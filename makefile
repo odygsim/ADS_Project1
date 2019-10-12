@@ -255,8 +255,8 @@ INC_DIR ?=		inc/
 SRC_DIR ?=		src/
 DOC_DIR ?=		doc/
 TMP_DIR ?=		tmp/
-#LIB_DIR ?=		lib/
 TESTS_DIR ?=	 	tests/
+#LIB_DIR ?=		lib/
 
 
 # Target name
@@ -344,6 +344,29 @@ ${OBJ_DIR}util.o : ${SRC_DIR}util.cpp
 #
 #
 
+#..............................................................................#
+# TEST
+.PHONY: runtestslsh
+runtestslsh: ##@tests Run lsh tests
+runtestslsh:
+	@${MKDIR_P} ${TESTS_DIR}
+	${RUNNING}
+	@$(ECHO)
+	$(info running small dataset)
+	${BIN_DIR}lsh –d ${TESTS_DIR}sample datasets/siftsmall/input_small_id –q ${TESTS_DIR}sample datasets/siftsmall/query_small_id –k 4 -L 5 -o ${TESTS_DIR}
+	$(info running big dataset)
+	${BIN_DIR}lsh –d ${TESTS_DIR}sample datasets/siftbig/input_big_id –q ${TESTS_DIR}sample datasets/siftbig/query_big_id –k 4 -L 5 -o ${TESTS_DIR}
+
+.PHONY: runtestscube
+runtestcube: ##@tests Run lsh test
+runtestcube:
+	@${MKDIR_P} ${TESTS_DIR}
+	${RUNNING}
+	@$(ECHO)
+	$(info running small dataset)
+	${BIN_DIR}cube –d ${TESTS_DIR}sample datasets/siftsmall/input_small_id –q ${TESTS_DIR}sample datasets/siftsmall/query_small_id –k 4 -M 5 -probes 100 -o ${TESTS_DIR}
+	$(info running big dataset)
+	${BIN_DIR}cube –d ${TESTS_DIR}sample datasets/siftbig/input_big_id –q ${TESTS_DIR}sample datasets/siftbig/query_big_id –k 4 -M 5 -probes 100 -o ${TESTS_DIR}
 #..............................................................................#
 #	Documentation
 
