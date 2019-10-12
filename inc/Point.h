@@ -10,12 +10,12 @@
 
 class Point {
     std::string name;
-    std::vector<double> dList;
+    std::vector<int> dList;
 
-    std::vector <double> getList();
+    std::vector <int> getList();
     void setPoint();
 public:
-    Point(std::string, std::vector<double>);
+    Point(std::string, std::vector<int>);
 };
 
 

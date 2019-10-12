@@ -6,10 +6,10 @@
 
 #include <utility>
 
-std::vector<double> Point::getList() {
+std::vector<int> Point::getList() {
     return this->dList;
 }
-Point::Point(std::string n, std::vector<double> l) {
+Point::Point(std::string n, std::vector<int> l) {
     name=std::move(n);
     dList = std::move(l);
 }

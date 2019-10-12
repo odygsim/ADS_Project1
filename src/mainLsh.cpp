@@ -12,8 +12,7 @@
 //#include <cstring>
 #include<cstdlib>
 #include "../inc/Point.h"
-
-
+#include "../inc/util.h"
 
 
 int main(int argc, char ** argv)
@@ -21,7 +20,8 @@ int main(int argc, char ** argv)
     using namespace std;
 
     int L=0, k=0;
-    char delim = '\t', *pEnd;
+    char delim = ' ', *pEnd;
+    char delimN = '\n';
     const char *arg;
     string oFileName, iFileName, qFileName, tmp;
     ifstream oFile, iFile, qFile;
@@ -69,15 +69,14 @@ int main(int argc, char ** argv)
         cerr << "Unable to open file : " << iFileName << endl;
         return 1;
     }
+    int i = 0;
     while (!iFile.eof()){
-        getline(iFile, tmp, delim);
-        name = tmp[1];
-        cout << name << endl;
-        return 1;
-        for (auto index : tmp) {
-        }
+        getline(iFile, tmp, '\r');
+        dataList.push_back(splitToPoint(tmp,' '));
+        i += 1;
 
     }
+
     iFile.close();
 
     return 0;

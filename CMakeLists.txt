@@ -3,4 +3,4 @@ project(ADS_Project1)
 
 set(CMAKE_CXX_STANDARD 11)
 
-add_executable(ADS_Project1 src/mainLsh.cpp src/FunctionH.cpp inc/FunctionH.h src/Point.cpp inc/Point.h)
+add_executable(ADS_Project1 src/mainLsh.cpp src/FunctionH.cpp inc/FunctionH.h src/Point.cpp inc/Point.h src/util.cpp inc/util.h)
