@@ -359,9 +359,9 @@ runtestslsh:
 	${RUNNING}
 	@$(ECHO)
 	$(info running small dataset)
-	${BIN_DIR}lsh –d ${TESTS_DIR}sample_datasets/siftsmall/input_small_id –q ${TESTS_DIR}sample_datasets/siftsmall/query_small_id –k 4 -L 5 -o ${TESTS_DIR}outsmall.txt
+	${BIN_DIR}lsh -d ${TESTS_DIR}sample_datasets/siftsmall/input_small_id -q ${TESTS_DIR}sample_datasets/siftsmall/query_small_id -k 4 -L 5 -o ${TESTS_DIR}outsmall.txt
 # 	$(info running big dataset)
-# 	${BIN_DIR}lsh –d ${TESTS_DIR}sample\ datasets/siftbig/input_big_id –q ${TESTS_DIR}sample\ datasets/siftbig/query_big_id –k 4 -L 5 -o ${TESTS_DIR}outbig.txt
+# 	${BIN_DIR}lsh -d ${TESTS_DIR}sample_datasets/siftsmall/input_small_id -q ${TESTS_DIR}sample_datasets/siftsmall/query_small_id -k 4 -L 5 -o ${TESTS_DIR}outsmall.txt
 
 .PHONY: runtestscube
 runtestcube: ##@tests Run lsh test
@@ -370,9 +370,9 @@ runtestcube:
 	${RUNNING}
 	@$(ECHO)
 	$(info running small dataset)
-	${BIN_DIR}cube –d ${TESTS_DIR}sample datasets/siftsmall/input_small_id –q ${TESTS_DIR}sample datasets/siftsmall/query_small_id –k 4 -M 5 -probes 100 -o ${TESTS_DIR}
+	${BIN_DIR}cube -d ${TESTS_DIR}sample_datasets/siftsmall/input_small_id -q ${TESTS_DIR}sample_datasets/siftsmall/query_small_id -k 4 -M 5 -probes 100 -o ${TESTS_DIR}
 	$(info running big dataset)
-	${BIN_DIR}cube –d ${TESTS_DIR}sample datasets/siftbig/input_big_id –q ${TESTS_DIR}sample datasets/siftbig/query_big_id –k 4 -M 5 -probes 100 -o ${TESTS_DIR}
+	${BIN_DIR}cube -d ${TESTS_DIR}sample_datasets/siftbig/input_big_id -q ${TESTS_DIR}sample_datasets/siftbig/query_big_id –k 4 -M 5 -probes 100 -o ${TESTS_DIR}
 #..............................................................................#
 #	Documentation
 

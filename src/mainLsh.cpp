@@ -4,12 +4,17 @@
 #include <getopt.h>
 #include<cstring>
 #include <fstream>
+//#include <stdio.h>
+//#include <unistd.h>
 //#include <vector>
 #include <algorithm>    // copy
 #include <iterator>     // ostream_operator
 //#include <cstring>
 #include<cstdlib>
 #include "../inc/Point.h"
+
+
+
 
 int main(int argc, char ** argv)
 {
@@ -29,20 +34,19 @@ int main(int argc, char ** argv)
         fprintf(stderr, "Usage : %s -d <input file> -q <query file> -k <int> -L <int> -o <output file>\n", argv[0]);
         return 1;
     }
-    while (--argc && argc > 3) {
+    while (--argc && argc > 4) {
         arg = *++argv;
-        string t = arg;
-        if (t == "-o") {
+        if (!strcmp(arg, "-o")) {
             if (argc > 1 && --argc)
-                oFileName = t;
+                oFileName = *++argv;
         } else if (!strcmp(arg, "-L")) {
             L = (int) strtol(*++argv, &pEnd, 10);
         } else if (!strcmp(arg, "-k"))
             k = (int) strtol(*++argv, &pEnd, 10);
-        else if (t == "-q")
-            qFileName = t;
-        else if (t == "-d")
-            iFileName = t;
+        else if (!strcmp(arg, "-q"))
+            qFileName = *++argv;
+        else if (!strcmp(arg, "-d"))
+            iFileName = *++argv;
     }
 
     cout << "Running Instance with args " << iFileName << " " << qFileName << " " << k << " " << L << " " << oFileName << endl;
