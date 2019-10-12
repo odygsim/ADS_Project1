@@ -109,6 +109,110 @@ HELP_FUNC := \
 		print "\n"; \
 	}
 ################################################################################
+#	  ____              _____ _
+#	 / ___| _     _    |  ___| | __ _  __ _ ___
+#	| |   _| |_ _| |_  | |_  | |/ _` |/ _` / __|
+#	| |__|_   _|_   _| |  _| | | (_| | (_| \__ \
+#	 \____||_|   |_|   |_|   |_|\__,_|\__, |___/
+#	                                  |___/
+#
+
+# Default compiler C++ flags
+#
+CXXFLAGS =		-std=c++11
+
+#..............................................................................#
+# Host C++ flags
+HOST_CXXFLAGS =		$(CXXFLAGS)\
+			$(USER_HOST_CXXFLAGS)\
+			$(USER_CXXFLAGS)
+
+#..............................................................................#
+# Target C++ flags
+TARGET_CXXFLAGS =	$(CXXFLAGS)\
+			$(USER_TARGET_CXXFLAGS)\
+			$(USER_CXXFLAGS)
+
+################################################################################
+#	 ____                   __                _____ _
+#	|  _ \ _ __ ___ _ __   / /__  ___  _ __  |  ___| | __ _  __ _ ___
+#	| |_) | '__/ _ \ '_ \ / / __|/ _ \| '__| | |_  | |/ _` |/ _` / __|
+#	|  __/| | |  __/ |_) / /\__ \ (_) | |    |  _| | | (_| | (_| \__ \
+#	|_|   |_|  \___| .__/_/ |___/\___/|_|    |_|   |_|\__,_|\__, |___/
+#	               |_|                                      |___/
+#
+
+# Warnings and error notification
+CPPFLAGS =		-w\
+			-Wall\
+			-Werror\
+			-pedantic-errors
+
+
+# Debug flags
+#TODO FIX this
+#ifeq ($(CONF),rel)
+  # Optimization
+#  CPPFLAGS +=		-O3
+#  CPPFLAGS +=		-DNDEBUG
+#else
+  # Debug flags
+CPPFLAGS +=		-g 
+
+  # Optimization
+CPPFLAGS +=		-Og
+#endif
+
+
+#..............................................................................#
+# Host compiler preprossesor flags
+HOST_CPPFLAGS =		$(CPPFLAGS)\
+			$(USER_HOST_CPPFLAGS)\
+			$(USER_CPPFLAGS)
+
+#..............................................................................#
+# Target compiler preprossesor flags
+TARGET_CPPFLAGS =	$(CPPFLAGS)\
+			$(USER_TARGET_CPPFLAGS)\
+			$(USER_CPPFLAGS)
+
+#..............................................................................#
+# Test compiler preprossesor flags
+TEST_CPPFLAGS =		$(CPPFLAGS)\
+			$(USER_TEST_CPPFLAGS)\
+			$(USER_CPPFLAGS)
+
+################################################################################
+#	 ___            _           _         __ _
+#	|_ _|_ __   ___| |_   _  __| | ___   / _| | __ _  __ _ ___
+#	 | || '_ \ / __| | | | |/ _` |/ _ \ | |_| |/ _` |/ _` / __|
+#	 | || | | | (__| | |_| | (_| |  __/ |  _| | (_| | (_| \__ \
+#	|___|_| |_|\___|_|\__,_|\__,_|\___| |_| |_|\__,_|\__, |___/
+#	                                                 |___/
+#
+
+# Include directories
+INCLUDES =		-I$(INC_DIR)
+
+#..............................................................................#
+# Host include directories
+HOST_INCLUDES =		$(INCLUDES)\
+			$(USER_HOST_INCLUDES)\
+			$(USER_INCLUDES)
+
+#..............................................................................#
+# Target include directories
+TARGET_INCLUDES =	$(INCLUDES)\
+			$(USER_TARGET_INCLUDES)\
+			$(USER_INCLUDES)
+
+#..............................................................................#
+# Test include directories
+TEST_INCLUDES =		$(INCLUDES)\
+			$(USER_TEST_INCLUDES)\
+			$(USER_INCLUDES)
+
+################################################################################
 #	  _____           _           _
 #	 |  __ \         (_)         | |
 #	 | |__) | __ ___  _  ___  ___| |_
@@ -154,6 +258,7 @@ TMP_DIR ?=		tmp/
 #LIB_DIR ?=		lib/
 TESTS_DIR ?=	 	tests/
 
+
 # Target name
 #ifeq ($(TARGET_NAME),)
   #$(error "TARGET_NAME" is not specified)
@@ -166,6 +271,24 @@ TESTS_DIR ?=	 	tests/
 # Object files
 # TARGET_OBJS =		$(addprefix $(OBJ_DIR)$(TARGET_DIR),$(TARGET_CXX_SRCs:%.cpp=%.o))
 # object files
+
+#..............................................................................#
+
+################################################################################
+#	 _____           _
+#	|_   _|__   ___ | |___
+#	  | |/ _ \ / _ \| / __|
+#	  | | (_) | (_) | \__ \
+#	  |_|\___/ \___/|_|___/
+#
+#
+
+#..............................................................................#
+# Host toolchain
+CC_HOST ?=		gcc
+CXX_HOST ?=		g++
+SZ_HOST ?=		size
+#..............................................................................#
 OBJS1 = ${OBJ_DIR}mainLsh.o ${OBJ_DIR}FunctionH.o ${OBJ_DIR}util.o
 OBJS2 = ${OBJ_DIR}mainHypercube.o ${OBJ_DIR}FunctionH.o ${OBJ_DIR}util.o
 OBJS3 = ${OBJ_DIR}mainCurveLsh.o ${OBJ_DIR}FunctionH.o ${OBJ_DIR}util.o
@@ -173,35 +296,41 @@ OBJS4 = ${OBJ_DIR}mainCurveHypercube.o ${OBJ_DIR}FunctionH.o ${OBJ_DIR}util.o
 OBJS5 = ${OBJ_DIR}mainCurveProjection.o ${OBJ_DIR}FunctionH.o ${OBJ_DIR}util.o
 OBJS = $(OBJ1) $(OBJ2) $(OBJ3) $(OBJ4) $(OBJ5)
 
-#OBJS = main.o Grid.o Hero.o Item.o Living.o Market.o Monster.o Spell.o Square.o
 # create / compile the individual files >> separately < <
-${OBJ_DIR}mainLsh.o : ${SRC_DIR}mainLsh.cpp
-# 	${COMPILING}
-	$(CC) $(CFLAGS) ${SRC_DIR}mainLsh.cpp -o ${OBJ_DIR}mainLsh.o
+${OBJ_DIR}mainLsh.o: ${SRC_DIR}mainLsh.cpp
+	${COMPILING}
+	$(MKDIR_P)		$(dir $@)
+	@$(CXX_HOST) 	-c $(TARGET_CXXFLAGS) $(HOST_CPPFLAGS) $(HOST_INCLUDES) ${SRC_DIR}mainLsh.cpp -o $@
 
 ${OBJ_DIR}mainHypercube.o : ${SRC_DIR}mainHypercube.cpp
 	${COMPILING}
-	$(CC) $(CFLAGS) ${SRC_DIR}mainHypercube.cpp -o ${OBJ_DIR}mainCurveHypercube.o
+	$(MKDIR_P)		$(dir $@)
+	@$(CXX_HOST) 	-c $(TARGET_CXXFLAGS)  $(HOST_CPPFLAGS) $(HOST_INCLUDES) ${SRC_DIR}mainHypercube.cpp -o $@
 
 ${OBJ_DIR}mainCurveLsh.o : ${SRC_DIR}mainCurveLsh.cpp
 	${COMPILING}
-	$(CC) $(CFLAGS) ${SRC_DIR}mainCurveLsh.cpp -o ${OBJ_DIR}mainCurveLsh.o
+	$(MKDIR_P)		$(dir $@)
+	@$(CXX_HOST) 	-c $(TARGET_CXXFLAGS) $(HOST_CPPFLAGS) $(HOST_INCLUDES)  ${SRC_DIR}mainCurveLsh.cpp -o $@
 
 ${OBJ_DIR}mainCurveHypercube.o : ${SRC_DIR}mainCurveHypercube.cpp
 	${COMPILING}
-	$(CC) $(CFLAGS) ${SRC_DIR}mainCurveHypercube.cpp -o ${OBJ_DIR}mainCurveHypercube.o
+	$(MKDIR_P)		$(dir $@)
+	@$(CXX_HOST) 	-c $(TARGET_CXXFLAGS) $(HOST_CPPFLAGS) $(HOST_INCLUDES)${SRC_DIR}mainCurveHypercube.cpp -o $@
 
 ${OBJ_DIR}mainCurveProjection.o : ${SRC_DIR}mainCurveProjection.cpp
 	${COMPILING}
-	$(CC) $(CFLAGS) ${SRC_DIR}mainCurveProjection.cpp -o ${OBJ_DIR}mainCurveProjection.o
+	$(MKDIR_P)		$(dir $@)
+	@$(CXX_HOST) 	-c $(TARGET_CXXFLAGS) $(HOST_CPPFLAGS) $(HOST_INCLUDES) ${SRC_DIR}mainCurveProjection.cpp -o $@
 
 ${OBJ_DIR}FunctionH.o : ${SRC_DIR}FunctionH.cpp
 	${COMPILING}
-	$(CC) $(CFLAGS) ${SRC_DIR}FunctionH.cpp -o ${OBJ_DIR}FunctionH.o
+	$(MKDIR_P)		$(dir $@)
+	@$(CXX_HOST) 	-c $(TARGET_CXXFLAGS) $(HOST_CPPFLAGS) $(HOST_INCLUDES) ${SRC_DIR}FunctionH.cpp -o $@
 
 ${OBJ_DIR}util.o : ${SRC_DIR}util.cpp
 	${COMPILING}
-	$(CC) $(CFLAGS) ${SRC_DIR}util.cpp -o ${OBJ_DIR}util.o
+	$(MKDIR_P)		$(dir $@)
+	@$(CXX_HOST) 	-c $(TARGET_CXXFLAGS) $(HOST_CPPFLAGS) $(HOST_INCLUDES) ${SRC_DIR}util.cpp -o $@
 
 ################################################################################
 #	 _____  _                                    _
@@ -260,45 +389,54 @@ all:
 	$(TARGET1) $(TARGET2) $(TARGET3) $(TARGET4) $(TARGET5)
 
 lsh: ##@build lsh with points.
-lsh: $(OBJS1)
-# 	@echo Creates $(TARGET1)
-	$(info *** Creating lsh executable ***  )
-	$(CC) -g $(OBJS1) -o $(OUT1)
+lsh: ${BIN_DIR}lsh
+${BIN_DIR}lsh: $(OBJS1)
+	${BUILDING}
+	$(MKDIR_P)		$(dir $@)
+	@$(CXX_HOST)  $(OBJS1) -o $@
 	${BUILD_SUCCESS}
 
 cube: ##@build cube with points.
-cube: 
-	@echo Creates $(TARGET2)
+cube: ${BIN_DIR}cube
+${BIN_DIR}cube: 
+	$(error *** Creating cube executable ***  )
+	${BUILDING}
+	$(MKDIR_P)		$(dir $@)
 	$(OBJS2)
-	$(info *** Creating cube executable ***  )
-	$(CC) -g $(OBJS2) -o $(OUT2)
+	@$(CXX_HOST)  $(OBJS2) -o $@
 
-curvelsh: ##@build curve Lsh.
-curvelsh: 
-	@echo Creates $(TARGET3)
-	$(OBJS3)
+curve_grid_lsh: ##@build curve Lsh.
+curve_grid_lsh:${BIN_DIR}curve_grid_lsh
+${BIN_DIR}curve_grid_lsh:
 	$(error *** Creating Curve Grid Lsh executable ***  )
-	$(CC) -g $(OBJS3) -o $(OUT3)
+	${BUILDING}
+	$(MKDIR_P)		$(dir $@)
+	$(OBJS3)
+	@$(CXX_HOST)  $(OBJS3) -o $@
 
-curvecube: ##@build curveCube.
-curvecube: 
-	@echo Creates $(TARGET4)
-	$(OBJS4)
+curve_grid_cube: ##@build curveCube.
+curve_grid_cube: ${BIN_DIR}curve_grid_cube
+${BIN_DIR}curve_grid_cube:
 	$(error *** Creating Curve Grid HyperCube executable ***  )
-	$(CC) -g $(OBJS4) -o $(OUT4)
+	${BUILDING}
+	$(MKDIR_P)		$(dir $@)
+	$(OBJS4)
+	@$(CXX_HOST)  $(OBJS4) -o $@
 
-curveprojection: ##@build curveProjection.
-curveprojection:
-	@echo Creates $(TARGET5)
-	$(OBJS5)
+curve_grid_projection: ##@build curveProjection.
+curve_grid_projection: ${BIN_DIR}curve_grid_projection
+${BIN_DIR}curve_grid_projection:
 	$(error *** Creating Curve Grid Projection executable ***  )
-	$(CC) -g $(OBJS5) -o $(OUT5)
+	${BUILDING}
+	$(MKDIR_P)		$(dir $@)
+	$(OBJS5)
+	@$(CXX_HOST)  $(OBJS5) -o $@
 
 .PHONY: clean
 clean:
 	$(CLEANING)
-	$(RM_FR)		$(OBJ_DIR)*.o
-	$(RM_FR)		$(BIN_DIR)*
+	$(RM_FR)		$(OBJ_DIR)
+	$(RM_FR)		$(BIN_DIR)
 
 .PHONY: rebuild
 rebuild: ##@build Rebuilds project.
@@ -308,10 +446,10 @@ count:
 	wc ${SRC_DIR}*.cpp ${INC_DIR}/*.h
 
 # flags
-CFLAGS = -g -c -Wall $(DEPS)
+#CFLAGS = -g -c -Wall $(DEPS)
 
 # general dependencies
-DEPS = -I ./inc/
+#DEPS = -I ./inc/
 
 # main file names
 TARGET1 = mainLsh
@@ -320,14 +458,6 @@ TARGET3 = mainCurveLsh
 TARGET4 = mainCurveHypercube
 TARGET5 = mainCurveProjection
 TARGETS = $(TARGET1) $(TARGET2) $(TARGET3) $(TARGET4) $(TARGET5)
-
-# out file name
-OUT1 = ${BIN_DIR}lsh
-OUT2 = ${BIN_DIR}cube
-OUT3 = ${BIN_DIR}curve_grid_lsh
-OUT4 = ${BIN_DIR}curve_grid_hypercube
-OUT5 = ${BIN_DIR}curve_grid_projection
-OUTS = $(OUT1) $(OUT2) $(OUT3) $(OUT4) $(OUT5)
 
 # standard
 STD = #-std=c98
