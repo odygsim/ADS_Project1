@@ -289,7 +289,7 @@ CC_HOST ?=		gcc
 CXX_HOST ?=		g++
 SZ_HOST ?=		size
 #..............................................................................#
-OBJS1 = ${OBJ_DIR}mainLsh.o ${OBJ_DIR}FunctionH.o ${OBJ_DIR}util.o
+OBJS1 = ${OBJ_DIR}mainLsh.o ${OBJ_DIR}FunctionH.o ${OBJ_DIR}util.o ${OBJ_DIR}Point.o
 OBJS2 = ${OBJ_DIR}mainHypercube.o ${OBJ_DIR}FunctionH.o ${OBJ_DIR}util.o
 OBJS3 = ${OBJ_DIR}mainCurveLsh.o ${OBJ_DIR}FunctionH.o ${OBJ_DIR}util.o
 OBJS4 = ${OBJ_DIR}mainCurveHypercube.o ${OBJ_DIR}FunctionH.o ${OBJ_DIR}util.o
@@ -332,6 +332,12 @@ ${OBJ_DIR}util.o : ${SRC_DIR}util.cpp
 	$(MKDIR_P)		$(dir $@)
 	@$(CXX_HOST) 	-c $(TARGET_CXXFLAGS) $(HOST_CPPFLAGS) $(HOST_INCLUDES) ${SRC_DIR}util.cpp -o $@
 
+${OBJ_DIR}Point.o : ${SRC_DIR}Point.cpp
+	${COMPILING}
+	$(MKDIR_P)		$(dir $@)
+	@$(CXX_HOST) 	-c $(TARGET_CXXFLAGS) $(HOST_CPPFLAGS) $(HOST_INCLUDES) ${SRC_DIR}Point.cpp -o $@
+
+
 ################################################################################
 #	 _____  _                                    _
 #	|  __ \| |                                  | |
@@ -353,9 +359,9 @@ runtestslsh:
 	${RUNNING}
 	@$(ECHO)
 	$(info running small dataset)
-	${BIN_DIR}lsh –d ${TESTS_DIR}sample datasets/siftsmall/input_small_id –q ${TESTS_DIR}sample datasets/siftsmall/query_small_id –k 4 -L 5 -o ${TESTS_DIR}
-	$(info running big dataset)
-	${BIN_DIR}lsh –d ${TESTS_DIR}sample datasets/siftbig/input_big_id –q ${TESTS_DIR}sample datasets/siftbig/query_big_id –k 4 -L 5 -o ${TESTS_DIR}
+	${BIN_DIR}lsh –d ${TESTS_DIR}sample_datasets/siftsmall/input_small_id –q ${TESTS_DIR}sample_datasets/siftsmall/query_small_id –k 4 -L 5 -o ${TESTS_DIR}outsmall.txt
+# 	$(info running big dataset)
+# 	${BIN_DIR}lsh –d ${TESTS_DIR}sample\ datasets/siftbig/input_big_id –q ${TESTS_DIR}sample\ datasets/siftbig/query_big_id –k 4 -L 5 -o ${TESTS_DIR}outbig.txt
 
 .PHONY: runtestscube
 runtestcube: ##@tests Run lsh test
