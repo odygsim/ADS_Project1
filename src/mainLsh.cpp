@@ -30,7 +30,7 @@ int main(int argc, char ** argv)
     string name;
     int kk = -2;
     //Read args
-    if (argc != 12) {
+    if (argc != 11) {
         fprintf(stderr, "Usage : %s -d <input file> -q <query file> -k <int> -L <int> -o <output file>\n", argv[0]);
         return 1;
     }
