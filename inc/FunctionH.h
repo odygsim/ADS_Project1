@@ -15,8 +15,13 @@ class FunctionH {
 public:
     // Calculates h(x)
     int calculatePoint(const Point *);
-//    FunctionH(unsigned int w, unsigned int d);
-    FunctionH(unsigned int w, unsigned int d, unsigned int m, unsigned int M, unsigned int k);
+//    FunctionH(unsigned int w, unsigned int d) {
+//
+//    }
+
+//    FunctionH(unsigned int w, unsigned int d, unsigned int m=0, unsigned int M=0, unsigned int k=4);
+    FunctionH(unsigned int w, unsigned int d, unsigned int k);
+    ~FunctionH(){}
 
 };
 

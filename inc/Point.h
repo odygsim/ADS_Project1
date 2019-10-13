@@ -22,13 +22,13 @@ public:
 
 class qPoint {
     std::string name;
-    double distance;
+    int distance;
 public:
-    qPoint(std::string, double);
+    qPoint(std::string, int);
     ~qPoint()= default;;
 //    bool operator <(const qPoint & qPointObj) const;
     std::string getName() const;
-    double getDistance() const;
+    int getDistance() const;
 };
 
 #endif //ADS_PROJECT1_POINT_H

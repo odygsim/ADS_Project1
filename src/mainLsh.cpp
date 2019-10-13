@@ -8,13 +8,14 @@
 #include "../inc/util.h"
 #include "../inc/FunctionH.h"
 
-
 int main(int argc, char **argv) {
     using namespace std;
 
-    int L = 0, k = 0;
+    int L = 0, k = 0, r = 0;
     char *pEnd;
     const char *arg;
+    string newline = "\n";
+    string space = " ";
     list<const qPoint *> resultList;
     const qPoint *result;
     string oFileName, iFileName, qFileName, output;
@@ -39,6 +40,8 @@ int main(int argc, char **argv) {
         else if (!strcmp(arg, "-d"))
             iFileName = *++argv;
     }
+//    cout << -73 << endl;
+//    exit(1);
 
     cout << "Running Instance with args " << iFileName << " " << qFileName << " " << k << " " << L << " " << oFileName
          << endl;
@@ -47,7 +50,9 @@ int main(int argc, char **argv) {
     qDataList = readData(qFileName);
 
     //TODO Finish FunctionH, get which mod to use and how, and implement LSH
-//    FunctionH h(5,iDataList[0]->getList().size());
+//    r=meanDistanceBetweenPoints(iDataList);
+//    FunctionH h(10*r,iDataList[0]->getList().size(), 4);
+//    h.calculatePoint(i)
 //    exit(10);
 
     // Try Query Exact KNN
@@ -58,7 +63,7 @@ int main(int argc, char **argv) {
 //    }
 //    cout << endl;
 //    for (auto & b : iDataList) {
-//        cout << b->getList().size() << '|';
+//        cout << h.calculatePoint(b) << '|';
 //    }
 //    cout << endl;
 //    exit(1);
@@ -66,7 +71,7 @@ int main(int argc, char **argv) {
     list< const qPoint *> ::iterator itE;
     list< const qPoint *> ::iterator it;// = resultList.begin();
     for (auto &i : qDataList) {
-        char str[20];
+//        char str[20];
         std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
         resultList = exactKNN(iDataList, i, 1);
         std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
@@ -74,20 +79,21 @@ int main(int argc, char **argv) {
         itE = resultList.end();
         for (it = itS; it != itE; ++it) {
             result = *it;
-            output += "Query: " + i->getName() + "\n";
-            output += "Nearest neighbor: " + result->getName() + "\n";
-            output += "distanceLSH: \n";
-//        output += "distanceTrue: " + std::to_string(result->getDistance()) + "\n";
-            sprintf(str, "%.2f", result->getDistance());
-            string a(str, strlen(str));
-            output += "distanceTrue: " + a + "\n";// std::to_string(result->getDistance()) + "\n";
-            output += "tLSH: \n";
+            output += "Query: " + i->getName() + space;
+            output += "Nearest neighbor: " + result->getName() + space;
+            output += "distanceLSH: " + space;
+            output += "distanceTrue: " + std::to_string(result->getDistance()) + space;
+//            sprintf(str, "%.2f", result->getDistance());
+//            string a(str, strlen(str));
+//            output += "distanceTrue: " ;
+//            output += a + space;// std::to_string(result->getDistance()) + "\n";
+            output += "tLSH: " + space;
             output += "tTrue: " + std::to_string(
-                    (std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count()) / 1000000.0) + "\n";
+                    (std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count()) / 1000000.0) + space;
             cout << output << endl;
             output = "";
-//        break;
         }
+//        break;
     }
     // Clean Up
 
