@@ -1,11 +1,8 @@
 // this file will contain general used utilities
-#include <iostream>
-#include <cstdlib>
-#include <sstream>
-#include <fstream>
 //#include <tuple>
 #include "../inc/util.h"
-#include "../inc/FunctionH.h"
+//#include "../inc/FunctionH.h"
+//#include "../inc/LSH_HT.h"
 
 //template <typename RT, typename DT >
 //RT manhattanDistance(DT point1, DT point2) {
@@ -118,11 +115,14 @@ std::list < const qPoint * > exactKNN(std::vector<const Point *> & dataList, con
     return returnList;
 }
 
-const qPoint * AproximateKNN(std::vector<const Point *> dataList,
+const qPoint * AproximateKNN(const std::vector<const Point *>& dataList,
                            const Point *queryPoint /*TODO put here 3rd arg hash method lsh/cube*/) {
     std::list<const qPoint *> distanceList;
+//    LSH lsh(3000, dataList[0]->getList().size());
 
 //    for (unsigned long i = 0; i < dataList.size(); ++i)
+//        lsh.addPoint()
+
 //        distanceList.push_back(
 //                new qPoint(dataList[i]->getName(), manhattanDistance(dataList[i]->getList(), queryPoint->getList())));
 //    distanceList.sort(ComparatorqPoint());

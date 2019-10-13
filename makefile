@@ -289,7 +289,7 @@ CC_HOST ?=		gcc
 CXX_HOST ?=		g++
 SZ_HOST ?=		size
 #..............................................................................#
-OBJS1 = ${OBJ_DIR}mainLsh.o ${OBJ_DIR}FunctionH.o ${OBJ_DIR}util.o ${OBJ_DIR}Point.o
+OBJS1 = ${OBJ_DIR}mainLsh.o ${OBJ_DIR}FunctionH.o ${OBJ_DIR}util.o ${OBJ_DIR}Point.o ${OBJ_DIR}LSH_HT.o
 OBJS2 = ${OBJ_DIR}mainHypercube.o ${OBJ_DIR}FunctionH.o ${OBJ_DIR}util.o
 OBJS3 = ${OBJ_DIR}mainCurveLsh.o ${OBJ_DIR}FunctionH.o ${OBJ_DIR}util.o
 OBJS4 = ${OBJ_DIR}mainCurveHypercube.o ${OBJ_DIR}FunctionH.o ${OBJ_DIR}util.o
@@ -336,6 +336,11 @@ ${OBJ_DIR}Point.o : ${SRC_DIR}Point.cpp
 	${COMPILING}
 	$(MKDIR_P)		$(dir $@)
 	@$(CXX_HOST) 	-c $(TARGET_CXXFLAGS) $(HOST_CPPFLAGS) $(HOST_INCLUDES) ${SRC_DIR}Point.cpp -o $@
+
+${OBJ_DIR}LSH_HT.o : ${SRC_DIR}LSH_HT.cpp
+	${COMPILING}
+	$(MKDIR_P)		$(dir $@)
+	@$(CXX_HOST) 	-c $(TARGET_CXXFLAGS) $(HOST_CPPFLAGS) $(HOST_INCLUDES) ${SRC_DIR}LSH_HT.cpp -o $@
 
 
 ################################################################################
