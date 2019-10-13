@@ -10,13 +10,25 @@
 
 class Point {
     std::string name;
-    std::vector<int> dList;
+    std::vector<int> dataList;
 
-    std::vector <int> getList();
-    void setPoint();
 public:
-    Point(std::string, std::vector<int>);
+    Point(std::string, std::vector<int> );
+    ~Point()= default;;
+    std::vector <int> getList() const;
+    std::string getName() const;
+//    void setPoint();
 };
 
+class qPoint {
+    std::string name;
+    double distance;
+public:
+    qPoint(std::string, double);
+    ~qPoint()= default;;
+//    bool operator <(const qPoint & qPointObj) const;
+    std::string getName();
+    double getDistance() const;
+};
 
 #endif //ADS_PROJECT1_POINT_H
