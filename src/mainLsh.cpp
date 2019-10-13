@@ -2,17 +2,8 @@
 
 #include<iostream>
 #include <chrono>
-#include <getopt.h>
 #include<cstring>
-#include <fstream>
-//#include <stdio.h>
-//#include <unistd.h>
-//#include <vector>
-#include <algorithm>    // copy
-#include <iterator>     // ostream_operator
-//#include <cstring>
 #include<cstdlib>
-#include <sstream>
 #include "../inc/Point.h"
 #include "../inc/util.h"
 #include "../inc/FunctionH.h"
@@ -24,6 +15,7 @@ int main(int argc, char **argv) {
     int L = 0, k = 0;
     char *pEnd;
     const char *arg;
+    list<const qPoint *> resultList;
     const qPoint *result;
     string oFileName, iFileName, qFileName, output;
     vector<const Point *> iDataList;
@@ -51,8 +43,8 @@ int main(int argc, char **argv) {
     cout << "Running Instance with args " << iFileName << " " << qFileName << " " << k << " " << L << " " << oFileName
          << endl;
     // Iterate over query file and store each Point's dimension data in a vector
-    iDataList = copyData(iFileName);
-    qDataList = copyData(qFileName);
+    iDataList = readData(iFileName);
+    qDataList = readData(qFileName);
 
     //TODO Finish FunctionH, get which mod to use and how, and implement LSH
 //    FunctionH h(5,iDataList[0]->getList().size());
@@ -66,28 +58,36 @@ int main(int argc, char **argv) {
 //    }
 //    cout << endl;
 //    for (auto & b : iDataList) {
-//        cout << b->getName() << '|';
+//        cout << b->getList().size() << '|';
 //    }
 //    cout << endl;
 //    exit(1);
+    list< const qPoint *> ::iterator itS;
+    list< const qPoint *> ::iterator itE;
+    list< const qPoint *> ::iterator it;// = resultList.begin();
     for (auto &i : qDataList) {
         char str[20];
         std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-        result = exactNN(iDataList, i);
+        resultList = exactKNN(iDataList, i, 1);
         std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-        output += "Query: " + i->getName() + "\n";
-        output += "Nearest neighbor: " + result->getName() + "\n";
-        output += "distanceLSH: \n";
+        itS = resultList.begin();
+        itE = resultList.end();
+        for (it = itS; it != itE; ++it) {
+            result = *it;
+            output += "Query: " + i->getName() + "\n";
+            output += "Nearest neighbor: " + result->getName() + "\n";
+            output += "distanceLSH: \n";
 //        output += "distanceTrue: " + std::to_string(result->getDistance()) + "\n";
-        sprintf(str, "%.2f", result->getDistance());
-        string a(str,strlen(str));
-        output += "distanceTrue: " + a + "\n";// std::to_string(result->getDistance()) + "\n";
-        output += "tLSH: \n";
-        output += "tTrue: " + std::to_string(
-                (std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count()) / 1000000.0) + "\n";
-        cout << output << endl;
-        output = "";
+            sprintf(str, "%.2f", result->getDistance());
+            string a(str, strlen(str));
+            output += "distanceTrue: " + a + "\n";// std::to_string(result->getDistance()) + "\n";
+            output += "tLSH: \n";
+            output += "tTrue: " + std::to_string(
+                    (std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count()) / 1000000.0) + "\n";
+            cout << output << endl;
+            output = "";
 //        break;
+        }
     }
     // Clean Up
 

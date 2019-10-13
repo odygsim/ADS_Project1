@@ -2,9 +2,8 @@
 #include <iostream>
 #include <cstdlib>
 #include <sstream>
-#include <list>
 #include <fstream>
-#include "../inc/Point.h"
+#include "../inc/util.h"
 
 double manhattanDistance(std::vector<int> point1, std::vector<int> point2) {
     long sum = 0;
@@ -17,7 +16,7 @@ double manhattanDistance(std::vector<int> point1, std::vector<int> point2) {
     std::vector<int>::iterator it2;
     for (it1 = b1, it2 = b2; (it1 != e1) && (it2 != e2); ++it1, ++it2) {
 //        std::cout << "" << it1. << " " << it2 << " " << std::endl;
-        sum += std::abs(point1[*it1] - point1[*it2]);
+        sum += abs(point1[*it1] - point2[*it2]);
     }
 
 
@@ -104,15 +103,23 @@ int meanDistanceBetweenPoints(std::vector<const Point *> dataList) {
     return sum / (int) minDistances.size();
 }
 
-const qPoint *exactNN(std::vector<const Point *> dataList, const Point *queryPoint) {
+std::list < const qPoint * > exactKNN(std::vector<const Point *> dataList, const Point *queryPoint, int radius) {
     std::list<const qPoint *> distanceList;
+    std::list<const qPoint *> returnList;
 
     for (unsigned long i = 0; i < dataList.size(); ++i)
         distanceList.push_back(
                 new qPoint(dataList[i]->getName(), manhattanDistance(dataList[i]->getList(), queryPoint->getList())));
     distanceList.sort(ComparatorqPoint());
-
-    return distanceList.front();
+    std::list <const qPoint *>::iterator it = distanceList.begin();
+    for (int j = 0; j < radius; ++j, it++) {
+    returnList.push_back(*it);
+    }
+//    qPoint *ret = distanceList.front();
+//    for (int j = 0; j < distanceList.size(); ++j) {
+//        delete distanceList[i];
+//    }
+    return returnList;
 }
 
 const qPoint *AproximateNN(std::vector<const Point *> dataList,
@@ -127,7 +134,7 @@ const qPoint *AproximateNN(std::vector<const Point *> dataList,
     return distanceList.front();
 }
 
-std::vector<const Point *> copyData(const std::string &fileName) {
+std::vector<const Point *> readData(const std::string &fileName) {
     std::vector<const Point *> dataList;
     std::ifstream file;
     std::string tmp;
