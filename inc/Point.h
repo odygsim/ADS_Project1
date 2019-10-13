@@ -27,7 +27,7 @@ public:
     qPoint(std::string, double);
     ~qPoint()= default;;
 //    bool operator <(const qPoint & qPointObj) const;
-    std::string getName();
+    std::string getName() const;
     double getDistance() const;
 };
 

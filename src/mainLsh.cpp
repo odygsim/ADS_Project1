@@ -15,6 +15,7 @@
 #include <sstream>
 #include "../inc/Point.h"
 #include "../inc/util.h"
+#include "../inc/FunctionH.h"
 
 
 int main(int argc, char **argv) {
@@ -23,7 +24,7 @@ int main(int argc, char **argv) {
     int L = 0, k = 0;
     char *pEnd;
     const char *arg;
-    qPoint *result;
+    const qPoint *result;
     string oFileName, iFileName, qFileName, output;
     vector<const Point *> iDataList;
     vector<const Point *> qDataList;
@@ -53,6 +54,10 @@ int main(int argc, char **argv) {
     iDataList = copyData(iFileName);
     qDataList = copyData(qFileName);
 
+    //TODO Finish FunctionH, get which mod to use and how, and implement LSH
+//    FunctionH h(5,iDataList[0]->getList().size());
+//    exit(10);
+
     // Try Query Exact KNN
     // Count CPU+WALL Time https://stackoverflow.com/questions/2808398/easily-measure-elapsed-time
 //    clock_t t_start, t_end;
@@ -68,7 +73,7 @@ int main(int argc, char **argv) {
     for (auto &i : qDataList) {
         char str[20];
         std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-        result = exactKNN(iDataList, i);
+        result = exactNN(iDataList, i);
         std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
         output += "Query: " + i->getName() + "\n";
         output += "Nearest neighbor: " + result->getName() + "\n";

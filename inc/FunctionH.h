@@ -6,13 +6,17 @@
 #define ADS_PROJECT1_FUNCTIONH_H
 
 
+#include "Point.h"
+
 class FunctionH {
+    unsigned int w,d,m,M, k;
+    std::vector<double> S;
+
 public:
     // Calculates h(x)
-    void calculatePoint();
-
-private:
-
+    int calculatePoint(const Point *);
+//    FunctionH(unsigned int w, unsigned int d);
+    FunctionH(unsigned int w, unsigned int d, unsigned int m, unsigned int M, unsigned int k);
 
 };
 

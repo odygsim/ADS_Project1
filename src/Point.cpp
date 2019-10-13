@@ -39,4 +39,4 @@ qPoint::qPoint(std::string n, double d) {
 
 double qPoint::getDistance() const { return distance; }
 
-std::string qPoint::getName() { return name; }
+std::string qPoint::getName() const { return name; }

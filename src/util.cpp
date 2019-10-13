@@ -49,7 +49,7 @@ std::vector<int> splitInt(const std::string &s, char delimiter) {
     return tokens;
 }
 
-Point *splitToPoint(const std::string &s, char delimiter) {
+const Point *splitToPoint(const std::string &s, char delimiter) {
     std::vector<int> tokens;
     std::string token;
     std::istringstream tokenStream(s);
@@ -74,12 +74,37 @@ struct ComparatorqPoint {
 //    bool operator() (qPoint const & qPointObjA, qPoint const & qPointObjB ) {
 //        return qPointObjA.getDistance() < qPointObjB.getDistance();
 //    }
-    bool operator()(const qPoint *a,const  qPoint *b) {
+    bool operator()(const qPoint *a, const qPoint *b) {
         return a->getDistance() < b->getDistance();
     }
 };
 
-const qPoint * exactKNN(std::vector<const Point *> dataList, const Point *queryPoint) {
+int meanDistanceBetweenPoints(std::vector<const Point *> dataList) {
+    /* For Each Point calculate its nearest neighbor
+     * bruteforce, run each point versus all dataset
+     * and produce the mean results*/
+    std::list<const int> minDistances;
+    int sum = 0;
+
+
+    for (unsigned long i = 0; i < dataList.size(); ++i) {
+        std::list<const qPoint *> distanceList;
+        for (unsigned long j = 0; j < dataList.size(); ++j) {
+            distanceList.push_back(new qPoint(dataList[j]->getName(),
+                                              manhattanDistance(dataList[j]->getList(), dataList[i]->getList())));
+        }
+        // Get min
+        distanceList.sort(ComparatorqPoint());
+        minDistances.push_back(distanceList.front()->getDistance());
+    }
+    // Calculate mean
+    for (auto i: minDistances) {
+        sum += i;
+    }
+    return sum / (int) minDistances.size();
+}
+
+const qPoint *exactNN(std::vector<const Point *> dataList, const Point *queryPoint) {
     std::list<const qPoint *> distanceList;
 
     for (unsigned long i = 0; i < dataList.size(); ++i)
@@ -90,7 +115,19 @@ const qPoint * exactKNN(std::vector<const Point *> dataList, const Point *queryP
     return distanceList.front();
 }
 
-std::vector<const Point *> copyData(const std::string& fileName) {
+const qPoint *AproximateNN(std::vector<const Point *> dataList,
+                           const Point *queryPoint /*TODO put here 3rd arg hash method lsh/cube*/) {
+    std::list<const qPoint *> distanceList;
+
+//    for (unsigned long i = 0; i < dataList.size(); ++i)
+//        distanceList.push_back(
+//                new qPoint(dataList[i]->getName(), manhattanDistance(dataList[i]->getList(), queryPoint->getList())));
+//    distanceList.sort(ComparatorqPoint());
+
+    return distanceList.front();
+}
+
+std::vector<const Point *> copyData(const std::string &fileName) {
     std::vector<const Point *> dataList;
     std::ifstream file;
     std::string tmp;
@@ -98,7 +135,7 @@ std::vector<const Point *> copyData(const std::string& fileName) {
     // Check filenames
     if (file.fail()) {
         std::cerr << "Error: Wrong filename / notFound" << std::endl;
-        exit(1) ;
+        exit(1);
     }
     // Test if file can be opened
     file.open(fileName);
