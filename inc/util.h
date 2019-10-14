@@ -10,6 +10,10 @@
 #include <iostream>
 #include "Point.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <getopt.h>
+
 struct ComparatorqPoint {
     bool operator()(const qPoint *a, const qPoint *b) {
         return a->getDistance() < b->getDistance();
