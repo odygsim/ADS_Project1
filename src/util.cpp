@@ -5,6 +5,11 @@
 #include <list>
 #include <fstream>
 #include "../inc/Point.h"
+#include <unistd.h>
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <getopt.h>
 
 double manhattanDistance(std::vector<int> point1, std::vector<int> point2) {
     long sum = 0;
@@ -116,4 +121,80 @@ std::vector<const Point *> copyData(const std::string& fileName) {
     }
     file.close();
     return dataList;
+}
+
+
+void print_cube_usage() {
+    fprintf(stderr, "Usage: cube -d <input file> -q <query file> k <int> -M <int> -probes <int> -o <output file>\n");
+}
+
+int readHypercubeParameters(int argc, char** argv,
+        std::string &inputFile, std::string &queryFile, std::string &outputFile,
+        int &k, int &M, int &probes){
+
+    extern char *optarg;
+    int opt=0;
+
+    //Set default parameters values
+    k=3; M=10; probes=2;
+
+    //Specify expected options
+    static struct option cube_options[] = {
+            {"d", required_argument, 0, 'd' },
+            {"q", required_argument, 0, 'q' },
+            {"o", required_argument, 0, 'o' },
+            {"k", required_argument, 0,  'k' },
+            {"M", required_argument, 0,  'M' },
+            {"probes", required_argument,0,'p' }
+    };
+
+    int longIndex = 0;
+    int dflag = 0, qflag = 0, oflag = 0;
+
+    // Get options given
+    while ((opt = getopt_long_only(argc, argv,"",
+                                   cube_options, &longIndex )) != -1) {
+        switch (opt) {
+            case 'd' :
+                dflag = 1;
+                inputFile = optarg;
+                break;
+            case 'q' :
+                qflag = 1;
+                queryFile = optarg;
+                break;
+            case 'o' :
+                oflag = 1;
+                outputFile = optarg;
+                break;
+            case 'k' :
+                k = atoi(optarg);
+                break;
+            case 'M' :
+                M = atoi(optarg);
+                break;
+            case 'p' :
+                probes =  atoi(optarg);
+                break;
+            default: print_cube_usage();
+                exit(EXIT_FAILURE);
+        }
+    }
+
+    //  Check if necessary options have been provided
+    if (dflag == 0) {
+        fprintf(stderr, "cube: missing -d option\n");
+        print_cube_usage();
+        exit(EXIT_FAILURE);
+    } else if (qflag == 0 ){
+        fprintf(stderr, "cube: missing -q option\n");
+        print_cube_usage();
+        exit(EXIT_FAILURE);
+    } else if (oflag == 0 ){
+        fprintf(stderr, "cube: missing -o option\n");
+        print_cube_usage();
+        exit(EXIT_FAILURE);
+    }
+
+    return 0;
 }

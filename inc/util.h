@@ -14,3 +14,8 @@ int manhattanDistance( std:: vector<int> , std:: vector<int> );
 qPoint * exactKNN(std::vector<const Point *> , const Point *);
 
 std::vector<const Point *> copyData(std::string const & fileName);
+
+void print_cube_usage();
+int readHypercubeParameters(int argc, char** argv,
+                            std::string &inputFile, std::string&queryFile, std::string &outputFile,
+                            int &k, int &M, int &probes);
