@@ -17,26 +17,15 @@ Point::Point(std::string n, std::vector<int> l) {
     dataList = std::move(l);
 }
 
-qPoint::qPoint(std::string n, double d) {
+qPoint::qPoint(std::string n, int d) {
     this->name = n;
     this->distance = d;
 }
 
-//struct ComparatorqPoint{
-//    bool operator() (qPoint const & qPointObjA, qPoint const & qPointObjB ) {
-//        return qPointObjA.getDistance() < qPointObjB.getDistance();
-//    }
-////    bool operator() (qPoint * a, qPoint * b){ return a->getDistance() < b->getDistance();}
-//};
-//bool qPoint::operator <(qPoint const & qPointObjA, qPoint const & qPointObjB ) {
-////return qPointObjA.getDistance() < qPointObjB.getDistance();
-//    return qPointObjA.distance < qPointObjB.distance;
+//bool qPoint::operator<( const qPoint & qPointObjB) const {
+//    return distance < qPointObjB.distance;
 //}
 
-//bool qPoint::operator<( const qPoint *qPointObjB) const {
-//    return qPointObjA->getDistance() < qPointObjB->getDistance();
-//}
+int qPoint::getDistance() const { return distance; }
 
-double qPoint::getDistance() const { return distance; }
-
-std::string qPoint::getName() { return name; }
+std::string qPoint::getName() const { return name; }
