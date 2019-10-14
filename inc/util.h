@@ -20,6 +20,15 @@ struct ComparatorqPoint {
     }
 };
 
+template<int index>
+struct TupleLess {
+    template<typename Tuple>
+    bool operator()(const Tuple &left, const Tuple &right) const {
+        return std::get<index>(left) < std::get<index>(right);
+    }
+};
+
+
 std::vector<std::string> split(const std::string& s, char delimiter);
 
 std::vector<int> splitInt(const std::string& s, char delimiter);
@@ -126,3 +135,46 @@ void print_cube_usage();
 int readHypercubeParameters(int argc, char** argv,
                             std::string &inputFile, std::string&queryFile, std::string &outputFile,
                             int &k, int &M, int &probes);
+
+template<class Y, class D, class TY>
+std::string
+unrollResult(std::list<std::tuple<double, std::list<std::tuple<Y, D>>>> listExact,
+             std::list<std::tuple<double, std::list<std::tuple<Y, D>>>> listAprox, TY y) {
+
+    typedef std::list<std::tuple<double, std::list<std::tuple<Y, D>>>> Ltl;
+    typedef std::list<std::tuple<Y, D>> listTuples;
+    std::string result, delim = " ";
+//    typedef std::list<std::tuple<double, std::list<Y, D>>> Ltl;
+    typename TY::iterator yE = y.end();
+    typename Ltl::iterator lE1 = listExact.end();
+    typename Ltl::iterator lE2 = listAprox.end();
+    typename TY::iterator itY;
+    typename Ltl::iterator itListEx;
+    typename Ltl::iterator itListAp;
+    for (itY = y.begin(), itListEx = listExact.begin(), itListAp = listAprox.begin();
+         (itY != yE); ++itY, ++itListEx, ++itListAp) {
+//        std::tuple<double, std::list<std::tuple<Y, D>> currentTuple
+// Get for each tuple second arg the list of points
+        listTuples curLE = std::get<1>(*itListEx);
+        listTuples curLA = std::get<1>(*itListAp);
+
+        result += "Query: " + *(itY) + delim;
+        result += "Nearest neighbor: " + std::get<0>(curLE.front()) + delim;
+        result += "distanceLSH: " + std::to_string(std::get<1>(curLE.front())) + delim;
+        result += "distanceTrue: " + std::to_string(std::get<1>(curLA.front())) + delim;
+////            sprintf(str, "%.2f", result->getDistance());
+////            string a(str, strlen(str));
+////            output += "distanceTrue: " ;
+////            output += a + space;// std::to_string(result->getDistance()) + "\n";
+        result += "tLSH: " + std::to_string(std::get<0>(*itListAp)) + delim;
+        result += "tTrue: " + std::to_string(std::get<0>(*itListEx)) + delim;
+        result += "R-near neighbors:\n";
+        for (auto item : curLE) {
+            // for each query
+            result += std::get<0>(item) + delim;
+        }
+        result += delim;
+//            cout << result << endl;
+//            result = "";
+    }
+}
