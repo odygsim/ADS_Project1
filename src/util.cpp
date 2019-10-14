@@ -61,60 +61,60 @@ const Point *splitToPoint(const std::string &s, char delimiter) {
 }
 
 
-int meanDistanceBetweenPoints(std::vector<const Point *> & dataList) {
-    /* For Each Point calculate its nearest neighbor
-     * bruteforce, run each point versus all dataset
-     * and produce the mean results*/
-    std::list<const int> minDistances;
-    int sum = 0;
-
-
-    for (unsigned long i = 0; i < dataList.size(); ++i) {
-        std::list<const qPoint *> distanceList;
-        for (unsigned long j = 0; j < dataList.size(); ++j) {
-            distanceList.push_back(new qPoint(dataList[j]->getName(),
-                                              manhattanDistance<int,std::vector<int>>(dataList[j]->getList(), dataList[i]->getList())));
-        }
-        // Get min
-        distanceList.sort(ComparatorqPoint());
-        minDistances.push_back(distanceList.front()->getDistance());
-    }
-    // Calculate mean
-    for (auto i: minDistances) {
-        sum += i;
-    }
-    return sum / (int) minDistances.size();
-}
-
-std::list < const qPoint * > exactKNN(std::vector<const Point *> & dataList, const Point *queryPoint, int radius) {
-    typedef std::list<const qPoint *> qpList;
-    qpList distanceList;
-    qpList returnList;
-    typedef qpList::iterator qpIt;
-
-    int j;
-
-    for (unsigned long i = 0; i < dataList.size(); ++i)
-        distanceList.push_back(
-                new qPoint(dataList[i]->getName(), manhattanDistance<int,std::vector<int>>(dataList[i]->getList(), queryPoint->getList())));
-    distanceList.sort(ComparatorqPoint());
-
-     qpIt itS = distanceList.begin();
-     qpIt it;
-     qpIt itE = distanceList.end();
-    for (j = 0, it = itS; (j < radius) && (it!=itE); ++j, ++it) {
-        returnList.push_back(*it);
-        }
-//    it = distanceList.begin();
-//    for (it = itS; (it!=itE); ++it) {
-//        std::cout << "Name: " << (*it)->getName()  << ", " << (*it)->getDistance() << std:: endl;//.push_back(*it);
+//int meanDistanceBetweenPoints(std::vector<const Point *> & dataList) {
+//    /* For Each Point calculate its nearest neighbor
+//     * bruteforce, run each point versus all dataset
+//     * and produce the mean results*/
+//    std::list<const int> minDistances;
+//    int sum = 0;
+//
+//
+//    for (unsigned long i = 0; i < dataList.size(); ++i) {
+//        std::list<const qPoint *> distanceList;
+//        for (unsigned long j = 0; j < dataList.size(); ++j) {
+//            distanceList.push_back(new qPoint(dataList[j]->getName(),
+//                                              manhattanDistance<int,std::vector<int>>(dataList[j]->getList(), dataList[i]->getList())));
+//        }
+//        // Get min
+//        distanceList.sort(ComparatorqPoint());
+//        minDistances.push_back(distanceList.front()->getDistance());
 //    }
-//    qPoint *ret = distanceList.front();
-//    for (int j = 0; j < distanceList.size(); ++j) {
-//        delete distanceList[i];
+//    // Calculate mean
+//    for (auto i: minDistances) {
+//        sum += i;
 //    }
-    return returnList;
-}
+//    return sum / (int) minDistances.size();
+//}
+
+//std::list < const qPoint * > exactKNN(std::vector<const Point *> & dataList, const Point *queryPoint, int radius) {
+//    typedef std::list<const qPoint *> qpList;
+//    qpList distanceList;
+//    qpList returnList;
+//    typedef qpList::iterator qpIt;
+//
+//    int j;
+//
+//    for (unsigned long i = 0; i < dataList.size(); ++i)
+//        distanceList.push_back(
+//                new qPoint(dataList[i]->getName(), manhattanDistance<int,std::vector<int>>(dataList[i]->getList(), queryPoint->getList())));
+//    distanceList.sort(ComparatorqPoint());
+//
+//     qpIt itS = distanceList.begin();
+//     qpIt it;
+//     qpIt itE = distanceList.end();
+//    for (j = 0, it = itS; (j < radius) && (it!=itE); ++j, ++it) {
+//        returnList.push_back(*it);
+//        }
+////    it = distanceList.begin();
+////    for (it = itS; (it!=itE); ++it) {
+////        std::cout << "Name: " << (*it)->getName()  << ", " << (*it)->getDistance() << std:: endl;//.push_back(*it);
+////    }
+////    qPoint *ret = distanceList.front();
+////    for (int j = 0; j < distanceList.size(); ++j) {
+////        delete distanceList[i];
+////    }
+//    return returnList;
+//}
 
 const qPoint * AproximateKNN(const std::vector<const Point *>& dataList,
                            const Point *queryPoint /*TODO put here 3rd arg hash method lsh/cube*/) {

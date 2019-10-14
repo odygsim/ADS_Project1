@@ -38,7 +38,7 @@ const Point * splitToPoint(const std::string& s, char delimiter);
 //double manhattanDistance( std:: vector<int> , std:: vector<int> );
 
 template <typename RT, typename DT >
-RT manhattanDistance(DT point1, DT point2) {
+RT manhattanDistance(DT & point1, DT & point2) {
     RT sum = 0;
 
     typename DT::iterator e1 = point1.end();
