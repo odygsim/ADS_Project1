@@ -14,7 +14,7 @@
 template<class TID, class Y>
 /*Usually TID: vector<int>, Y string*/
 class LSH_HT {
-    int w, k, d, r;
+    int w, k, d, r, radius, topLimit;
 //    std::unordered_map<int, const Point *> ht;
     std::unordered_map<int, std::tuple<Y, TID> > ht;
     std::list<FunctionH<TID> *> hList;
@@ -24,13 +24,13 @@ class LSH_HT {
 //    int calculateG(const Point * p) ;
 
 public:
-    LSH_HT(int w, int d, int, int);
+    LSH_HT(int w, int d, int, int, int, int);
 
 //    LSH_HT<TD, D, TY, Y>::LSH_HT(int w, int d, int k = 4, int r=1000):w(w),k(k),d(d),r(r)
     ~LSH_HT();
 
     void addPoint(TID &, Y &); // Add a Vector of int with its label
-    std::list<std::tuple<Y, TID>> getPoint(TID &, int, int);
+    std::list<std::tuple<Y, TID>> getPoint(TID &);
 
 //    void addPoint(const Point *) ;
 //    void LSH_HT<TD, D, TY, Y>::addPoint(D, Y);
@@ -42,7 +42,8 @@ public:
 /************* LSH_HT Methods Definitions *********************/
 template<class TID, class Y>
 /*Usually TID: vector<int>, Y string*/
-LSH_HT<TID, Y>::LSH_HT(int w, int d, int k, int r):w(w), k(k), d(d), r(r) {
+LSH_HT<TID, Y>::LSH_HT(int w, int d, int k, int r, int radius, int topLimit):w(w), k(k), d(d), r(r), radius(radius),
+                                                                             topLimit(topLimit) {
     /* Constructor and initialize values of lsh_hashtable */
     for (int j = 0; j < k; ++j) {
         hList.push_back(new FunctionH<TID>(4 * r, d, k));
@@ -65,16 +66,16 @@ LSH_HT<TID, Y>::~LSH_HT() {
 template<class TID, class Y>
 /*Usually TID: vector<int>, Y string*/
 void LSH_HT<TID, Y>::addPoint(TID &x, Y &y) {
-    std::tuple<Y, TID> result(x, y);
+    std::tuple<Y, TID> result(y, x);
     /*Add Point to the hashtable */ ht[calculateG(x)] = result;
 }
 
 template<class TID, class Y>
 /*Usually TID: vector<int>, Y string*/
-std::list<std::tuple<Y, TID>> LSH_HT<TID, Y>::getPoint(TID &x, int radius, int topLimit) {
+std::list<std::tuple<Y, TID>> LSH_HT<TID, Y>::getPoint(TID &x) {
     /* Return: a list of tuples <string, vector<int>> */
 
-    std::vector<std::tuple<Y, TID>> dataList;
+    std::list<std::tuple<Y, TID>> dataList;
     /* Gather radius values from calculated g Key and return them in a list */
     // Create a type of hashTable <int, tuple<label,vector<x>>
     typedef typename std::unordered_map<int, std::tuple<Y, TID>>::iterator umapIt;
@@ -121,33 +122,33 @@ class LSH {
     std::string metric_name = "manhattan";
     std::list<LSH_HT<TID, Y> *> htList;
 
-    D (*f)(TID , TID ); /* This is the function Pointer to selected metric its declaration is here
+    D (*f)(TID &, TID &); /* This is the function Pointer to selected metric its declaration is here
                      * and the definition an initialization*/
 
 public:
-    LSH(int, int, int, int, int, int, int, std::string );
+    LSH(int, int, int, int, int, int, int, std::string);
 
-    LSH(int w, int d, int radius, int topLimit, std::string );
+    LSH(int w, int d, int radius, int topLimit, std::string);
 
 //    void addPoint(const Point *) ;
 //    std::list<const qPoint *> queryPoint(const Point *, int radius, int) const;
 //    std::list<const qPoint *> queryPoint(const Point *, int radius, int) const;
     void addPoint(TID &x, Y &y);
 
-    std::list<std::tuple<Y, D>> queryPoint(TID & x) const; // Query a Point it return a list of tuples (label, distance)
+    std::list<std::tuple<Y, D>> queryPoint(TID &x) const; // Query a Point it return a list of tuples (label, distance)
 };
 
 
 template<class TID, class D, class Y>
 /*Usually TID: vector<int>, D: int, Y string*/
 LSH<TID, D, Y>::LSH(int w, int d, int k, int L, int r, int radius, int top_limit, std::string metric_name):L(L),
-                                                                                                            radius(radius),
-                                                                                                            topLimit(
-                                                                                                                    top_limit),
-                                                                                                            metric_name(
-                                                                                                                    metric_name) {
+                                                                                                           radius(radius),
+                                                                                                           topLimit(
+                                                                                                                   top_limit),
+                                                                                                           metric_name(
+                                                                                                                   metric_name) {
 
-    if (metric_name == "manhattan")     /* definition of the metric depending */
+//    if (metric_name == "manhattan")     /* definition of the metric depending */
         f = &manhattanDistance<D, TID>;  /* on the metric_name argument passed to the constructor*/
     /* Create the k Hi functions in a list */
     for (int j = 0; j < L; ++j) {
@@ -157,14 +158,13 @@ LSH<TID, D, Y>::LSH(int w, int d, int k, int L, int r, int radius, int top_limit
 
 template<class TID, class D, class Y>
 /*Usually TID: vector<int>, D: int, Y string*/
-LSH<TID, D, Y>::LSH(int w, int d, int radius, int topLimit, std::string metric_name):radius(radius),
-                                                                                      topLimit(topLimit),
-                                                                                      metric_name(metric_name) {
+LSH<TID, D, Y>::LSH(int w, int d, int radius, int topLimit, std::string metric_name):radius(radius), topLimit(topLimit),
+                                                                                     metric_name(metric_name) {
     int k = 4, r = 1000;
     L = 5;
     /* Create the k Hi functions in a list */
     for (int j = 0; j < L; ++j) {
-        htList.push_back(new LSH_HT<TID, Y>(w, d, k, r));
+        htList.push_back(new LSH_HT<TID, Y>(w, d, k, r, radius, topLimit));
     }
 }
 
@@ -195,7 +195,9 @@ std::list<std::tuple<Y, D>> LSH<TID, D, Y>::queryPoint(TID &x) const {
     for (auto ht: htList) { // for all hastTables getPoints!
         for (auto point : ht->getPoint(x)) {
             // iterate through all returned points and append them in a list.
-            distanceList.push_back(std::make_pair(std::get<0>(point), f(std::get<1>(point), x)));
+            j = manhattanDistance<int, std::vector<int>>(std::get<1>(point), x);
+            distanceList.push_back(std::make_pair(std::get<0>(point), j));
+                    //f(std::get<1>(point), x)));
         }
     }
 

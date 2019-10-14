@@ -48,7 +48,7 @@ int main(int argc, char **argv) {
          << endl;
     // Iterate over query file and store each Point's dimension data in a vector
 //    vector<std::tuple<string, vector<int>>> iDataList(readData2<string, vector<int>>(iFileName));
-    iDataVec = readData2<std::string, std::vector<int>>(qFileName);
+    iDataVec = readData2<std::string, std::vector<int>>(iFileName);
     qDataVec = readData2<std::string, std::vector<int>>(qFileName);
     for (int i = 0; i < iDataVec.size(); ++i) {
         iDataList.push_back(std::get<1>(iDataVec[i]));
@@ -58,13 +58,26 @@ int main(int argc, char **argv) {
         qDataList.push_back(std::get<1>(qDataVec[i]));
         qLabelList.push_back(std::get<0>(qDataVec[i]));
     }
+    typedef LSH<vector<int>, int, string> LSH_;
+    typedef ExactKNeighbors<list<vector<int>>, vector<int>, int, list<string>, string> EKNN_;
     //template<class A, class TD, class TID, class D, class TY, class Y>
 //    KNeighborsClassifier<ExactKNeighbors<list<vector<int>>, vector<int>, int, list<string>, string>, list<vector<int>>, vector<int>, int, list<string>, string> knn(
 //            1, "bruteforce", "manhattan");
-//    KNeighborsClassifier<<list<vector<int>>, vector<int>, int, list<string>, string>, list<vector<int>>, vector<int>, int, list<string>, string> knn(
+    LSH_ *lsh = new LSH<vector<int>, int, string>(3000, 0, 1, 5, "manhattan");
+    EKNN_ *eknn = new ExactKNeighbors<list<vector<int>>, vector<int>, int, list<string>, string>( 1, "manhattan");
+    KNeighborsClassifier<LSH_ *, list<vector<int>>, vector<int>, int, list<string>, string> *clLsh = new KNeighborsClassifier<LSH_ *, list<vector<int>>, vector<int>, int, list<string>, string>(
+            1, lsh, "manhattan");
+
+    KNeighborsClassifier<EKNN_ *, list<vector<int>>, vector<int>, int, list<string>, string> *clEknn = new KNeighborsClassifier<EKNN_* , list<vector<int>>, vector<int>, int, list<string>, string>(
+            1, eknn, "manhattan");
+    clEknn->fit(iDataList, iLabelList);
+    clLsh->fit(iDataList, iLabelList);
+    unrollResult(clEknn->predictWithTimeAndDistance(qDataList), clLsh->predictWithTimeAndDistance(qDataList), qLabelList);
+//    KNeighborsClassifier<LSH<vector<int>, int, string>, list<vector<int>>, vector<int>, int, list<string>, string> knn(
 //            1, "lsh", "manhattan");
 //    knn.fit(iDataList, iLabelList);
 //    knn.predictWithTimeAndDistance(qDataList);
+
 //    knn.predict(qDataList);
 
 //    r=meanDistanceBetweenPoints(iDataList);

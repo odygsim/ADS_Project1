@@ -35,7 +35,7 @@ public:
     }
 
     void addPoint(TID &, Y &); // Add a Vector of int with its label
-    std::list<std::tuple<Y, D>> queryPoint(TID &x) const; // Query a Point it return a list of tuples (label, distance)
+    std::list<std::tuple<Y, D>> queryPoint(TID &x); // Query a Point it return a list of tuples (label, distance)
 };
 
 template<class TD, class TID, class D, class TY, class Y>
@@ -48,7 +48,7 @@ void ExactKNeighbors<TD, TID, D, TY, Y>::addPoint(TID &x, Y &y) {
 
 template<class TD, class TID, class D, class TY, class Y>
 /*Usually TD: list<vector<int>>, TID: vector<int>, D: int, TY list<string>, Y string*/
-std::list<std::tuple<Y, D>> ExactKNeighbors<TD, TID, D, TY, Y>::queryPoint(TID &x) const {
+std::list<std::tuple<Y, D>> ExactKNeighbors<TD, TID, D, TY, Y>::queryPoint(TID &x)  {
     /* Query a Point iterListTuples
     * Return: a list of tuples (label, distance) */
 
@@ -93,30 +93,30 @@ class KNeighborsClassifier {
     int n_neighbors;
     std::string algorithm_name;
     std::string metric_name;
-    A *alg;
+    A alg;
     TD data;
     TY labels;
 
     D (*f)(TID &, TID &);
 
 public:
-    KNeighborsClassifier(int n_neighbors, std::string algorithm, std::string metric) : n_neighbors(n_neighbors),
-                                                                                       algorithm_name(
-                                                                                               std::move(algorithm)),
-                                                                                       metric_name(metric) {
-        using namespace ::std;
-        if (metric_name == "manhattan")
-            f = &manhattanDistance<D, TID>;
-        if (algorithm_name == "bruteforce")
-            alg = new ExactKNeighbors<list < vector<int>>, vector<int>, int, list < string >, string > (1, "manhattan");
-//        else if (algorithm == "lsh")
-//            alg = new LSH<TID, D, Y>(3000, 0, 1, 5, "manhattan");
-//        else if (algorithm == "cube")
-//            alg = new LSH<TID, D, Y>(3000, 0, 1, 5, "manhattan");
-        std::cout << "KNN Initialization with " + algorithm_name << std::endl;
-    }
+//    KNeighborsClassifier(int n_neighbors, std::string algorithm, std::string metric) : n_neighbors(n_neighbors),
+//                                                                                       algorithm_name(
+//                                                                                               std::move(algorithm)),
+//                                                                                       metric_name(metric) {
+//        using namespace ::std;
+//        if (metric_name == "manhattan")
+//            f = &manhattanDistance<D, TID>;
+////        if (algorithm_name == "bruteforce")
+////            alg = new ExactKNeighbors<list < vector<int>>, vector<int>, int, list < string >, string > (1, "manhattan");
+////        else if (algorithm == "lsh")
+////            alg = new LSH<TID, D, Y>(3000, 0, 1, 5, "manhattan");
+////        else if (algorithm == "cube")
+////            alg = new LSH<TID, D, Y>(3000, 0, 1, 5, "manhattan");
+//        std::cout << "KNN Initialization with " + algorithm_name << std::endl;
+//    }
 
-    KNeighborsClassifier(int n_neighbors, A alg, std::string  metric) : n_neighbors(n_neighbors), alg(alg),
+    KNeighborsClassifier(int n_neighbors, A & alg, std::string  metric) : n_neighbors(n_neighbors), alg(alg),
                                                                        metric_name(metric) {
         using namespace ::std;
         if (metric_name == "manhattan")
@@ -130,7 +130,7 @@ public:
     void fit(TD &x, TY &y); // Fit data of list<vector<int>>, and list< string>
     /* This method is used to get prediction not only for label but also for time and distance, specific for this
      * homework */
-    std::list<std::tuple<double, std::list<Y, D>>> predictWithTimeAndDistance(TD &x);
+    std::list<std::tuple<double, std::list<std::tuple<Y, D>>>> predictWithTimeAndDistance(TD &x);
 
     /* This method is a test method for simple predict, just return list of labels*/
     std::list<std::list<Y>>
@@ -162,10 +162,10 @@ void KNeighborsClassifier<A, TD, TID, D, TY, Y>::fit(TD &x, TY &y) {
 
 template<class A, class TD, class TID, class D, class TY, class Y>
 /*Usually A:Algorithm to run class, TD: list<vector<int>>, TID: vector<int>, D: int, TY list<string>, Y string*/
-std::list<std::tuple<double, std::list<Y, D>>>
+std::list<std::tuple<double, std::list<std::tuple<Y, D>>>>
 KNeighborsClassifier<A, TD, TID, D, TY, Y>::predictWithTimeAndDistance(TD &x) {
     /* This method will be used for the homework
-     * Return: A list of tuples (timeValue, list(label, distance)) == list<tuple<double,list<string,double/int >>*/
+     * Return: A list of tuples (timeValue, list(tuple<label, distance>)) == list<tuple<double,list<tuple<string,double/int >>>*/
     // Further explanation of return type
     /* Each record of tuple is (timeValue, list(tuple(label,distanceValue))
      * because each query has a time value and K neighbors, so will have a list of these tuples
@@ -177,11 +177,10 @@ KNeighborsClassifier<A, TD, TID, D, TY, Y>::predictWithTimeAndDistance(TD &x) {
     typedef typename listTuples::iterator lTIt; // Iterator typedef on list of tuples
 
     listTuples distanceList; // distanceList to store all neighbors
-    typedef std::list<std::tuple<double, std::list<Y, D>>> returnL; // typedef the return type because its big
+    typedef std::list<std::tuple<double, std::list<std::tuple<Y, D>>>> returnL; // typedef the return type because its big
     lTIt iteratorListTuples; // Iterator on list of tuples
     returnL returnList; // definition of return list
-    int j;
-    double elapsed = 0.0;
+    double elapsed;
 
     IteratorTD e1 = x.end();
     IteratorTD iteratorData;
