@@ -1,14 +1,8 @@
 // This file will be the main of lsh
-
-//#include<iostream>
-#include <chrono>
 #include<cstring>
-//#include<cstdlib>
-//#include "../inc/Point.h"
-#include "../inc/util.h"
+//#include "../inc/util.h"
 #include "../inc/KNeighborsClassifier.h"
 
-//template<class  X, class Y>
 int main(int argc, char **argv) {
     using namespace std;
 
@@ -64,7 +58,7 @@ int main(int argc, char **argv) {
         qDataList.push_back(std::get<1>(qDataVec[i]));
         qLabelList.push_back(std::get<0>(qDataVec[i]));
     }
-    KNeighborsClassifier<nullptr_t ,list<vector<int>>, int, list<string>, string> knn(1, "bruteforce", "manhattan");
+    KNeighborsClassifier<ExactKNeighbors<nullptr_t ,list<vector<int>>,int, list<string>, string>,list<vector<int>>, vector<int>, int, list<string>, list<string>, string> knn(1, "bruteforce", "manhattan");
     knn.fit(iDataList, iLabelList);
     knn.predict(qDataList);
 

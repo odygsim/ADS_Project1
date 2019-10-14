@@ -16,15 +16,25 @@ struct ComparatorqPoint {
     }
 };
 
-std::vector<std::string> split(const std::string& s, char delimiter);
+template<int index>
+struct TupleLess {
+    template<typename Tuple>
+    bool operator()(const Tuple &left, const Tuple &right) const {
+        return std::get<index>(left) < std::get<index>(right);
+    }
+};
 
-std::vector<int> splitInt(const std::string& s, char delimiter);
+std::vector<std::string> split(const std::string &s, char delimiter);
 
-const Point * splitToPoint(const std::string& s, char delimiter);
+std::vector<int> splitInt(const std::string &s, char delimiter);
 
-//double manhattanDistance( std:: vector<int> , std:: vector<int> );
+const Point *splitToPoint(const std::string &s, char delimiter);
 
-template <typename RT, typename DT >
+//https://stackoverflow.com/questions/1174169/function-passed-as-template-argument#1174193
+template<typename RT, typename DT>
+RT do_op(DT x, DT y, RT f) { return f(x, y); }
+
+template<typename RT, typename DT>
 RT manhattanDistance(DT point1, DT point2) {
     RT sum = 0;
 
@@ -32,23 +42,24 @@ RT manhattanDistance(DT point1, DT point2) {
     typename DT::iterator e2 = point2.end();
     typename DT::iterator it1;
     typename DT::iterator it2;
-    for (it1 = point1.begin(), it2 =point2.begin(); (it1 != e1) && (it2 != e2); ++it1, ++it2) {
+    for (it1 = point1.begin(), it2 = point2.begin(); (it1 != e1) && (it2 != e2); ++it1, ++it2) {
         sum += abs(*it1 - *it2);
     }
 
     return sum;
 }
 
-std::list < const qPoint * > exactKNN(std::vector<const Point *> & dataList, const Point *queryPoint, int radius);
+std::list<const qPoint *> exactKNN(std::vector<const Point *> &dataList, const Point *queryPoint, int radius);
 //std::list<const qPoint *> exactKNN(std::vector<const Point *> dataList, const Point *queryPoint, unsigned int radius);
 
 int meanDistanceBetweenPoints(std::vector<const Point *> dataList);
 
-const qPoint * AproximateNN(std::vector<const Point *> dataList, const Point *queryPoint /*TODO put here 3rd arg hash method lsh/cube*/);
+const qPoint *AproximateNN(std::vector<const Point *> dataList,
+                           const Point *queryPoint /*TODO put here 3rd arg hash method lsh/cube*/);
 
-std::vector<const Point *> readData(std::string const & fileName);
+std::vector<const Point *> readData(std::string const &fileName);
 
-template < class X, class Y>
+template<class X, class Y>
 std::tuple<Y, X> splitToPoint2(const std::string &s, char delimiter) {
     X tokens;
     std::string token;
@@ -64,7 +75,7 @@ std::tuple<Y, X> splitToPoint2(const std::string &s, char delimiter) {
         }
         i += 1;
     }
-    return std::make_tuple(name,tokens);
+    return std::make_tuple(name, tokens);
 }
 
 //template <class X, class Y>
@@ -89,9 +100,9 @@ std::tuple<Y, X> splitToPoint2(const std::string &s, char delimiter) {
 //    return std::make_tuple(name,tokens);
 //}
 
-template < class Y, class X>
-std::vector<std::tuple<Y,X>> readData2(const std::string &fileName) {
-    std::vector<std::tuple<Y,X>> dataList;
+template<class Y, class X>
+std::vector<std::tuple<Y, X>> readData2(std::string &fileName) {
+    std::vector<std::tuple<Y, X>> dataList;
     std::ifstream file;
     std::string tmp;
 
@@ -112,9 +123,51 @@ std::vector<std::tuple<Y,X>> readData2(const std::string &fileName) {
         if (tmp[0] == '\n')
             tmp.erase(tmp.begin());
         if (!tmp.empty())
-            dataList.push_back(splitToPoint2<X,Y>(tmp, ' '));
+            dataList.push_back(splitToPoint2<X, Y>(tmp, ' '));
     }
     file.close();
     return dataList;
 }
 
+template<class Y, class D, class TY>
+std::string
+unrollResult(std::list<std::tuple<double, std::list<std::tuple<Y, D>>>> listExact,
+             std::list<std::tuple<double, std::list<std::tuple<Y, D>>>> listAprox, TY y) {
+
+    typedef std::list<std::tuple<double, std::list<std::tuple<Y, D>>>> Ltl;
+    typedef std::list<std::tuple<Y, D>> listTuples;
+    std::string result, delim = " ";
+//    typedef std::list<std::tuple<double, std::list<Y, D>>> Ltl;
+    typename TY::iterator yE = y.end();
+    typename Ltl::iterator lE1 = listExact.end();
+    typename Ltl::iterator lE2 = listAprox.end();
+    typename TY::iterator itY;
+    typename Ltl::iterator itListEx;
+    typename Ltl::iterator itListAp;
+    for (itY = y.begin(), itListEx = listExact.begin(), itListAp = listAprox.begin();
+         (itY != yE); ++itY, ++itListEx, ++itListAp) {
+//        std::tuple<double, std::list<std::tuple<Y, D>> currentTuple
+// Get for each tuple second arg the list of points
+        listTuples curLE = std::get<1>(*itListEx);
+        listTuples curLA = std::get<1>(*itListAp);
+
+        result += "Query: " + *(itY) + delim;
+        result += "Nearest neighbor: " + std::get<0>(curLE.front()) + delim;
+        result += "distanceLSH: " + std::to_string(std::get<1>(curLE.front())) + delim;
+        result += "distanceTrue: " + std::to_string(std::get<1>(curLA.front())) + delim;
+////            sprintf(str, "%.2f", result->getDistance());
+////            string a(str, strlen(str));
+////            output += "distanceTrue: " ;
+////            output += a + space;// std::to_string(result->getDistance()) + "\n";
+        result += "tLSH: " + std::to_string(std::get<0>(*itListAp)) + delim;
+        result += "tTrue: " + std::to_string(std::get<0>(*itListEx)) + delim;
+        result += "R-near neighbors:\n";
+        for (auto item : curLE) {
+            // for each query
+            result += std::get<0>(item) + delim;
+        }
+        result += delim;
+//            cout << result << endl;
+//            result = "";
+    }
+}
