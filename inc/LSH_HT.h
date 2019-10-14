@@ -11,6 +11,7 @@
 #include "FunctionH.h"
 #include "util.h"
 
+// TODO Check the templates of this file if need to be same with KNN like TD TID D TY Y to be uniform templates
 
 template < class TD, class D, class TY, class Y>
 class LSH_HT {
@@ -32,22 +33,7 @@ public:
 
 };
 
-template < class TD, class D, class TY, class Y>
-class LSH {
-    int L;
-    std::list<LSH_HT<TD,TY, Y, D> *> htList;
-public:
-    LSH(int, int, int, int, int);
-    LSH(int w, int d);
-    void addPoint(const Point *) ;
-    void addPoint(TD, TY);
-    std::list<const qPoint *> queryPoint(const Point *, int radius, int) const;
-
-//    template<class D, class Y>
-    void addPoint(D x, Y y);
-};
-
-
+/************* LSH_HT Methods Definitions *********************/
 template < class TD, class D, class TY, class Y>
 LSH_HT<TD, D, TY, Y>::LSH_HT(int w, int d, int k , int r):w(w),k(k),d(d),r(r){
 
@@ -66,7 +52,17 @@ LSH_HT<TD, D, TY, Y>::~LSH_HT(){
         delete *it;
     }
 }
+template < class TD, class D, class TY, class Y>
+void LSH_HT<TD, D, TY, Y>::addPoint(D x, Y y) {
+    std::tuple<D, Y> result(x, y);
+    /*Add Point to the hashtable */ ht[calculateG(x)] = result; }
 
+template < class TD, class D, class TY, class Y>
+// TODO Implement
+std::list<const Point *> LSH_HT<TD, D, TY, Y>::getPoint(TD, int, int) {
+    return std::list<const Point *>();
+}
+/*********** methods on Point **************/
 template < class TD, class D, class TY, class Y>
 int LSH_HT<TD, D, TY, Y>::calculateG(const Point * p) {
     /* Calculate the g from the k Hi */
@@ -85,11 +81,6 @@ int LSH_HT<TD, D, TY, Y>::calculateG(const Point * p) {
 
 template < class TD, class D, class TY, class Y>
 void LSH_HT<TD, D, TY, Y>::addPoint(const Point * p) {/*Add Point to the hashtable */ ht[calculateG(p)] = p; }
-
-template < class TD, class D, class TY, class Y>
-void LSH_HT<TD, D, TY, Y>::addPoint(D x, Y y) {
-    std::tuple<D, Y> result(x, y);
-    /*Add Point to the hashtable */ ht[calculateG(x)] = result; }
 
 template < class TD, class D, class TY, class Y>
 std::list<const Point *> LSH_HT<TD, D, TY, Y>::getPoint(const Point * p, int radius, int topLimit) {
@@ -115,10 +106,24 @@ std::list<const Point *> LSH_HT<TD, D, TY, Y>::getPoint(const Point * p, int rad
 
 //}
 
+
+/********************** LSH Part *************************************/
 template < class TD, class D, class TY, class Y>
-std::list<const Point *> LSH_HT<TD, D, TY, Y>::getPoint(TD, int, int) {
-    return std::list<const Point *>();
-}
+class LSH {
+    int L;
+    std::list<LSH_HT<TD,TY, Y, D> *> htList;
+public:
+    LSH(int, int, int, int, int);
+    LSH(int w, int d);
+    void addPoint(const Point *) ;
+    void addPoint(TD, TY);
+    std::list<const qPoint *> queryPoint(const Point *, int radius, int) const;
+
+//    template<class D, class Y>
+    void addPoint(D x, Y y);
+};
+
+
 
 template < class TD, class D, class TY, class Y>
 LSH<TD, D, TY, Y>::LSH(int w, int d, int k ,int L ,int r ):L(L) {

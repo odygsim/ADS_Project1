@@ -117,17 +117,19 @@ void KNeighborsClassifier<A, TD, TID, D, TY, Y>::fit(TD &x, TY &y) {
 /* General fit for all methods lsh, cube, exactKnn
  * Return: void
  * */
+
+    typedef typename TD::iterator tdIt; // Iterator on the list of vectors
+    typedef typename TY::iterator tyIt; // iterator on the list of strings
+    tdIt iteratorData; // Init Iterator on list of vectors
+    tdIt itDE = data.end(); // end of data iterator
+    tyIt iteratorLabels; // Iterator on the list of strings
     data = x;
     labels = y;
-    typedef typename std::vector<D>::iterator tdIt; // Iterator on the vector of data D
-    typedef typename std::vector<Y>::iterator tyIt; // Iterator on the vector of labels Y
-    tdIt e1 = data.end();
-    tyIt e2 = labels.end();
-    tdIt dIt;
-    tyIt yIt;
-    for (dIt = data.begin(), yIt = labels.begin(); (dIt != e1) && (yIt != e2); ++dIt, ++yIt) {
-        alg->addPoint(*dIt, *yIt);
+
+    for (iteratorData = data.begin(), iteratorLabels = labels.begin(); iteratorData != itDE; ++iteratorData, ++iteratorLabels){
+        alg->addPoint(*iteratorData, *iteratorLabels); // Add a vector<int> and string
     }
+
 }
 
 template<class A, class TD, class TID, class D, class TY, class Y>
@@ -141,25 +143,25 @@ KNeighborsClassifier<A, TD, TID, D, TY, Y>::predictWithTimeAndDistance(TD x) {
      * because each query has a time value and K neighbors, so will have a list of these tuples
      * and for all queries a list of of tuples(time, listOfNeighbors)
      * */
-    typedef typename TD::iterator tdIt;
-    typedef typename TY::iterator tyIt;
-    typedef std::list<std::tuple<Y, D>> listTuples;
-    typedef typename listTuples::iterator lTIt;
+    typedef typename TD::iterator IteratorTD; // Iterator typedef on data
+    typedef typename TY::iterator IteratorTY; // Iterator typedef on labels
+    typedef std::list<std::tuple<Y, D>> listTuples; // list of tuples <label,distances> , needed to calculcate neighbors
+    typedef typename listTuples::iterator lTIt; // Iterator typedef on list of tuples
 
-    listTuples distanceList;
-    typedef std::list<std::tuple<double, std::list<Y, D>>> returnL;
-    lTIt it;
-    returnL returnList;
+    listTuples distanceList; // distanceList to store all neighbors
+    typedef std::list<std::tuple<double, std::list<Y, D>>> returnL; // typedef the return type because its big
+    lTIt iteratorListTuples; // Iterator on list of tuples
+    returnL returnList; // definition of return list
     int j;
     double elapsed = 0.0;
 
-    tdIt e1 = x.end();
-    tdIt dIt;
-    for (dIt = x.begin(); dIt != e1; ++dIt) {
-        listTuples labelDistanceList;
+    IteratorTD e1 = x.end();
+    IteratorTD iteratorData;
+    for (iteratorData = x.begin(); iteratorData != e1; ++iteratorData) {
+        listTuples labelDistanceList; // every query has new labelDistanceList
         // Start Time
         std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-        labelDistanceList = alg->queryPoint(*dIt);
+        labelDistanceList = alg->queryPoint(*iteratorData); // Query the point here send a vector<int>
         std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
         elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() / 1000000.0;
         // End Time
