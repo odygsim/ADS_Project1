@@ -118,3 +118,7 @@ std::vector<std::tuple<Y,X>> readData2(const std::string &fileName) {
     return dataList;
 }
 
+void print_cube_usage();
+int readHypercubeParameters(int argc, char** argv,
+                            std::string &inputFile, std::string&queryFile, std::string &outputFile,
+                            int &k, int &M, int &probes);
