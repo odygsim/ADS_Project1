@@ -1,5 +1,6 @@
 // this file will contain general used utilities
 //#include <tuple>
+#include <getopt.h>
 #include "../inc/util.h"
 //#include "../inc/FunctionH.h"
 //#include "../inc/LSH_HT.h"
