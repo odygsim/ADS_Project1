@@ -6,6 +6,7 @@
 //#include<cstdlib>
 //#include "../inc/Point.h"
 #include "../inc/util.h"
+#include "../inc/KNeighborsClassifier.h"
 
 //template<class  X, class Y>
 int main(int argc, char **argv) {
@@ -17,12 +18,17 @@ int main(int argc, char **argv) {
     string newline = "\n";
     string space = " ";
     list<const qPoint *> resultList;
+    list <vector<int>> iDataList;
+    list  <string> iLabelList;
+    list <vector<int>> qDataList;
+    list  <string> qLabelList;
+
     const qPoint *result;
     string oFileName, iFileName, qFileName, output;
 //    vector<const Point *> iDataList;
 //    vector<const Point *> qDataList;
-    vector<std::tuple<string, vector<int>>>  iDataList;
-    vector<std::tuple<string, vector<int>>>  qDataList;
+    vector<std::tuple<string, vector<int>>>  iDataVec;
+    vector<std::tuple<string, vector<int>>>  qDataVec;
 //    vector<const Point *> qDataList;
     //Read args
     if (argc != 11) {
@@ -48,8 +54,19 @@ int main(int argc, char **argv) {
          << endl;
     // Iterate over query file and store each Point's dimension data in a vector
 //    vector<std::tuple<string, vector<int>>> iDataList(readData2<string, vector<int>>(iFileName));
-    iDataList = readData2<std::string, std::vector<int>>(qFileName);
-    qDataList = readData2<std::string, std::vector<int>>(qFileName);
+    iDataVec = readData2<std::string, std::vector<int>>(qFileName);
+    qDataVec = readData2<std::string, std::vector<int>>(qFileName);
+    for (int i = 0; i < iDataVec.size(); ++i) {
+        iDataList.push_back(std::get<1>(iDataVec[i]));
+        iLabelList.push_back(std::get<0>(iDataVec[i]));
+    }
+    for (int i = 0; i < qDataVec.size(); ++i) {
+        qDataList.push_back(std::get<1>(qDataVec[i]));
+        qLabelList.push_back(std::get<0>(qDataVec[i]));
+    }
+    KNeighborsClassifier<nullptr_t ,list<vector<int>>, int, list<string>, string> knn(1, "bruteforce", "manhattan");
+    knn.fit(iDataList, iLabelList);
+    knn.predict(qDataList);
 
 //    r=meanDistanceBetweenPoints(iDataList);
     // Count CPU+WALL Time https://stackoverflow.com/questions/2808398/easily-measure-elapsed-time
