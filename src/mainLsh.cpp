@@ -58,7 +58,8 @@ int main(int argc, char **argv) {
         qDataList.push_back(std::get<1>(qDataVec[i]));
         qLabelList.push_back(std::get<0>(qDataVec[i]));
     }
-    KNeighborsClassifier<ExactKNeighbors<nullptr_t ,list<vector<int>>,int, list<string>, string>,list<vector<int>>, vector<int>, int, list<string>, list<string>, string> knn(1, "bruteforce", "manhattan");
+                              //template<class A, class TD, class TID, class D, class TY, class Y>
+    KNeighborsClassifier<ExactKNeighbors<list<vector<int>>,vector<int>, int, list<string>, string>,list<vector<int>>, vector<int>, int, list<string>, string> knn(1, "bruteforce", "manhattan");
     knn.fit(iDataList, iLabelList);
     knn.predict(qDataList);
 
