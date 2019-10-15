@@ -5,19 +5,177 @@
 #ifndef ADS_PROJECT1_HYPERCUBE_H
 #define ADS_PROJECT1_HYPERCUBE_H
 
+#include <string>
 #include <list>
+#include <unordered_map>
+#include <algorithm>
+#include "util.h"
+#include "util2.h"
 #include "Hypercube_HT.h"
 
-template < class TD, class D, class TY, class Y>
+template<class TID, class D, class Y>
 class Hypercube {
+
 private :
     // Parameters
-    int d, k, m, M, probes, k_hi;
+    int d, k, m, maxSearchPoints, probes, k_hi;
     double w, r;
     // Hypercube HashTables
-    std::list< Hypercube_HT<TD, D, TY, Y> > HQ_HT_List;
+    std::list< Hypercube_HT<TID> * > HQ_HT_List;
     // Hypercube Hash Structure (vertices to points)
-    std::unordered_multimap< int, const Point* > HQ_Buckets;
+    std::unordered_multimap< int, std::tuple<Y, TID> > HQ_Buckets;
+    // Function reference for calculating distance according to specific metric
+    D (*f)(TID &, TID &);
+    // Calculate a point's corresponding hypercube vertice and return to integer representation
+    int calculate_point_corresponding_vertice(const TID &x);
+    // Get the near vertices (only 1 bit change)
+    std::list<int> get_vertice_candidate_adjacent_buckets(int v);
+
+public:
+
+    Hypercube(double w, int d, int k, int maxSearchPoints, int probes, int k_hi, double r);
+    ~Hypercube();
+    // Adding a point with it's label to Hypercube Hash structure
+    void addPoint(TID &x, Y &y);
+    // Query a point : return a list of ANN in (label,distance) tuples
+    std::list<std::tuple<Y, D>> queryPoint(TID &x) const;
 
 }
+
+template<class TID, class D, class Y>
+Hypercube<TID, D, Y>::Hypercube(double w, int d, int k, int maxSearchPoints, int probes, int k_hi, double r):
+        w(w), d(d), k(k), maxSearchPoints(maxSearchPoints), probes(probes), k_hi(k_hi), r(r){
+
+    // Set default parameters
+    int m = 2^32-5;
+    k_hi = 4;
+
+    // Create d number of gi hypercube hashTable functions
+    for (int i = 0; i < d; ++i) {
+        HQ_HT_List.push_back(new Hypercube_HT<TID>(w,d,k,m,maxSearchPoints,probes,k_hi,r));
+    }
+
+    // Set the distance metric function to be used
+    f = &manhattanDistance<D, TID>;
+}
+
+template<class TID, class D, class Y>
+void Hypercube<TID, D, Y>::addPoint(TID &x, Y &y) {
+
+    // Find corresponding hypercube vertice
+    int v = calculate_point_corresponding_vertice(&x);
+    // Create a (data,label) tuple to add to bucket
+    std::tuple<Y, TID> result(y, x);
+    // Add point to Hypercube
+    HQ_Buckets.insert( {v, result} );
+
+}
+
+template<class TID, class D, class Y>
+std::list<std::tuple<Y, D>> Hypercube<TID, D, Y>::queryPoint(TID &x) const {
+
+    int currVert, currDist;
+    std::list<std::tuple<Y, D>> distanceList;
+    std::list<std::tuple<Y, D>> distanceLabelList;
+
+    // Get corresponding hypercube vertice
+    int v = calculate_point_corresponding_vertice(x);
+
+    // Get adjacent canditate vertices including main one
+    std::list<int> candVert = get_vertice_candidate_adjacent_buckets(v);
+    // Get candidate vertices list size
+    int candVertSz = candVert.size();
+
+    // Create iterator for Hypercube Buckets
+    typename std::unordered_multimap< int, std::tuple<Y, TID> >::iterator mapBucket;
+
+    // Loop until reaching max probes given or no-more candidate vertices to search
+    for (int i=1 ; (i <= probes+1) && ( i <= candVertSz) ; i++) {
+        // Get and remove current candidate vertice
+        currVert = candVert.front();
+        candVert.pop_front();
+        // Get corresponding vertice in Hypercube if it exists
+        mapBucket = HQ_Buckets.find(currVert);
+        // Check in current Bucket (max : up to MaxSearchPoints number)
+        if ( mapBucket != HQ_Buckets.end() ) {
+            for ( unsigned j = 0; j < HQ_Buckets.bucket_count(); ++j) {
+                // Check all points within the bucket
+                for ( auto local_it = HQ_Buckets.begin(j); local_it!= HQ_Buckets.end(j); ++local_it ){
+                    // Get neighbor point data and label
+                    TID currNeighbor = std::get<1>(local_it->second);
+                    Y currNeighLabel = std::get<0>(local_it->second);
+                    // Get the distance of given point from current neighbor point
+                    currDist = f(currNeighbor, x);
+                    // Add (label, distance) tuple to distance list
+                    distanceList.push_back(std::make_pair(std::get<0>(currNeighbor), currDist));
+                }
+
+            }
+
+        }
+    }
+
+    // Create a vector in order to sort Neighbors tuples
+    std::vector< std::tuple<Y,D> > neighResVector;
+    typename std::list< std::tuple<Y, D>>::iterator tupleIter;
+    typename std::vector< std::tuple<Y, D>>::iterator vecIter;
+
+    // Fill vector with distanceList tuple data
+    for( tupleIter = distanceList.begin() ; tupleIter != distanceList.end(); tupleIter++ ){
+        neighResVector.push_back(tupleIter);
+    }
+    // Sort vector according to the distance element of tuples
+    std::sort(begin(neighResVector), end(neighResVector), TupleLess<1>);
+
+    // Create new tupples distance list
+    for( vecIter = neighResVector.begin() ; vecIter != neighResVector.end(); vecIter++ ){
+        distanceLabelList.push_back(vecIter);
+    }
+
+    return distanceLabelList;
+}
+
+template<class TID, class D, class Y>
+int Hypercube<TID, D, Y>::calculate_point_corresponding_vertice(const TID &x) {
+
+    int fi, ftotal;
+    std::string res_str_fi;
+    typename std::list< Hypercube_HT<TID> * >::iterator HT_Iter;
+
+    // Iterate through all Hypercube HashTables to get fi's
+    for (HT_Iter = HQ_HT_List.begin(); HT_Iter != HQ_HT_List.end(); ++HT_Iter) {
+        fi = HT_Iter.get_fi(&x);
+        res_str_fi += std::to_string(fi);
+    }
+
+    // Convert concatenated fi's bit string to integer
+    ftotal = std::stoi(res_str_fi, nullptr, 2);
+
+    return ftotal;
+}
+
+template<class TID, class D, class Y>
+std::list<int> Hypercube<TID, D, Y>::get_vertice_candidate_adjacent_buckets(int v){
+
+    std::list<int> resList;
+    // Add main vertice to search
+    resList.push_back(v);
+
+    int i, bitValue, nearV;
+
+    // Alter all bits of vertice to get possible candidate vertices
+    for (i = 1; i <= k; i++) {
+        // get bit in i-th position
+        bitValue = get_int_bit_value(v, i);
+        // change it and set it to get the new integer value
+        if (bitValue == 0) { bitValue = 1; } else { bitValue = 0; }
+        nearV = set_int_bit_value(v, i, bitValue);
+        // add it to candidate list
+        resList.push_back(nearV);
+    }
+
+    return resList;
+
+}
+
 #endif //ADS_PROJECT1_HYPERCUBE_H
