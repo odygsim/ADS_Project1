@@ -20,10 +20,10 @@ template<class TD, class TID, class D, class TY, class Y>
 /*Usually TD: list<vector<int>>, TID: vector<int>, D: int, TY list<string>, Y string*/
 class ExactKNeighbors {
     /* This class is used as an algorithm for exact NN and has 2 methods addPoint, QueryPoint */
-    int n_neighbors;
-    std::string metric_name;
-    TD data;
-    TY labels;
+    int n_neighbors;            // Number of Neighbors to search.
+    std::string metric_name;    // metric that will be used.
+    TD data;                    // object that will store the data
+    TY labels;                  // object that will store the labels
 
     D (*f)(TID &, TID &); /* This is the function Pointer to selected metric its declaration is here
                      * and the definition an initialization*/
@@ -41,16 +41,24 @@ public:
 template<class TD, class TID, class D, class TY, class Y>
 /*Usually TD: list<vector<int>>, TID: vector<int>, D: int, TY list<string>, Y string*/
 void ExactKNeighbors<TD, TID, D, TY, Y>::addPoint(TID &x, Y &y) {
-    /* Just push the key and value to the lists */
+    /**
+     * @brief Add key and value to according list.
+     * @param x The first object with data.
+     * @param y The second object with label.
+     * @return void.
+     */
     data.push_back(x);
     labels.push_back(y);
 }
 
 template<class TD, class TID, class D, class TY, class Y>
 /*Usually TD: list<vector<int>>, TID: vector<int>, D: int, TY list<string>, Y string*/
-std::list<std::tuple<Y, D>> ExactKNeighbors<TD, TID, D, TY, Y>::queryPoint(TID &x)  {
-    /* Query a Point iterListTuples
-    * Return: a list of tuples (label, distance) */
+std::list<std::tuple<Y, D>> ExactKNeighbors<TD, TID, D, TY, Y>::queryPoint(TID &x) {
+    /**
+     * @brief Query a point.
+     * @param x The object with data that the query will be executed.
+     * @return A newly-constructed list, containing tuples<label,distance>.
+     */
 
     typedef typename TD::iterator tdIt; // Iterator on the list of vectors
     typedef typename TY::iterator tyIt; // iterator on the list of strings
@@ -97,16 +105,17 @@ class KNeighborsClassifier {
     TD data;
     TY labels;
 
-    D (*f)(TID &, TID &);
+//    D (*f)(TID &, TID &);
 
 public:
 //    KNeighborsClassifier(int n_neighbors, std::string algorithm, std::string metric) : n_neighbors(n_neighbors),
 //                                                                                       algorithm_name(
 //                                                                                               std::move(algorithm)),
 //                                                                                       metric_name(metric) {
+///// OLD CONSTRUCTOR to be deleted?
 //        using namespace ::std;
-//        if (metric_name == "manhattan")
-//            f = &manhattanDistance<D, TID>;
+////        if (metric_name == "manhattan")
+////            f = &manhattanDistance<D, TID>;
 ////        if (algorithm_name == "bruteforce")
 ////            alg = new ExactKNeighbors<list < vector<int>>, vector<int>, int, list < string >, string > (1, "manhattan");
 ////        else if (algorithm == "lsh")
@@ -116,15 +125,20 @@ public:
 //        std::cout << "KNN Initialization with " + algorithm_name << std::endl;
 //    }
 
-    KNeighborsClassifier(int n_neighbors, A & alg, std::string  metric) : n_neighbors(n_neighbors), alg(alg),
-                                                                       metric_name(metric) {
-        using namespace ::std;
-        if (metric_name == "manhattan")
-            f = &manhattanDistance<D, TID>;
+    KNeighborsClassifier(int n_neighbors, A &alg) : n_neighbors(n_neighbors), alg(alg) {
+        /**
+         * @brief Constructor of this object.
+         * @param n_neighbors The integer with the number of max neighbors to search.
+         * @param alg The algorithm that will be used to classify data.
+         * @return void.
+         */
+//        using namespace ::std;
+//        if (metric_name == "manhattan")
+//            f = &manhattanDistance<D, TID>;
 //        if (algorithm == "bruteforce")
 //            alg = new ExactKNeighbors<list < vector<int>>, vector<int>, int, list < string >, string > (1, "manhattan");
 //        else if
-        std::cout << "KNN Initialization with " + algorithm_name << std::endl;
+//        std::cout << "KNN Initialization with " + algorithm_name << std::endl;
     }
 
     void fit(TD &x, TY &y); // Fit data of list<vector<int>>, and list< string>
@@ -133,17 +147,20 @@ public:
     std::list<std::tuple<double, std::list<std::tuple<Y, D>>>> predictWithTimeAndDistance(TD &x);
 
     /* This method is a test method for simple predict, just return list of labels*/
-    std::list<std::list<Y>>
-    predict(TD &x); // return a list of lists that each list contains tuple(x.name, y.name), tuple(x.name, y.name)
+//    std::list<std::list<Y>>
+//    predict(TD &x); // return a list of lists that each list contains tuple(x.name, y.name), tuple(x.name, y.name)
 };
 
 
 template<class A, class TD, class TID, class D, class TY, class Y>
 /*Usually A:Algorithm to run class, TD: list<vector<int>>, TID: vector<int>, D: int, TY list<string>, Y string*/
 void KNeighborsClassifier<A, TD, TID, D, TY, Y>::fit(TD &x, TY &y) {
-/* General fit for all methods lsh, cube, exactKnn
- * Return: void
- * */
+    /**
+     * @brief General fit for all methods lsh, cube, exactKnn.
+     * @param x The first object with data.
+     * @param y The second object with label.
+     * @return void.
+     */
 
     typedef typename TD::iterator tdIt; // Iterator on the list of vectors
     typedef typename TY::iterator tyIt; // iterator on the list of strings
@@ -164,15 +181,16 @@ template<class A, class TD, class TID, class D, class TY, class Y>
 /*Usually A:Algorithm to run class, TD: list<vector<int>>, TID: vector<int>, D: int, TY list<string>, Y string*/
 std::list<std::tuple<double, std::list<std::tuple<Y, D>>>>
 KNeighborsClassifier<A, TD, TID, D, TY, Y>::predictWithTimeAndDistance(TD &x) {
-    /* This method will be used for the homework
-     * Return: A list of tuples (timeValue, list(tuple<label, distance>)) == list<tuple<double,list<tuple<string,double/int >>>*/
-    // Further explanation of return type
-    /* Each record of tuple is (timeValue, list(tuple(label,distanceValue))
+    /**
+     * @brief General fit for all methods lsh, cube, exactKnn.
+     * @param x The first object with data.
+     * @return A newly-constructed list of tuples (timeValue, list(tuple<label, distance>))
+     *
+     * Each record of tuple is (timeValue, list(tuple(label,distanceValue))
      * because each query has a time value and K neighbors, so will have a list of these tuples
      * and for all queries a list of of tuples(time, listOfNeighbors)
-     * */
+     */
     typedef typename TD::iterator IteratorTD; // Iterator typedef on data
-//    typedef typename TY::iterator IteratorTY; // Iterator typedef on labels
     typedef std::list<std::tuple<Y, D>> listTuples; // list of tuples <label,distances> , needed to calculcate neighbors
     typedef typename listTuples::iterator lTIt; // Iterator typedef on list of tuples
 
@@ -200,45 +218,45 @@ KNeighborsClassifier<A, TD, TID, D, TY, Y>::predictWithTimeAndDistance(TD &x) {
 
 /************ Test Code ************/
 
-template<class A, class TD, class TID, class D, class TY, class Y>
+//template<class A, class TD, class TID, class D, class TY, class Y>
 /*Usually A:Algorithm to run class, TD: list<vector<int>>, TID: vector<int>, D: int, TY list<string>, Y string*/
-std::list<std::list<Y>> KNeighborsClassifier<A, TD, TID, D, TY, Y>::predict(TD &x) {
-    /* Classic Predict OUT OF SCOPE of this homework, return a list of labels */
-
-    typedef typename TD::iterator tdIt;
-    typedef typename TY::iterator tyIt;
-    typedef std::list<std::tuple<Y, D>> listTuples;
-    typedef typename listTuples::iterator lTIt;
-    listTuples distanceList;
-    typedef std::list<std::list<Y>> returnL;
-    lTIt it;
-    returnL returnList;
-    int j;
-    tdIt itD;
-    tdIt itDE = data.end();
-    tyIt itY;
-
-    tdIt e1 = x.end();
-    tdIt dItx;
-    if (algorithm_name == "bruteforce") {
-
-        for (dItx = x.begin(); dItx != e1; ++dItx) {
-            std::list<Y> labelList;
-
-            for (itD = data.begin(), itY = labels.begin(); itD != itDE; ++itD, ++itY)
-                distanceList.push_back(std::make_pair(*itY, f(*itD, *dItx)));
-//                                                      manhattanDistance<int, std::vector<int>>(data[i]->getList(), (*dItx)->getList())));
-            distanceList.sort(TupleLess<1>());
-            lTIt itS = distanceList.begin();
-            lTIt itE = distanceList.end();
-            for (j = 0, it = itS; (j < this->n_neighbors) && (it != itE); ++j, ++it) {
-                labelList.push_back(std::get<0>(*it));
-            }
-            returnList.push_back(labelList);
-        }
-    }
-
-    return returnList;
-}
+//std::list<std::list<Y>> KNeighborsClassifier<A, TD, TID, D, TY, Y>::predict(TD &x) {
+//    /* Classic Predict OUT OF SCOPE of this homework, return a list of labels */
+//
+//    typedef typename TD::iterator tdIt;
+//    typedef typename TY::iterator tyIt;
+//    typedef std::list<std::tuple<Y, D>> listTuples;
+//    typedef typename listTuples::iterator lTIt;
+//    listTuples distanceList;
+//    typedef std::list<std::list<Y>> returnL;
+//    lTIt it;
+//    returnL returnList;
+//    int j;
+//    tdIt itD;
+//    tdIt itDE = data.end();
+//    tyIt itY;
+//
+//    tdIt e1 = x.end();
+//    tdIt dItx;
+//    if (algorithm_name == "bruteforce") {
+//
+//        for (dItx = x.begin(); dItx != e1; ++dItx) {
+//            std::list<Y> labelList;
+//
+//            for (itD = data.begin(), itY = labels.begin(); itD != itDE; ++itD, ++itY)
+//                distanceList.push_back(std::make_pair(*itY, f(*itD, *dItx)));
+////                                                      manhattanDistance<int, std::vector<int>>(data[i]->getList(), (*dItx)->getList())));
+//            distanceList.sort(TupleLess<1>());
+//            lTIt itS = distanceList.begin();
+//            lTIt itE = distanceList.end();
+//            for (j = 0, it = itS; (j < this->n_neighbors) && (it != itE); ++j, ++it) {
+//                labelList.push_back(std::get<0>(*it));
+//            }
+//            returnList.push_back(labelList);
+//        }
+//    }
+//
+//    return returnList;
+//}
 
 #endif //ADS_PROJECT1_KNEIGHBORSCLASSIFIER_H
