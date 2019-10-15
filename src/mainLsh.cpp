@@ -66,10 +66,10 @@ int main(int argc, char **argv) {
     LSH_ *lsh = new LSH<vector<int>, int, string>(3000, 0, 1, 5, "manhattan");
     EKNN_ *eknn = new ExactKNeighbors<list<vector<int>>, vector<int>, int, list<string>, string>( 1, "manhattan");
     KNeighborsClassifier<LSH_ *, list<vector<int>>, vector<int>, int, list<string>, string> *clLsh = new KNeighborsClassifier<LSH_ *, list<vector<int>>, vector<int>, int, list<string>, string>(
-            1, lsh, "manhattan");
+            1, lsh);
 
     KNeighborsClassifier<EKNN_ *, list<vector<int>>, vector<int>, int, list<string>, string> *clEknn = new KNeighborsClassifier<EKNN_* , list<vector<int>>, vector<int>, int, list<string>, string>(
-            1, eknn, "manhattan");
+            1, eknn);
     clEknn->fit(iDataList, iLabelList);
     clLsh->fit(iDataList, iLabelList);
     unrollResult(clEknn->predictWithTimeAndDistance(qDataList), clLsh->predictWithTimeAndDistance(qDataList), qLabelList);
