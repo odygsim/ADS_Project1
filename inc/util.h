@@ -38,7 +38,7 @@ const Point * splitToPoint(const std::string& s, char delimiter);
 //double manhattanDistance( std:: vector<int> , std:: vector<int> );
 
 template <typename RT, typename DT >
-RT manhattanDistance(DT point1, DT point2) {
+RT manhattanDistance(DT & point1, DT & point2) {
     RT sum = 0;
 
     typename DT::iterator e1 = point1.end();
@@ -159,7 +159,7 @@ unrollResult(std::list<std::tuple<double, std::list<std::tuple<Y, D>>>> listExac
         listTuples curLA = std::get<1>(*itListAp);
 
         result += "Query: " + *(itY) + delim;
-        result += "Nearest neighbor: " + std::get<0>(curLE.front()) + delim;
+        result += "Nearest neighbor: " + std::get<0>(curLA.front()) + delim;
         result += "distanceLSH: " + std::to_string(std::get<1>(curLE.front())) + delim;
         result += "distanceTrue: " + std::to_string(std::get<1>(curLA.front())) + delim;
 ////            sprintf(str, "%.2f", result->getDistance());
@@ -169,12 +169,14 @@ unrollResult(std::list<std::tuple<double, std::list<std::tuple<Y, D>>>> listExac
         result += "tLSH: " + std::to_string(std::get<0>(*itListAp)) + delim;
         result += "tTrue: " + std::to_string(std::get<0>(*itListEx)) + delim;
         result += "R-near neighbors:\n";
-        for (auto item : curLE) {
+        if (curLA.size() > 1){
+        for (auto item : curLA) {
             // for each query
             result += std::get<0>(item) + delim;
         }
-        result += delim;
-//            cout << result << endl;
+//            result += delim;
+        }
 //            result = "";
     }
+            std::cout << result << std::endl;
 }
