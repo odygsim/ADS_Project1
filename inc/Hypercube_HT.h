@@ -27,10 +27,9 @@ private:
     int calculate_g(const TID &p);
     // Uniform random generator for mapping g to {0,1} : f
     std::mt19937 fgenerator;
-    std::uniform_int_distribution<int> f_distr;
 
 public:
-    Hypercube_HT(double w, int d, int k, int m, int M, int probes, int k_hi, double r);
+    Hypercube_HT(double w, int d, int k, int m = 2^32-5, int M = 10, int probes = 2, int k_hi = 4, double r = 0);
     ~Hypercube_HT();
     // Getting the fi for given point
     int get_fi(const TID &p) ;
@@ -39,9 +38,11 @@ public:
 
 // Hypercube HashTable constructor
 template<class TID>
-Hypercube_HT<TID>::Hypercube_HT(double w = 4, int d, int k = 3, int m = 2^32-5, int M, int probes = 2, int k_hi = 4, double r=0){
+Hypercube_HT<TID>::Hypercube_HT(double w, int d, int k , int m, int M, int probes, int k_hi, double r) : fgenerator((std::random_device())())
+{
 
     // Assign parameters
+    this->w = w;
     this->d = d;
     this->k = k;
     this->m = m;
@@ -52,17 +53,11 @@ Hypercube_HT<TID>::Hypercube_HT(double w = 4, int d, int k = 3, int m = 2^32-5, 
 
     // Get h new functions
     for ( int i=1 ; i <= k_hi ; i++) {
-        hList.push_back(new FunctionH<TID> (4*r, d, k) );
+        hList.push_back(new FunctionH<TID> (w, d, k) );
     }
 
     // Create a uniform random generator for g to f {0,1} values
-    std::random_device rndDev;
-    std::mt19937 generator(rndDev());
-    std::uniform_int_distribution<int> udistr(0, 1);
-
-    // Set generator and distribution to the class level
-    this->fgenerator = generator;
-    this->f_distr() = udistr;
+//    fgenerator(rndDevice);
 
 }
 
@@ -87,7 +82,8 @@ int Hypercube_HT<TID>::get_g_to_fi_mapping(int g){
     // Get existing g->f mapping or create a new one
     if ( fi_mapping.find(g) == fi_mapping.end() ) {
         // create new (f, g) pair - add to mapping
-        fi = f_distr(fgenerator);
+        std::uniform_int_distribution<int> distr(0, 1);
+        fi = distr(fgenerator);
         fi_mapping.insert( std::make_pair (g, fi) );
     } else {
         // existing (f, g) pair
@@ -120,7 +116,6 @@ int Hypercube_HT<TID>::calculate_g(const TID &p){
 // Get final fi for given point - case P is Point
 template<class TID>
 int Hypercube_HT<TID>::get_fi(const TID &p) {
-    int g;
 
     // Calculate g function for point p
     int g = calculate_g(p);

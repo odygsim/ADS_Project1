@@ -18,7 +18,8 @@ class Hypercube {
 
 private :
     // Parameters
-    int d, k, m, maxSearchPoints, probes, k_hi;
+    int d, k, maxSearchPoints, probes, k_hi;
+    unsigned int m;
     double w, r;
     // Hypercube HashTables
     std::list< Hypercube_HT<TID> * > HQ_HT_List;
@@ -40,19 +41,19 @@ public:
     // Query a point : return a list of ANN in (label,distance) tuples
     std::list<std::tuple<Y, D>> queryPoint(TID &x) const;
 
-}
+};
 
 template<class TID, class D, class Y>
 Hypercube<TID, D, Y>::Hypercube(double w, int d, int k, int maxSearchPoints, int probes, int k_hi, double r):
         w(w), d(d), k(k), maxSearchPoints(maxSearchPoints), probes(probes), k_hi(k_hi), r(r){
 
     // Set default parameters
-    int m = 2^32-5;
+    m = ( (unsigned int) pow(2,32) ) - 5;
     k_hi = 4;
 
     // Create d number of gi hypercube hashTable functions
-    for (int i = 0; i < d; ++i) {
-        HQ_HT_List.push_back(new Hypercube_HT<TID>(w,d,k,m,maxSearchPoints,probes,k_hi,r));
+    for (int i = 0; i < k; ++i) {
+        HQ_HT_List.push_back(new Hypercube_HT<TID>(w , d, k, m, maxSearchPoints, probes, k_hi, r));
     }
 
     // Set the distance metric function to be used
@@ -125,7 +126,7 @@ std::list<std::tuple<Y, D>> Hypercube<TID, D, Y>::queryPoint(TID &x) const {
         neighResVector.push_back(tupleIter);
     }
     // Sort vector according to the distance element of tuples
-    std::sort(begin(neighResVector), end(neighResVector), TupleLess<1>);
+    std::sort(begin(neighResVector), end(neighResVector), TupleLess<1>());
 
     // Create new tupples distance list
     for( vecIter = neighResVector.begin() ; vecIter != neighResVector.end(); vecIter++ ){
