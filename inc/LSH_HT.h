@@ -11,12 +11,17 @@
 #include "FunctionH.h"
 #include "util.h"
 
+/**class LSH_HT * /
+ *
+ * @tparam TID The object that has the data.
+ * @tparam Y  The object that has the labels.
+ */
 template<class TID, class Y>
 /*Usually TID: vector<int>, Y string*/
 class LSH_HT {
-    int w, k, d, r, radius, topLimit;
+    int w, k, d, m, radius, topLimit;
 //    std::unordered_map<int, const Point *> ht;
-    std::unordered_map<int, std::tuple<Y, TID> > ht; // The type of hash table that will be created.
+    std::unordered_multimap<int, std::tuple<Y, TID> > ht; // The type of hash table that will be created.
     std::list<FunctionH<TID> *> hList;               // The list that will store the L hash tables.
 
     int calculateG(TID &);
@@ -42,7 +47,7 @@ public:
 /************* LSH_HT Methods Definitions *********************/
 template<class TID, class Y>
 /*Usually TID: vector<int>, Y string*/
-LSH_HT<TID, Y>::LSH_HT(int w, int d, int k, int r, int radius, int topLimit):w(w), k(k), d(d), r(r), radius(radius),
+LSH_HT<TID, Y>::LSH_HT(int w, int d, int k, int m, int radius, int topLimit):w(w), k(k), d(d), m(m), radius(radius),
                                                                              topLimit(topLimit) {
 
     /**
@@ -50,14 +55,14 @@ LSH_HT<TID, Y>::LSH_HT(int w, int d, int k, int r, int radius, int topLimit):w(w
      * @param w The Value of w.
      * @param d The dimension of the data.
      * @param k The number of hash functions to create.
-     * @param r The number that will be used to calculated w.
+     * @param m The number that will be used to calculated ai.
      * @param radius The number of points that a query will return.
      * @param top_limit The number of max points that a query will search to each hash table.
      * @return void.
      */
     /* Constructor and initialize values of lsh_hashtable */
     for (int j = 0; j < k; ++j) {
-        hList.push_back(new FunctionH<TID>(4 * r, d, k));
+        hList.push_back(new FunctionH<TID>(w, d, k, m));
     }
 }
 
@@ -84,7 +89,8 @@ void LSH_HT<TID, Y>::addPoint(TID &x, Y &y) {
      * @return void.
      */
     std::tuple<Y, TID> result(y, x);
-    /*Add Point to the hashtable */ ht[calculateG(x)] = result;
+//    /*Add Point to the hashtable */ ht[calculateG(x)] = result;
+    /*Add Point to the hashtable */ ht.insert(std::pair<int,std::tuple<Y, TID>>(calculateG(x), result));//[calculateG(x)] = result;
 }
 
 template<class TID, class Y>
@@ -99,7 +105,7 @@ std::list<std::tuple<Y, TID>> LSH_HT<TID, Y>::getPoint(TID &x) {
     std::list<std::tuple<Y, TID>> dataList;
     /* Gather radius values from calculated g Key and return them in a list */
     // Create a type of hashTable <int, tuple<label,vector<x>>
-    typedef typename std::unordered_map<int, std::tuple<Y, TID>>::iterator umapIt;
+    typedef typename std::unordered_multimap<int, std::tuple<Y, TID>>::iterator umapIt;
     int g = 0, i;
     int limit = radius * topLimit; // multiply because if we want 5 neighbors we should get 5*topLimit
 
@@ -110,7 +116,6 @@ std::list<std::tuple<Y, TID>> LSH_HT<TID, Y>::getPoint(TID &x) {
     umapIt it;
     // Append to the list all the points between required range
     for (i = 0, it = result.first; (i < limit) && (it != result.second); i++, it++) {
-        // TODO check this
         dataList.push_back(it->second);
     }
     return dataList;
@@ -133,14 +138,22 @@ int LSH_HT<TID, Y>::calculateG(TID &x) {
         hValues.push_back(h->calculatePoint(x));
     }
     g = hValues[0];
+//    std::cout << hValues[0] << "| ";
     for (int i = 1; i < k; ++i) {
+//        std::cout << hValues[i] << "| ";
         g = (g << k) | hValues[i]; //concatenate the k bits of all Hi
     }
+//    std::cout << " = " << g << "\n";
     return g;
 }
 
 
-/********************** LSH Part *************************************/
+/** LSH Part *
+ *
+ * @tparam TID  The object representing one data.
+ * @tparam D    The type of data as ex. int/double.
+ * @tparam Y    The type of label as ex. string.
+ */
 template<class TID, class D, class Y>
 /*Usually TID: vector<int>, D: int, Y string*/
 class LSH {
@@ -154,8 +167,9 @@ class LSH {
 
 public:
     LSH(int, int, int, int, int, int, int, std::string);
+    ~LSH(){ for(auto ht : htList)  delete ht; };
 
-    LSH(int w, int d, int radius, int topLimit, std::string);
+    LSH(int w, int d,int m, int radius, int topLimit, std::string);
 
 //    void addPoint(const Point *) ;
 //    std::list<const qPoint *> queryPoint(const Point *, int radius, int) const;
@@ -168,7 +182,7 @@ public:
 
 template<class TID, class D, class Y>
 /*Usually TID: vector<int>, D: int, Y string*/
-LSH<TID, D, Y>::LSH(int w, int d, int k, int L, int r, int radius, int top_limit, std::string metric_name):L(L),
+LSH<TID, D, Y>::LSH(int w, int d, int k, int L, int m, int radius, int top_limit, std::string metric_name):L(L),
                                                                                                            radius(radius),
                                                                                                            topLimit(
                                                                                                                    top_limit),
@@ -180,24 +194,24 @@ LSH<TID, D, Y>::LSH(int w, int d, int k, int L, int r, int radius, int top_limit
      * @param d The dimension of the data.
      * @param k The number of hash functions to create.
      * @param L The number of hash tables to create.
-     * @param r The number that will be used to calculated w.
+     * @param m The number that will be used to calculate ai.
      * @param radius The number of points that a query will return.
      * @param top_limit The number of max points that a query will search to each hash table.
      * @param metric_name The name of the metric that will be used to calculate distance.
      * @return void.
      */
 
-//    if (metric_name == "manhattan")     /* definition of the metric depending */
+    if (metric_name == "manhattan")     /* definition of the metric depending */
     f = &manhattanDistance<D, TID>;  /* on the metric_name argument passed to the constructor*/
     /* Create the k Hi functions in a list */
     for (int j = 0; j < L; ++j) {
-        htList.push_back(new LSH_HT<TID, Y>(w, d, k, r));
+        htList.push_back(new LSH_HT<TID, Y>(w, d, k, m,radius, topLimit));
     }
 }
 
 template<class TID, class D, class Y>
 /*Usually TID: vector<int>, D: int, Y string*/
-LSH<TID, D, Y>::LSH(int w, int d, int radius, int topLimit, std::string metric_name):radius(radius), topLimit(topLimit),
+LSH<TID, D, Y>::LSH(int w, int d, int m, int radius, int topLimit, std::string metric_name):radius(radius), topLimit(topLimit),
                                                                                      metric_name(metric_name) {
     /**
      * @brief Constructor of this object.
@@ -208,11 +222,13 @@ LSH<TID, D, Y>::LSH(int w, int d, int radius, int topLimit, std::string metric_n
      * @param metric_name The name of the metric that will be used to calculate distance.
      * @return void.
      */
-    int k = 4, r = 1000;
+    int k = 4;
     L = 5;
+    if (metric_name == "manhattan")     /* definition of the metric depending */
+    f = &manhattanDistance<D, TID>;  /* on the metric_name argument passed to the constructor*/
     /* Create the k Hi functions in a list */
     for (int j = 0; j < L; ++j) {
-        htList.push_back(new LSH_HT<TID, Y>(w, d, k, r, radius, topLimit));
+        htList.push_back(new LSH_HT<TID, Y>(w, d, k, m, radius, topLimit));
     }
 }
 
@@ -251,9 +267,7 @@ std::list<std::tuple<Y, D>> LSH<TID, D, Y>::queryPoint(TID &x) const {
     for (auto ht: htList) { // for all hastTables getPoints!
         for (auto point : ht->getPoint(x)) {
             // iterate through all returned points and append them in a list.
-            j = manhattanDistance<int, std::vector<int>>(std::get<1>(point), x);
-            distanceList.push_back(std::make_pair(std::get<0>(point), j));
-            //f(std::get<1>(point), x)));
+            distanceList.push_back(std::make_pair(std::get<0>(point), f(std::get<1>(point), x)));
         }
     }
 

@@ -1,29 +1,18 @@
 // This file will be the main of lsh
 #include<cstring>
-//#include "../inc/util.h"
 #include "../inc/KNeighborsClassifier.h"
 
 int main(int argc, char **argv) {
     using namespace std;
 
-    int L = 0, k = 0, r = 0;
+    int L1, k1, L = 6, k = 7, w = 5000, numNeighbors = 1, topLimit =
+            4 * L, r = 0, dimension = 0, m = INT32_MAX - 5;
+    int id = 0;
     char *pEnd;
     const char *arg;
-    string newline = "\n";
-    string space = " ";
-    list<const qPoint *> resultList;
-    list<vector<int>> iDataList;
-    list<string> iLabelList;
-    list<vector<int>> qDataList;
-    list<string> qLabelList;
-
-    const qPoint *result;
+    string newline = "\n", space = " ", metric_name = "manhattan", stats, result;
     string oFileName, iFileName, qFileName, output;
-//    vector<const Point *> iDataList;
-//    vector<const Point *> qDataList;
-    vector<std::tuple<string, vector<int>>> iDataVec;
-    vector<std::tuple<string, vector<int>>> qDataVec;
-//    vector<const Point *> qDataList;
+
     //Read args
     if (argc != 11) {
         fprintf(stderr, "Usage : %s -d <input file> -q <query file> -k <int> -L <int> -o <output file>\n", argv[0]);
@@ -35,65 +24,35 @@ int main(int argc, char **argv) {
             if (argc > 1 && --argc)
                 oFileName = *++argv;
         } else if (!strcmp(arg, "-L")) {
-            L = (int) strtol(*++argv, &pEnd, 10);
+            L1 = (int) strtol(*++argv, &pEnd, 10);
         } else if (!strcmp(arg, "-k"))
-            k = (int) strtol(*++argv, &pEnd, 10);
+            k1 = (int) strtol(*++argv, &pEnd, 10);
         else if (!strcmp(arg, "-q"))
             qFileName = *++argv;
         else if (!strcmp(arg, "-d"))
             iFileName = *++argv;
     }
 
-    cout << "Running Instance with args " << iFileName << " " << qFileName << " " << k << " " << L << " " << oFileName
-         << endl;
-    // Iterate over query file and store each Point's dimension data in a vector
-//    vector<std::tuple<string, vector<int>>> iDataList(readData2<string, vector<int>>(iFileName));
-    iDataVec = readData2<std::string, std::vector<int>>(iFileName);
-    qDataVec = readData2<std::string, std::vector<int>>(qFileName);
-    for (int i = 0; i < iDataVec.size(); ++i) {
-        iDataList.push_back(std::get<1>(iDataVec[i]));
-        iLabelList.push_back(std::get<0>(iDataVec[i]));
-    }
-    for (int i = 0; i < qDataVec.size(); ++i) {
-        qDataList.push_back(std::get<1>(qDataVec[i]));
-        qLabelList.push_back(std::get<0>(qDataVec[i]));
-    }
-    typedef LSH<vector<int>, int, string> LSH_;
-    typedef ExactKNeighbors<list<vector<int>>, vector<int>, int, list<string>, string> EKNN_;
-    //template<class A, class TD, class TID, class D, class TY, class Y>
-//    KNeighborsClassifier<ExactKNeighbors<list<vector<int>>, vector<int>, int, list<string>, string>, list<vector<int>>, vector<int>, int, list<string>, string> knn(
-//            1, "bruteforce", "manhattan");
-    LSH_ *lsh = new LSH<vector<int>, int, string>(3000, 0, 1, 5, "manhattan");
-    EKNN_ *eknn = new ExactKNeighbors<list<vector<int>>, vector<int>, int, list<string>, string>( 1, "manhattan");
-    KNeighborsClassifier<LSH_ *, list<vector<int>>, vector<int>, int, list<string>, string> *clLsh = new KNeighborsClassifier<LSH_ *, list<vector<int>>, vector<int>, int, list<string>, string>(
-            1, lsh);
-
-    KNeighborsClassifier<EKNN_ *, list<vector<int>>, vector<int>, int, list<string>, string> *clEknn = new KNeighborsClassifier<EKNN_* , list<vector<int>>, vector<int>, int, list<string>, string>(
-            1, eknn);
-    clEknn->fit(iDataList, iLabelList);
-    clLsh->fit(iDataList, iLabelList);
-    unrollResult(clEknn->predictWithTimeAndDistance(qDataList), clLsh->predictWithTimeAndDistance(qDataList), qLabelList);
-//    KNeighborsClassifier<LSH<vector<int>, int, string>, list<vector<int>>, vector<int>, int, list<string>, string> knn(
-//            1, "lsh", "manhattan");
-//    knn.fit(iDataList, iLabelList);
-//    knn.predictWithTimeAndDistance(qDataList);
-
-//    knn.predict(qDataList);
-
-//    r=meanDistanceBetweenPoints(iDataList);
-    // Count CPU+WALL Time https://stackoverflow.com/questions/2808398/easily-measure-elapsed-time
-//    for (auto & i : qDataList) {
-//        cout << i->getName() << '|';
-//    }
-//    cout << endl;
-//    for (auto & b : iDataList) {
-//        cout << h.calculatePoint(b) << '|';
-//    }
-    cout << endl;
-    exit(1);
-//    // Clean Up
+//    cout << "Running Instance with args " << iFileName << " " << qFileName << " " << k << " " << L << " " << oFileName
+//         << endl;
+    runLSH<int>(id, iFileName, qFileName, output, L, k, w, numNeighbors, topLimit, m);
+//    / Tests for lsh
+//    for (int i = 0; i < 4; ++i) { // Run (49280) tests
+//        if (i > 1) { m = 0; }   // two with m = 0 and 2 with m = int32max -5
+////        else    m = INT32_MAX - 5;
+//        for (int l = 4; l < 31; ++l) { // Try L {4,31}
+//            topLimit = 3 * l;
+//            if (i > 1) topLimit = 4 * l;  // Try topLimit {3,4} * L from 2 tests each one
+//            for (int k = 4; k < 11; ++k) { // Try k from 4 until 11
+//                for (int w = 1000; w < 12001; w += 500) { // Try w from 1000 until 12000
+//                    id++;
 //
-//    for (vector<const Point *>::iterator it = iDataList.begin(); it != iDataList.end(); ++it) { delete *it; }
-//    for (vector<const Point *>::iterator it = qDataList.begin(); it != qDataList.end(); ++it) { delete *it; }
+//                    runLSH<int>(id, iFileName, qFileName,output, l, k, w, numNeighbors, topLimit, m);
+//                }
+//
+//            }
+//        }
+//    }
+
     return 0;
 }

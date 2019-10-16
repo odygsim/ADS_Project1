@@ -105,25 +105,7 @@ class KNeighborsClassifier {
     TD data;
     TY labels;
 
-//    D (*f)(TID &, TID &);
-
 public:
-//    KNeighborsClassifier(int n_neighbors, std::string algorithm, std::string metric) : n_neighbors(n_neighbors),
-//                                                                                       algorithm_name(
-//                                                                                               std::move(algorithm)),
-//                                                                                       metric_name(metric) {
-///// OLD CONSTRUCTOR to be deleted?
-//        using namespace ::std;
-////        if (metric_name == "manhattan")
-////            f = &manhattanDistance<D, TID>;
-////        if (algorithm_name == "bruteforce")
-////            alg = new ExactKNeighbors<list < vector<int>>, vector<int>, int, list < string >, string > (1, "manhattan");
-////        else if (algorithm == "lsh")
-////            alg = new LSH<TID, D, Y>(3000, 0, 1, 5, "manhattan");
-////        else if (algorithm == "cube")
-////            alg = new LSH<TID, D, Y>(3000, 0, 1, 5, "manhattan");
-//        std::cout << "KNN Initialization with " + algorithm_name << std::endl;
-//    }
 
     KNeighborsClassifier(int n_neighbors, A &alg) : n_neighbors(n_neighbors), alg(alg) {
         /**
@@ -132,22 +114,13 @@ public:
          * @param alg The algorithm that will be used to classify data.
          * @return void.
          */
-//        using namespace ::std;
-//        if (metric_name == "manhattan")
-//            f = &manhattanDistance<D, TID>;
-//        if (algorithm == "bruteforce")
-//            alg = new ExactKNeighbors<list < vector<int>>, vector<int>, int, list < string >, string > (1, "manhattan");
-//        else if
-//        std::cout << "KNN Initialization with " + algorithm_name << std::endl;
     }
 
     void fit(TD &x, TY &y); // Fit data of list<vector<int>>, and list< string>
     /* This method is used to get prediction not only for label but also for time and distance, specific for this
      * homework */
     std::list<std::tuple<double, std::list<std::tuple<Y, D>>>> predictWithTimeAndDistance(TD &x);
-
     /* This method is a test method for simple predict, just return list of labels*/
-//    std::list<std::list<Y>>
 //    predict(TD &x); // return a list of lists that each list contains tuple(x.name, y.name), tuple(x.name, y.name)
 };
 
@@ -189,6 +162,8 @@ KNeighborsClassifier<A, TD, TID, D, TY, Y>::predictWithTimeAndDistance(TD &x) {
      * Each record of tuple is (timeValue, list(tuple(label,distanceValue))
      * because each query has a time value and K neighbors, so will have a list of these tuples
      * and for all queries a list of of tuples(time, listOfNeighbors)
+     *
+     * TODO delete Count CPU+WALL Time https://stackoverflow.com/questions/2808398/easily-measure-elapsed-time
      */
     typedef typename TD::iterator IteratorTD; // Iterator typedef on data
     typedef std::list<std::tuple<Y, D>> listTuples; // list of tuples <label,distances> , needed to calculcate neighbors
@@ -216,6 +191,121 @@ KNeighborsClassifier<A, TD, TID, D, TY, Y>::predictWithTimeAndDistance(TD &x) {
     return returnList;
 }
 
+template<typename D>
+void
+runLSH(int id, std::string &iFileName, std::string &qFileName, std::string &outFile, int L = 5, int k = 4, int w = 5000,
+       int numNeighbors = 1, int topLimi = 4, int m = 0) {
+    /**
+     * @brief Runs lsh knn algorithm.
+     * @params TODO complete.
+     */
+
+    using namespace std;
+    typedef list<vector<D>> CX;
+    typedef list<string> CY;
+    typedef vector<D> X;
+    typedef string Y;
+    typedef int TX;
+    typedef LSH<X, TX, Y> LSH_;
+    typedef ExactKNeighbors<CX, X, TX, CY, Y> EKNN_;
+    typedef chrono::steady_clock::time_point timePoint;
+//    list<tuple<double, list<tuple<Y, D>>>> A;
+//    list<tuple<double, list<tuple<Y, D>>>> E;
+    std::list<std::tuple<double, std::list<std::tuple<Y, D>>>> A, E;
+//    resultList A;
+//    resultList E;
+
+    timePoint start;
+    timePoint AppStart = initTime();
+    int topLimit = topLimi * 4, dimension;
+    string newline = "\n", space = " ", metric_name = "manhattan", stats, result;
+    tuple<string, string> results;
+    CX iDataList, qDataList, testIDataList, testQDataList;
+    CY iLabelList, qLabelList, testILabelList, testQLabelList;
+    vector<double> timeList;
+    string oFileName, output;
+    ofstream oFile;
+
+    readDataAndLabelsFromFile2<CX, CY, X, Y>(iFileName, iDataList, iLabelList);
+    readDataAndLabelsFromFile2<CX, CY, X, Y>(qFileName, qDataList, qLabelList);
+    typename CX::iterator iterData1;
+    typename CY::iterator iterLabel1;
+    typename CX::iterator iterQData;
+    typename CY::iterator iterQLabel;
+
+    dimension = iDataList.front().size();
+    LSH_ *lsh = new LSH<X, TX, Y>(w, dimension, k, L, m, numNeighbors, topLimit, metric_name);
+    auto *clLsh = new KNeighborsClassifier<LSH_ *, CX, X, TX, CY, Y>(numNeighbors, lsh);
+    auto *eknn = new EKNN_(numNeighbors, metric_name);
+    auto *clEknn = new KNeighborsClassifier<EKNN_ *, CX, X, TX, CY, Y>(numNeighbors, eknn);
+    /// Find r, for small input takes ~5min, and r ~= 1200
+//    r = meanDisVtanceBetweenPoints<list<vector<int>>, vector<int>, int>(iDataList);
+//    w = 4*r;
+
+    /// Start Test Memory leaks with valgrind
+//    int i = 0;
+//    for (i = 0, iterData1 = iDataList.begin(), iterLabel1 = iLabelList.begin(), iterQData = qDataList.begin(), iterQLabel = qLabelList.begin() ;
+//    i < 10; i++, iterData1++, iterLabel1++, iterQData++, iterQLabel++){
+//        testIDataList.push_back(*iterData1);
+//        testILabelList.push_back(*iterLabel1);
+//        testQDataList.push_back(*iterQData);
+//        testQLabelList.push_back(*iterQLabel);
+//    }
+//    clEknn->fit(testIDataList, testILabelList);
+//    clEknn->predictWithTimeAndDistance(testQDataList);
+//    clLsh->fit(testIDataList, testILabelList);
+//    clLsh->predictWithTimeAndDistance(testQDataList);
+    /// End of Test
+
+    /// Start fit and predict
+    start = initTime();                                         // timestamp start
+    clEknn->fit(iDataList, iLabelList);                         // fit exact knn
+    timeList.push_back(getElapsed(start));                      // timestamp end
+    start = initTime();                                         // timestamp start
+    E = clEknn->predictWithTimeAndDistance(qDataList);          // predict exact knn
+//    exit(1);
+    timeList.push_back(getElapsed(start));                      // timestamp end
+    start = initTime();                                         // timestamp start
+    clLsh->fit(iDataList, iLabelList);                          // fit approx knn
+    timeList.push_back(getElapsed(start));                      // timestamp end
+    start = initTime();                                         // timestamp start
+    A = clLsh->predictWithTimeAndDistance(qDataList);           // predict Approx knn
+    timeList.push_back(getElapsed(start));                      // timestamp end
+    /// Calculate results and stats also
+    results = unrollResult<Y, TX, CY> (E, A, qLabelList);
+    timeList.push_back(getElapsed(AppStart));                      // timestamp App End
+
+//    results = unrollResult(clEknn->predictWithTimeAndDistance(qDataList), clLsh->predictWithTimeAndDistance(qDataList),
+//                           qLabelList);
+    // Write result, stats to according files
+    string fields  = "AlgorithmName,id,datetime,L,w,m,k,topLimitLsh,numNeighbors,dimension,Accuracy,Time,iFileName,trainSize,fitExactTime,predictExactTime,fitApproxTime,predictApproxtime,AppTime\n";
+    oFile.open("tests/lsh_results/test3/stats.csv", std::ios::out | std::ios::app);
+    string res;
+    res = "LSH," + to_string(id) + "," + getDatetime(false) + "," + to_string(L) + "," + to_string(w) + "," +
+          to_string(m) + "," + to_string(k) +
+          "," + to_string(topLimit) + "," + to_string(numNeighbors) + "," + to_string(dimension) + "," +
+          get<1>(results) + "," + getFilename(iFileName) +
+          "," + to_string(iDataList.size()) + "," + to_string(timeList[0]) +"," + to_string(timeList[1]) +
+            "," + to_string(timeList[2]) +"," + to_string(timeList[3]) +"," + to_string(timeList[4]) +
+          "\n";
+    oFile << res;
+    oFile.close();
+    cout << getDatetime(false) << "\t\t\t\t" <<fields;
+    cout << getDatetime(false) << "\t\t\t\t" << res;
+
+    oFile.open("tests/lsh_results/test3/out/Output__" + getDatetime(true) + ".txt", std::ios::out);
+    oFile << get<0>(results);
+    oFile << "\n" + get<1>(results) + "\n";
+    oFile.close();
+//    // Clean Up
+//
+    delete eknn;
+    delete clEknn;
+    delete lsh;
+    delete clLsh;
+//    for (vector<const Point *>::iterator it = iDataList.begin(); it != iDataList.end(); ++it) { delete *it; }
+//    for (vector<const Point *>::iterator it = qDataList.begin(); it != qDataList.end(); ++it) { delete *it; }
+}
 /************ Test Code ************/
 
 //template<class A, class TD, class TID, class D, class TY, class Y>
