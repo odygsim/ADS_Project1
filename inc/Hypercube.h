@@ -19,7 +19,7 @@ class Hypercube {
 private :
     // Parameters
     int d, k, maxSearchPoints, probes, k_hi;
-    unsigned int m;
+    int m;
     double w, r;
     // Hypercube HashTables
     std::list< Hypercube_HT<TID> * > HQ_HT_List;
@@ -34,26 +34,26 @@ private :
 
 public:
 
-    Hypercube(double w, int d, int k, int maxSearchPoints, int probes, int k_hi, double r);
+    Hypercube(int d, double w = 3000, int k = 3, int maxSearchPoints = 10, int probes = 2, int k_hi = 4, double r = 0);
     ~Hypercube();
     // Adding a point with it's label to Hypercube Hash structure
     void addPoint(TID &x, Y &y);
     // Query a point : return a list of ANN in (label,distance) tuples
-    std::list<std::tuple<Y, D>> queryPoint(TID &x) const;
+    std::list<std::tuple<Y, D>> queryPoint(TID &x);
 
 };
 
 template<class TID, class D, class Y>
-Hypercube<TID, D, Y>::Hypercube(double w, int d, int k, int maxSearchPoints, int probes, int k_hi, double r):
-        w(w), d(d), k(k), maxSearchPoints(maxSearchPoints), probes(probes), k_hi(k_hi), r(r){
+Hypercube<TID, D, Y>::Hypercube(int d, double w, int k, int maxSearchPoints, int probes, int k_hi, double r):
+        d(d), w(w), k(k), maxSearchPoints(maxSearchPoints), probes(probes), k_hi(k_hi), r(r){
 
     // Set default parameters
-    m = ( (unsigned int) pow(2,32) ) - 5;
+    m = INT32_MAX - 5;
     k_hi = 4;
 
     // Create d number of gi hypercube hashTable functions
     for (int i = 0; i < k; ++i) {
-        HQ_HT_List.push_back(new Hypercube_HT<TID>(w , d, k, m, maxSearchPoints, probes, k_hi, r));
+        HQ_HT_List.push_back(new Hypercube_HT<TID>(d, w, k, m, maxSearchPoints, probes, k_hi, r));
     }
 
     // Set the distance metric function to be used
@@ -64,7 +64,7 @@ template<class TID, class D, class Y>
 void Hypercube<TID, D, Y>::addPoint(TID &x, Y &y) {
 
     // Find corresponding hypercube vertice
-    int v = calculate_point_corresponding_vertice(&x);
+    int v = calculate_point_corresponding_vertice(x);
     // Create a (data,label) tuple to add to bucket
     std::tuple<Y, TID> result(y, x);
     // Add point to Hypercube
@@ -73,9 +73,10 @@ void Hypercube<TID, D, Y>::addPoint(TID &x, Y &y) {
 }
 
 template<class TID, class D, class Y>
-std::list<std::tuple<Y, D>> Hypercube<TID, D, Y>::queryPoint(TID &x) const {
+std::list<std::tuple<Y, D>> Hypercube<TID, D, Y>::queryPoint(TID &x) {
 
     int currVert, currDist;
+    unsigned  int j;
     std::list<std::tuple<Y, D>> distanceList;
     std::list<std::tuple<Y, D>> distanceLabelList;
 
@@ -84,6 +85,7 @@ std::list<std::tuple<Y, D>> Hypercube<TID, D, Y>::queryPoint(TID &x) const {
 
     // Get adjacent canditate vertices including main one
     std::list<int> candVert = get_vertice_candidate_adjacent_buckets(v);
+
     // Get candidate vertices list size
     int candVertSz = candVert.size();
 
@@ -99,18 +101,18 @@ std::list<std::tuple<Y, D>> Hypercube<TID, D, Y>::queryPoint(TID &x) const {
         mapBucket = HQ_Buckets.find(currVert);
         // Check in current Bucket (max : up to MaxSearchPoints number)
         if ( mapBucket != HQ_Buckets.end() ) {
-            for ( unsigned j = 0; j < HQ_Buckets.bucket_count(); ++j) {
-                // Check all points within the bucket
-                for ( auto local_it = HQ_Buckets.begin(j); local_it!= HQ_Buckets.end(j); ++local_it ){
-                    // Get neighbor point data and label
-                    TID currNeighbor = std::get<1>(local_it->second);
-                    Y currNeighLabel = std::get<0>(local_it->second);
-                    // Get the distance of given point from current neighbor point
-                    currDist = f(currNeighbor, x);
-                    // Add (label, distance) tuple to distance list
-                    distanceList.push_back(std::make_pair(std::get<0>(currNeighbor), currDist));
-                }
+            // Get hypercube bucket number where currVert is in
+            j = HQ_Buckets.bucket(currVert);
 
+            // Check all points within the bucket
+            for (auto local_it = HQ_Buckets.begin(j); local_it != HQ_Buckets.end(j); ++local_it) {
+                // Get neighbor point data and label
+                TID currNeighbor = std::get<1>(local_it->second);
+                Y currNeighLabel = std::get<0>(local_it->second);
+                // Get the distance of given point from current neighbor point
+                currDist = f(currNeighbor, x);
+                // Add (label, distance) tuple to distance list
+                distanceList.push_back(std::make_pair(currNeighLabel, currDist));
             }
 
         }
@@ -123,14 +125,14 @@ std::list<std::tuple<Y, D>> Hypercube<TID, D, Y>::queryPoint(TID &x) const {
 
     // Fill vector with distanceList tuple data
     for( tupleIter = distanceList.begin() ; tupleIter != distanceList.end(); tupleIter++ ){
-        neighResVector.push_back(tupleIter);
+        neighResVector.push_back(*tupleIter);
     }
     // Sort vector according to the distance element of tuples
     std::sort(begin(neighResVector), end(neighResVector), TupleLess<1>());
 
     // Create new tupples distance list
     for( vecIter = neighResVector.begin() ; vecIter != neighResVector.end(); vecIter++ ){
-        distanceLabelList.push_back(vecIter);
+        distanceLabelList.push_back(*vecIter);
     }
 
     return distanceLabelList;
@@ -139,13 +141,14 @@ std::list<std::tuple<Y, D>> Hypercube<TID, D, Y>::queryPoint(TID &x) const {
 template<class TID, class D, class Y>
 int Hypercube<TID, D, Y>::calculate_point_corresponding_vertice(const TID &x) {
 
-    int fi, ftotal;
+    int fi;
+    int ftotal;
     std::string res_str_fi;
-    typename std::list< Hypercube_HT<TID> * >::iterator HT_Iter;
+    typename std::list< Hypercube_HT<TID>* >::iterator HT_Iter;
 
     // Iterate through all Hypercube HashTables to get fi's
     for (HT_Iter = HQ_HT_List.begin(); HT_Iter != HQ_HT_List.end(); ++HT_Iter) {
-        fi = HT_Iter.get_fi(&x);
+        fi = (*HT_Iter)->get_fi(x);
         res_str_fi += std::to_string(fi);
     }
 
