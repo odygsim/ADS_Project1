@@ -15,6 +15,7 @@
 #include <values.h>
 #include <chrono>
 
+int pow(int a, int b, int c);
 
 std::string getDatetime(bool);
 
@@ -251,8 +252,8 @@ unrollResult(std::list<std::tuple<double, std::list<std::tuple<Y, D>>>> & listEx
     }
     stats = calculateStats(maxDistanceAdivE, meanTimeA);
 
-//    std::cout << result << std::endl;
-//    std::cout << stats << std::endl;
+    std::cout << result << std::endl;
+    std::cout << stats << std::endl;
 
     return std::pair<std::string, std::string>(result, stats);
 }

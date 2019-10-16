@@ -1,6 +1,8 @@
 // this file will contain general used utilities
 //#include <tuple>
 //#include <getopt.h>
+#include <cmath>
+#include <csignal>
 #include "../inc/util.h"
 //#include "../inc/FunctionH.h"
 //#include "../inc/LSH_HT.h"
@@ -275,12 +277,11 @@ std::string getDatetime(bool forFile = false) {
     time_t secs = time(0);
     tm *t = localtime(&secs);
     char buff[40];
-    if (forFile){
-    sprintf(buff, "%04d_%02d_%02d__%02d_%02d_%02d",
-            t->tm_year + 1900, t->tm_mon + 1, t->tm_mday,
-            t->tm_hour, t->tm_min, t->tm_sec);
-    }
-    else {
+    if (forFile) {
+        sprintf(buff, "%04d_%02d_%02d__%02d_%02d_%02d",
+                t->tm_year + 1900, t->tm_mon + 1, t->tm_mday,
+                t->tm_hour, t->tm_min, t->tm_sec);
+    } else {
         sprintf(buff, "%04d-%02d-%02d %02d:%02d:%02d",
                 t->tm_year + 1900, t->tm_mon + 1, t->tm_mday,
                 t->tm_hour, t->tm_min, t->tm_sec);
@@ -289,16 +290,16 @@ std::string getDatetime(bool forFile = false) {
     return std::string(buff);
 }
 
-std::string getFilename (const std::string& str) {
+std::string getFilename(const std::string &str) {
     unsigned found = str.find_last_of("/\\");
 //    std::cout << " path: " << str.substr(0,found) << '\n';
-    return str.substr(found+1);
+    return str.substr(found + 1);
 }
 
 
-std::chrono::steady_clock::time_point initTime(){ /**@return a time point*/return std::chrono::steady_clock::now(); }
+std::chrono::steady_clock::time_point initTime() { /**@return a time point*/return std::chrono::steady_clock::now(); }
 
-double getElapsed(std::chrono::steady_clock::time_point start){
+double getElapsed(std::chrono::steady_clock::time_point start) {
     /**
      * @brief Calculates time elapsed in seconds since start.
      * @param start The start time point.
@@ -307,3 +308,4 @@ double getElapsed(std::chrono::steady_clock::time_point start){
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
     return std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() / 1000000.0;
 }
+

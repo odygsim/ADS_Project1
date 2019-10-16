@@ -138,12 +138,12 @@ int LSH_HT<TID, Y>::calculateG(TID &x) {
         hValues.push_back(h->calculatePoint(x));
     }
     g = hValues[0];
-//    std::cout << hValues[0] << "| ";
+    std::cout << hValues[0] << "| ";
     for (int i = 1; i < k; ++i) {
-//        std::cout << hValues[i] << "| ";
+        std::cout << hValues[i] << "| ";
         g = (g << k) | hValues[i]; //concatenate the k bits of all Hi
     }
-//    std::cout << " = " << g << "\n";
+    std::cout << " = " << g << "\n";
     return g;
 }
 

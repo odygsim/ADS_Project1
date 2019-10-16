@@ -5,7 +5,7 @@
 int main(int argc, char **argv) {
     using namespace std;
 
-    int L1, k1, L = 6, k = 7, w = 5000, numNeighbors = 1, topLimit =
+    int L1, k1, L = 5, k = 4, w = 5000, numNeighbors = 1, topLimit =
             4 * L, r = 0, dimension = 0, m = INT32_MAX - 5;
     int id = 0;
     char *pEnd;

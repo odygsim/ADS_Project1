@@ -7,7 +7,10 @@
 
 
 #include <random>
+//#include "util.h"
 //#include "Point.h"
+
+int pow(int a, int b, int c);
 
 template<class TID>
 /* TID : usually vector<int> */
@@ -92,13 +95,12 @@ int FunctionH<TID>::calculatePoint(const TID &x) {
     typename TID::iterator iterAi;
     int t1, t2, t3, t4, mm = INT32_MAX - 5;
     for (di = 0, iterAi = itE; (di < d) && (iterAi != itS); --iterAi, di++) {
-        t1 = pow(m, di);     // m^di
-//        t1 = m*251;     // m*di
         if (m == mm)
-            t1 = t1 % M;         // m^di % M
-        t2 = (*iterAi);      // a d-1
-        t3 = t2 * t1;        // a d-1 * (m^di %M)
-        t4 = t3 % M;         // the result % M
+            t1 = pow(m, di, M);     // (m^di)% M
+        else
+            t1 = pow(m, di);        // m^di
+        t3 = pow((*iterAi),1, M);        // a * 1 (%M)
+        t4 = pow(t1*t3, 1, M);         //  (a*m) % M
         h += t4;
 
 //        h += (*iterAi) * (((int) pow(m, di)) % M) % M;
@@ -154,5 +156,148 @@ int FunctionH<TID>::calculatePoint(const TID &x) {
 //
 //    return h;
 //}
+
+/* For exponentiation, use the binary left-to-right algorithm
+ * unless the exponent contains more than FIVEARY_CUTOFF digits.
+ * In that case, do 5 bits at a time.  The potential drawback is that
+ * a table of 2**5 intermediate results is computed.
+ */
+#define FIVEARY_CUTOFF 8
+
+char * _digits_of_n(int n, int b) {
+//""" Return the list of the digits in the base 'b'
+//representation of n, from LSB to MSB
+//"""
+    std::vector<bool> digits;
+    char *ar= new char[32];
+
+    for(int i = 0; i < 32; i++){ //integer 32bits
+        digits.push_back(n % b);
+        n /= b;
+    }
+    return ar;
+}
+
+int pow(int a, int b, int c) {
+    /**
+     * @brief Calculates a^b % c, or else modular exponentiation.
+     * @param a The number that will be the base.
+     * @param b The number that will be the power.
+     * @param c The number that will be the modulus.
+     * @return a^b % c
+     */
+    // ideas from https://eli.thegreenplace.net/2009/03/28/efficient-modular-exponentiation-algorithms
+    // http://cacr.uwaterloo.ca/hac/about/chap14.pdf
+    // https://raw.githubusercontent.com/python/cpython/master/Objects/longobject.c
+    int negativeOutput = 0;  /* if c<0 return negative output */
+    long z = 1; /* accumulated result */
+    long i, j, k, temp;/* counters */
+    char digit = 0;
+    k = 5;
+
+    /* 5-ary values.  If the exponent is large enough, table is
+     * precomputed so that table[i] == a**i % c for i in range(32).
+     */
+    long table[32] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+    /* a, b, c = v, w, x */
+
+//        if (b < 0 && c == NULL) {
+//            /* if exponent is negative and there's no modulus:
+//                   return a float.  This works because we know
+//                   that this calls float_pow() which converts its
+//                   arguments to double. */
+//            return powf(a,b);
+//        }
+    if (c == 0) {
+        perror("modulus is 0\n");
+        exit(1);
+    }
+
+    /* if modulus < 0:
+           negativeOutput = True
+           modulus = -modulus */
+    if (c < 0) {
+        negativeOutput = 1;
+        c = 0 - c;
+    }
+
+    /* if modulus == 1:
+           return 0 */
+    if (c == 1) return 0;
+
+    /* if exponent is negative, negate the exponent and
+       replace the base with a modular inverse */
+    if (b < 0) {
+        b = 0 - b;
+        temp = a % c;
+        a = temp;
+    }
+
+    /* Reduce base by modulus in some cases:
+       1. If base < 0.  Forcing the base non-negative makes things easier.
+       2. If base is obviously larger than the modulus.  The "small
+          exponent" case later can multiply directly by base repeatedly,
+          while the "large exponent" case multiplies directly by base 31
+          times.  It can be unboundedly faster to multiply by
+          base % modulus instead.
+       We could _always_ do this reduction, but l_divmod() isn't cheap,
+       so we only do it when it buys something. */
+    if (a < 0 || a > c) {
+        if ((temp = a % c) < 0){
+//            perror("a%c < 0\n");
+            temp = 0 - a;
+//            exit(1);
+
+        }
+        a = temp;
+    }
+
+    /* At this point a, b, and c are guaranteed non-negative UNLESS
+       c is NULL, in which case a may be negative. */
+
+    /* Perform a modular reduction, X = X % c, but leave X alone if c
+     * is NULL.
+     */
+
+
+    if (b <= FIVEARY_CUTOFF) {
+        int base = 2;// << (5 -1);
+        digit = 0;
+        /* Left-to-right binary exponentiation (HAC Algorithm 14.79) */
+        /* http://www.cacr.math.uwaterloo.ca/hac/about/chap14.pdf    */
+        char *ar = _digits_of_n(b, base);
+        for (i = 32 - 1; 0 <= i;i--) {
+            digit = ar[i];
+            z = z * z % c;
+            if (digit == 1) { z = z * a % c; }
+        }
+        delete ar;
+    } else {
+        int base = 2 << (k - 1);
+
+        /* Left-to-right 5-ary exponentiation (HAC Algorithm 14.82) */
+        table[0] = z;
+        // Precompute the table exponents
+        for (i = 1; i < 32; ++i)
+            table[i] = table[i - 1] * a % c;//table[i];
+        char * ar = _digits_of_n(b, base);
+        for (i = 32 - 1; 0 <= i;i--) {
+            digit = ar[i];
+            for (k = 0; k < 5; ++k)
+                z = z * z % c;
+            if (digit == 1)
+                z = z * table[digit] % c;
+        }
+        delete ar;
+    }
+
+    if (negativeOutput && z != 0) {
+        temp = z - c;
+        z = temp;
+    }
+    return z;
+}
 
 #endif //ADS_PROJECT1_FUNCTIONH_H
