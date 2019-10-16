@@ -7,9 +7,50 @@
 
 
 #include <random>
-//#include "util.h"
-//#include "Point.h"
+#define FIVEARY_CUTOFF 8
+#define ll long long
 
+#include <bits/stdc++.h>
+using namespace std;
+#define lint long long int
+#define S second
+
+//* Iterative Function to calculate (x^y)%p in O(log y) */
+int power(int x, unsigned int y, int p)
+{
+    int res = 1;      // Initialize result
+
+    x = x % p;  // Update x if it is more than or
+    // equal to p
+
+    while (y > 0)
+    {
+        // If y is odd, multiply x with result
+        if (y & 1)
+            res = (res*x) % p;
+
+        // y must be even now
+        y = y>>1; // y = y/2
+        x = (x*x) % p;
+    }
+    return res;
+}
+
+lint modex(lint base,lint exponent,lint mod){
+    if(base == 0){                                  // 0^x = 0.
+        return 0;
+    }
+    if(exponent == 0){
+        return 1;                                   // x^0 = 1.
+    }
+    if(exponent%2 == 0){
+        lint ans = modex(base,exponent/2,mod);      // as, a^b = (a^(b/2))*(a^(b/2)), we use recursion to effectively reduce the no.
+        return (ans*ans)%mod;                       // of operations required for computing.
+    }
+    return ((base%mod)*(modex(base,exponent-1,mod)))%mod;   // when exponent is odd, we reduce it by 1 to make it even, which again uses
+}                                                           // recursion for computation.
+
+ll modular_pow(ll base, ll exponent, int modulus);
 int pow(int a, int b, int c);
 
 template<class TID>
@@ -93,76 +134,43 @@ int FunctionH<TID>::calculatePoint(const TID &x) {
     typename TID::iterator itS = A.begin();
     typename TID::iterator itE = --A.end();
     typename TID::iterator iterAi;
-    int t1, t2, t3, t4, mm = INT32_MAX - 5;
+
+    int t1, t2, t3, t4, mm = INT32_MAX - 5, t11, t12, t13, t14, h2 = 0;
     for (di = 0, iterAi = itE; (di < d) && (iterAi != itS); --iterAi, di++) {
-        if (m == mm)
-            t1 = pow(m, di, M);     // (m^di)% M
-        else
+        if (m == mm){
+            t1 = power(m, di, M);     // (m^di)% M
+             t11 = pow(m, di);     // (m^di)% M
+            t12 = t11 % M;     // (m^di)% M
+            // should t12 == t1?
+        }
+        else {
             t1 = pow(m, di);        // m^di
-        t3 = pow((*iterAi),1, M);        // a * 1 (%M)
-        t4 = pow(t1*t3, 1, M);         //  (a*m) % M
-        h += t4;
+            t12 = t1;     // (m^di)% M
+        }
+        t3 = (*iterAi) * t1;
+        t13 = (*iterAi) * t12;
+        // should t3 == t13?
+        h += t3;
+        h2 += t13;
 
 //        h += (*iterAi) * (((int) pow(m, di)) % M) % M;
 //        h += (*iterAi) * (int) pow(m, di) % M;
     }
-    return h;
+    int h10, h20, h11, h21;
+    h10 = h % M;
+    h11 = power(h, 1, M);
+    h20 = h2 % M;
+//    h21 = pow(h2, 1, M);
+
+    return h11;
 }
 
-//template <class TID>
-//int FunctionH<TID>::calculatePoint(const Point *p) {
-//    std::vector<int> data = p->getList();
-//    std::vector<int> A;
-//    int h = 0;
-//
-//    // Calculate ai integers
-//    int maxA = INT32_MIN, di=0;
-//
-//    if (d == 0) { //calculate it and produce S
-//        const int rangeFrom = 0, rangeTo = w;
-//        std::random_device randDev;
-//        std::mt19937 generator(randDev());
-//        std::uniform_real_distribution<double> distr(rangeFrom, rangeTo);
-//
-//        d = p->getList().size();
-//        S.reserve(d);
-//        for (int i = 0; i < d; ++i) {
-//            S.push_back(distr(generator));
-//        }
-//    }
-//    A.reserve(d);
-//    for (int i = 0; i < d; ++i) {
-//        A.push_back((int) ((data[i] - S[i]) / w));
-//        if (A[i] > maxA) maxA = A[i];
-//    }
-//    if (m == 0) {
-//        m = maxA + 1; // m > maxAi
-////        m = INT32_MAX - 5; // can use this!
-//    }
-//    if (M == 0) {
-//        unsigned int powerM = 32 / k;
-//        M = 1 << powerM;
-//    }
-//    std::vector<int>::iterator itS = A.begin();
-//    std::vector<int>::iterator itE = A.end();
-//    std::vector<int>::iterator it;
-//    for(di=0,it = itE;(di < d) && (it!=itS);--it, di++){
-////        h += (*it) * (((int) pow(m, di)) % M) % M;
-//        h += (*it) * (int) pow(m, di) % M;
-//    }
-//
-//
-//
-//
-//    return h;
-//}
 
 /* For exponentiation, use the binary left-to-right algorithm
  * unless the exponent contains more than FIVEARY_CUTOFF digits.
  * In that case, do 5 bits at a time.  The potential drawback is that
  * a table of 2**5 intermediate results is computed.
  */
-#define FIVEARY_CUTOFF 8
 
 char * _digits_of_n(int n, int b) {
 //""" Return the list of the digits in the base 'b'
@@ -176,6 +184,41 @@ char * _digits_of_n(int n, int b) {
         n /= b;
     }
     return ar;
+}
+
+//            perror("a%c < 0\n");
+
+
+
+
+/*
+
+ * Function to calculate modulus of x raised to the power y
+
+ */
+
+ll modular_pow(ll base, ll exponent, int modulus)
+
+{
+
+    ll result = 1;
+
+    while (exponent > 0)
+
+    {
+
+        if (exponent % 2 == 1)
+
+            result = (result * base) % modulus;
+
+        exponent = exponent >> 1;
+
+        base = (base * base) % modulus;
+
+    }
+
+    return result;
+
 }
 
 int pow(int a, int b, int c) {
@@ -194,47 +237,14 @@ int pow(int a, int b, int c) {
     long i, j, k, temp;/* counters */
     char digit = 0;
     k = 5;
-
     /* 5-ary values.  If the exponent is large enough, table is
      * precomputed so that table[i] == a**i % c for i in range(32).
      */
     long table[32] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-    /* a, b, c = v, w, x */
-
-//        if (b < 0 && c == NULL) {
-//            /* if exponent is negative and there's no modulus:
-//                   return a float.  This works because we know
-//                   that this calls float_pow() which converts its
-//                   arguments to double. */
-//            return powf(a,b);
-//        }
-    if (c == 0) {
-        perror("modulus is 0\n");
-        exit(1);
-    }
-
-    /* if modulus < 0:
-           negativeOutput = True
-           modulus = -modulus */
-    if (c < 0) {
-        negativeOutput = 1;
-        c = 0 - c;
-    }
-
-    /* if modulus == 1:
-           return 0 */
+    /* if modulus == 1: return 0 */
     if (c == 1) return 0;
-
-    /* if exponent is negative, negate the exponent and
-       replace the base with a modular inverse */
-    if (b < 0) {
-        b = 0 - b;
-        temp = a % c;
-        a = temp;
-    }
-
     /* Reduce base by modulus in some cases:
        1. If base < 0.  Forcing the base non-negative makes things easier.
        2. If base is obviously larger than the modulus.  The "small
@@ -244,15 +254,12 @@ int pow(int a, int b, int c) {
           base % modulus instead.
        We could _always_ do this reduction, but l_divmod() isn't cheap,
        so we only do it when it buys something. */
-    if (a < 0 || a > c) {
-        if ((temp = a % c) < 0){
-//            perror("a%c < 0\n");
-            temp = 0 - a;
-//            exit(1);
-
-        }
-        a = temp;
-    }
+//    if (a < 0 || a > c) {
+//        if ((temp = a % c) < 0){
+//            temp = 0 - a;
+//        }
+//        a = temp;
+//    }
 
     /* At this point a, b, and c are guaranteed non-negative UNLESS
        c is NULL, in which case a may be negative. */
