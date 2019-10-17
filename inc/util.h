@@ -1,4 +1,3 @@
-
 #ifndef ADS_PROJECT1_UTIL_H
 #define ADS_PROJECT1_UTIL_H
 
@@ -10,14 +9,18 @@
 #include <vector>
 #include <list>
 #include <string>
-#include "Point.h"
-
+#include <clocale>
+#include <cstdio>
 #include <stdio.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <getopt.h>
 #include <values.h>
 #include <chrono>
+#include <cstring>
+//#include "Point.h"
 
+#define __STDC_WANT_LIB_EXT1__ 1
 #define FIVEARY_CUTOFF 8
 #define lint long long int
 #define ll long long
@@ -27,11 +30,6 @@ std::string getDatetime(bool);
 
 std::string getFilename(const std::string &str);
 
-struct ComparatorqPoint {
-    bool operator()(const qPoint *a, const qPoint *b) {
-        return a->getDistance() < b->getDistance();
-    }
-};
 
 template<int index>
 struct TupleLess {
@@ -44,14 +42,14 @@ struct TupleLess {
 
 std::vector<std::string> split(const std::string &s, char delimiter);
 
-std::vector<int> splitInt(const std::string &s, char delimiter);
-
-const Point *splitToPoint(const std::string &s, char delimiter);
-
-//double manhattanDistance( std:: vector<int> , std:: vector<int> );
-
 template<typename RT, typename DT>
 RT manhattanDistance(DT &point1, DT &point2) {
+    /**
+     * @brief calculates l1 distance from given vectors/lists.
+     * @point1 An object that has a point with a big dimension.
+     * @point2 An object that has a point with a big dimension.
+     * @return the sum of l1 distance.
+     */
     RT sum = 0;
 
     typename DT::iterator e1 = point1.end();
@@ -65,15 +63,6 @@ RT manhattanDistance(DT &point1, DT &point2) {
     return sum;
 }
 
-std::list<const qPoint *> exactKNN(std::vector<const Point *> &dataList, const Point *queryPoint, int radius);
-//std::list<const qPoint *> exactKNN(std::vector<const Point *> dataList, const Point *queryPoint, unsigned int radius);
-
-int meanDistanceBetweenPoints(std::vector<const Point *> dataList);
-
-const qPoint *AproximateNN(std::vector<const Point *> dataList,
-                           const Point *queryPoint /*TODO put here 3rd arg hash method lsh/cube*/);
-
-std::vector<const Point *> readData(std::string const &fileName);
 
 template<class X, class Y>
 std::tuple<Y, X> splitToPoint2(const std::string &s, char delimiter) {
@@ -109,84 +98,76 @@ void splitToPoint3(const std::string &s, char delimiter, CX &dataList, CY &label
     std::istringstream tokenStream(s);
     int i = 0;
     std::string name;
-    while (std::getline(tokenStream, token, delimiter)) {
-        if (!token.empty()) {
-            if (i == 0)
-                name = token;
-            else // TODO make prediction for double? or get a parameter what to read? int/double
-                tokens.push_back(stoi(token));
-        }
-        i += 1;
+    if (std::getline(tokenStream, token, delimiter) && !token.empty()) {
+        name = token;
+    }
+    while (std::getline(tokenStream, token, delimiter) && !token.empty()) {
+        tokens.push_back(stoi(token));
     }
     dataList.push_back(tokens);
     labelList.push_back(name);
 }
 
-bool scanDelimiter(const std::string &s, char &delimiter) {
-    std::string token;
-    std::istringstream tokenStream(s);
-    std::string name;
-
-    if (std::getline(tokenStream, token, delimiter) && !token.empty()) {
-        return token.size() <= 30;
-    }
-    return false;
-}
 
 template<class CX, class CY, class X, class Y>
-char
-splitFirstLine(const std::string &s, char &delimiter, CX &dataList, CY &labelList, double &radius, bool &isDouble) {
+void splitToCurve(char *str, CX &dataList, CY &labelList) {
     /**
-     * @brief Parses first line looking for format of file.
-     * @param s string to parse.
+     * @brief Parse data and label to objects CX and CY accordingly.
+     * @param str string to parse.
      * @param dataList The object that the data will be stored.
      * @param labelList The object that the labels will be stored.
      * @return The fLabelList, fDataList, by parameter.
      */
-    char delimiters[3] = {'\t', ',', ' '};
-    char delim;
-    int j = 0, i = 0;
     X tokens;
-    std::string token;
-    std::istringstream tokenStream(s);
-    std::string name;
-    // Scan delimiter part.
-    if (delimiter != 0 && scanDelimiter(s, delimiter)) {
-        delim = delimiter;
-    } // given delimiter is right.
-    else {
-        for (j = 0; j < 3; ++j) { // scan delimiters
-            if (scanDelimiter(s, delimiters[j])) // if a right delimiter was found break
-                break;
-        }
-        if (j >= 3) {
-            std::cerr << getDatetime(false) << "\t\t\t\t" << "Could not find delimiter."
-                                                             "Please set delimiter one of {TAB,SPACE,COMMA}"
-                      << std::endl;
-            exit(-2);
-        }
-        delim = delimiters[j];
-    }
-    // end of scan delimiter
-    if (std::getline(tokenStream, token, delim) && !token.empty())              // try get radius
-    {
-        if (token[0] == 'R' && token[token.size() - 1] == ':') { // get radius
-            if (std::getline(tokenStream, token, delim) && !token.empty()) // get radius
-                radius = stod(token);
-        } else { // first part if not Radius:, is a label, so get a value to check for double.
-            if (std::getline(tokenStream, token, delim)) {
-                if (token.find('.') || token.find(','))
-                    isDouble = true;
-            }
-        }
-    }
-    if (isDouble) {
+    double x = 0, y = 0;
+    int tokens_size = 0;
+    char *found;
+    found = strchr(str, '(');
 
+    char name[10];
+    char *tokenC;
+    const char LP[2] = ")";
+    const char RP[4] = ") (";
+    // get first token
+    sscanf(str, "%s\t%d\t", name, &tokens_size);
+    tokenC = strtok(++found, LP); // done need it
+    sscanf(tokenC, "%lf, %lf", &x, &y);
+    tokens.push_back(std::make_pair(x, y));
+    tokens.reserve(tokens_size);
+    while (tokenC != NULL && tokenC[0] != '\n') {
+        tokenC = strtok(NULL, LP);
+        sscanf(tokenC, " (%lf, %lf", &x, &y);
+        tokens.push_back(std::make_pair(x, y));
     }
-    // radius scan end
     dataList.push_back(tokens);
-    labelList.push_back(name);
+    labelList.push_back(std::string(name));
 }
+
+template<class CX, class CY, class X, class Y>
+void readTrajectories(const std::string &filename, CX &dataList, CY &labelList) {
+    /**
+     * @brief Reads Trajectories into 2 lists data and label.
+     * @param filename to parse.
+     * @param dataList An object of type list<vector<tuple<double,double>>
+     * @param labelList An object of type list<string>
+     *
+     */
+    FILE *fp = fopen(filename.c_str(), "r");
+    if (fp == NULL)
+        exit(EXIT_FAILURE);
+
+    char *line = NULL;
+    size_t len = 0;
+    while ((getline(&line, &len, fp)) != -1) {
+        splitToCurve<CX, CY, X, Y>(line, dataList, labelList);
+    }
+    fclose(fp);
+    if (line)
+        free(line);
+}
+
+
+void scanRadius(const std::string &s, double &radius, char &delimiter);
 
 template<class CX, class CY, class X, class Y>
 //data container , data labels
@@ -200,7 +181,7 @@ bool readDataAndLabelsFromFile2(const std::string &fileName, CX &fDataList, CY &
      */
     std::ifstream file;
     std::string tmp;
-    char space = ' ', newlineUnix = '\n', newlineWindows = '\r';
+    char delim = ' ', newlineUnix = '\n', newlineWindows = '\r';
 
     // Check filenames
     if (file.fail()) {
@@ -216,20 +197,24 @@ bool readDataAndLabelsFromFile2(const std::string &fileName, CX &fDataList, CY &
     if (!file.eof()) {
         // Do checks for Radius: , split character. which file i read..
         getline(file, tmp, newlineUnix);
-        if (tmp[tmp.size() - 1] == newlineWindows)
+        if (!tmp.empty() && (tmp[tmp.size() - 1] == newlineWindows))
             tmp.erase(tmp.end() - 1); // remove /r
-        if (tmp[0] == 'R') // got radius must read it.
-
-            if (!tmp.empty())
-                splitToPoint3<CX, CY, X, Y>(tmp, space, fDataList, fLabelList);
+        scanRadius(tmp, radius, delim);
+        if (radius != 0.0) // no radius
+        { // go to next line
+        } else
+            splitToPoint3<CX, CY, X, Y>(tmp, delim, fDataList, fLabelList);
     }
+    // we have read the radius go on
+
     // Iterate over input file and store each Point's dimension data in a vector
     while (!file.eof()) {
-        getline(file, tmp, '\r'); // remove /r
-        if (tmp[0] == '\n')
-            tmp.erase(tmp.begin());
-        if (!tmp.empty())
-            splitToPoint3<CX, CY, X, Y>(tmp, space, fDataList, fLabelList);
+        getline(file, tmp, newlineUnix);
+        if (!tmp.empty()) {
+            if ( tmp[tmp.size() - 1] == newlineWindows)
+                tmp.erase(tmp.end() - 1); // remove /r
+            splitToPoint3<CX, CY, X, Y>(tmp, delim, fDataList, fLabelList);
+        }
     }
     file.close();
     return true;
@@ -267,17 +252,17 @@ std::vector<std::tuple<Y, X>> readData2(const std::string &fileName) {
 
 void print_cube_usage();
 
-int readHypercubeParameters(int argc, char **argv,
-                            std::string &inputFile, std::string &queryFile, std::string &outputFile,
-                            int &k, int &M, int &probes);
+int
+readHypercubeParameters(int argc, char **argv, std::string &inputFile, std::string &queryFile, std::string &outputFile,
+                        int &k, int &M, int &probes);
 
 
 std::string calculateStats(std::list<double> &distanceListEA, std::list<double> &timeListE);
 
 template<class Y, class D, class TY>
-std::tuple<std::string, std::string>
-unrollResult(std::list<std::tuple<double, std::list<std::tuple<Y, D>>>> &listExact,
-             std::list<std::tuple<double, std::list<std::tuple<Y, D>>>> &listAprox, TY &y) {
+std::tuple<std::string, std::string> unrollResult(std::list<std::tuple<double, std::list<std::tuple<Y, D>>>> &listExact,
+                                                  std::list<std::tuple<double, std::list<std::tuple<Y, D>>>> &listAprox,
+                                                  TY &y) {
     /**
      * @brief Unroll the results of Approximate and Exact Algorithms and calculate some numbers for statistics.
      * @param listExaxt The list that contains objects of (timeValue, (label, distance)).
@@ -301,9 +286,8 @@ unrollResult(std::list<std::tuple<double, std::list<std::tuple<Y, D>>>> &listExa
     D distanceA, distanceE;
 
 
-    for (itY = y.begin(), itListEx = listExact.begin(), itListAp = listAprox.begin();
-         (itY != yE); ++itY, ++itListEx, ++itListAp) {
-//        std::tuple<double, std::list<std::tuple<Y, D>> currentTuple
+    for (itY = y.begin(), itListEx = listExact.begin(), itListAp = listAprox.begin(); (itY !=
+                                                                                       yE); ++itY, ++itListEx, ++itListAp) {
 // Get for each tuple second arg the list of points
         listTuples curLE = std::get<1>(*itListEx);
         listTuples curLA = std::get<1>(*itListAp);
@@ -315,7 +299,8 @@ unrollResult(std::list<std::tuple<double, std::list<std::tuple<Y, D>>>> &listExa
         maxDistanceAdivE.push_back(distanceA / distanceE);
         result += "distanceLSH: " + std::to_string(distanceA) + delim;
         result += "distanceTrue: " + std::to_string(distanceE) + delim;
-////            sprintf(str, "%.2f", result->getDistance());
+////            sprintf(str, "%.2f", result->getDistance());   // these are commented in case
+                                                               /// we need the double with less digits.
 ////            string a(str, strlen(str));
 ////            output += "distanceTrue: " ;
 ////            output += a + space;// std::to_string(result->getDistance()) + "\n";
@@ -371,7 +356,6 @@ int meanDistanceBetweenPoints(TD &data) {
         distanceList.sort(); // Get min
         distanceList.pop_front();
         minDistances.push_back(distanceList.front());
-//        if (i == 3) break;
     }
     // Calculate mean
     for (auto j: minDistances) {

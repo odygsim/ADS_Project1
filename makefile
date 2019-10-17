@@ -289,11 +289,12 @@ CC_HOST ?=		gcc
 CXX_HOST ?=		g++
 SZ_HOST ?=		size
 #..............................................................................#
-OBJS1 = ${OBJ_DIR}mainLsh.o ${OBJ_DIR}FunctionH.o ${OBJ_DIR}util.o ${OBJ_DIR}Point.o ${OBJ_DIR}LSH_HT.o
-OBJS2 = ${OBJ_DIR}mainHypercube.o ${OBJ_DIR}FunctionH.o ${OBJ_DIR}util.o
-OBJS3 = ${OBJ_DIR}mainCurveLsh.o ${OBJ_DIR}FunctionH.o ${OBJ_DIR}util.o
-OBJS4 = ${OBJ_DIR}mainCurveHypercube.o ${OBJ_DIR}FunctionH.o ${OBJ_DIR}util.o
-OBJS5 = ${OBJ_DIR}mainCurveProjection.o ${OBJ_DIR}FunctionH.o ${OBJ_DIR}util.o
+# ${OBJ_DIR}Point.o
+OBJS1 = ${OBJ_DIR}mainLsh.o  ${OBJ_DIR}util.o #${OBJ_DIR}FunctionH.o ${OBJ_DIR}LSH.o ${OBJ_DIR}LSH_HT.o  ${OBJ_DIR}KNeighborsClassifier.o
+OBJS2 = ${OBJ_DIR}mainHypercube.o ${OBJ_DIR}util.o ${OBJ_DIR}util2.o #${OBJ_DIR}FunctionH.o ${OBJ_DIR}KNeighborsClassifier.o
+OBJS3 = ${OBJ_DIR}mainCurveLsh.o ${OBJ_DIR}util.o #${OBJ_DIR}FunctionH.o  ${OBJ_DIR}KNeighborsClassifier.o
+OBJS4 = ${OBJ_DIR}mainCurveHypercube.o ${OBJ_DIR}util.o  #${OBJ_DIR}FunctionH.o  ${OBJ_DIR}KNeighborsClassifier.o
+OBJS5 = ${OBJ_DIR}mainCurveProjection.o ${OBJ_DIR}util.o #${OBJ_DIR}FunctionH.o  ${OBJ_DIR}KNeighborsClassifier.o
 OBJS = $(OBJ1) $(OBJ2) $(OBJ3) $(OBJ4) $(OBJ5)
 
 # create / compile the individual files >> separately < <
@@ -322,27 +323,55 @@ ${OBJ_DIR}mainCurveProjection.o : ${SRC_DIR}mainCurveProjection.cpp
 	$(MKDIR_P)		$(dir $@)
 	@$(CXX_HOST) 	-c $(TARGET_CXXFLAGS) $(HOST_CPPFLAGS) $(HOST_INCLUDES) ${SRC_DIR}mainCurveProjection.cpp -o $@
 
-${OBJ_DIR}FunctionH.o : ${SRC_DIR}FunctionH.cpp
+${OBJ_DIR}FunctionH.o : 					#${SRC_DIR}FunctionH.cpp
 	${COMPILING}
 	$(MKDIR_P)		$(dir $@)
-	@$(CXX_HOST) 	-c $(TARGET_CXXFLAGS) $(HOST_CPPFLAGS) $(HOST_INCLUDES) ${SRC_DIR}FunctionH.cpp -o $@
+	@$(CXX_HOST) 	-c $(TARGET_CXXFLAGS) $(HOST_CPPFLAGS) $(HOST_INCLUDES) -o $@
 
 ${OBJ_DIR}util.o : ${SRC_DIR}util.cpp
 	${COMPILING}
 	$(MKDIR_P)		$(dir $@)
 	@$(CXX_HOST) 	-c $(TARGET_CXXFLAGS) $(HOST_CPPFLAGS) $(HOST_INCLUDES) ${SRC_DIR}util.cpp -o $@
 
+${OBJ_DIR}util2.o : ${SRC_DIR}util2.cpp
+	${COMPILING}
+	$(MKDIR_P)		$(dir $@)
+	@$(CXX_HOST) 	-c $(TARGET_CXXFLAGS) $(HOST_CPPFLAGS) $(HOST_INCLUDES) ${SRC_DIR}util2.cpp -o $@
+
 ${OBJ_DIR}Point.o : ${SRC_DIR}Point.cpp
 	${COMPILING}
 	$(MKDIR_P)		$(dir $@)
 	@$(CXX_HOST) 	-c $(TARGET_CXXFLAGS) $(HOST_CPPFLAGS) $(HOST_INCLUDES) ${SRC_DIR}Point.cpp -o $@
 
-${OBJ_DIR}LSH_HT.o : ${SRC_DIR}LSH_HT.cpp
+${OBJ_DIR}LSH_HT.o : 						#${SRC_DIR}LSH_HT.cpp
 	${COMPILING}
 	$(MKDIR_P)		$(dir $@)
-	@$(CXX_HOST) 	-c $(TARGET_CXXFLAGS) $(HOST_CPPFLAGS) $(HOST_INCLUDES) ${SRC_DIR}LSH_HT.cpp -o $@
+	@$(CXX_HOST) 	-c $(TARGET_CXXFLAGS) $(HOST_CPPFLAGS) $(HOST_INCLUDES) -o $@
 
+${OBJ_DIR}LSH.o : ${SRC_DIR}LSH.cpp
+	${COMPILING}
+	$(MKDIR_P)		$(dir $@)
+	@$(CXX_HOST) 	-c $(TARGET_CXXFLAGS) $(HOST_CPPFLAGS) $(HOST_INCLUDES) -o $@
 
+${OBJ_DIR}KNeighborsClassifier.o :									 #${SRC_DIR}KNeighborsClassifier.cpp
+	${COMPILING}
+	$(MKDIR_P)		$(dir $@)
+	@$(CXX_HOST) 	-c $(TARGET_CXXFLAGS) $(HOST_CPPFLAGS) $(HOST_INCLUDES) -o $@
+
+${OBJ_DIR}ExactKNeighbors.o : 												#${SRC_DIR}ExactKNeighbors.cpp
+	${COMPILING}
+	$(MKDIR_P)		$(dir $@)
+	@$(CXX_HOST) 	-c $(TARGET_CXXFLAGS) $(HOST_CPPFLAGS) $(HOST_INCLUDES) ${SRC_DIR}KNeighborsClassifier.cpp -o $@
+
+${OBJ_DIR}Hypercube.o : ${SRC_DIR}Hypercube.cpp
+	${COMPILING}
+	$(MKDIR_P)		$(dir $@)
+	@$(CXX_HOST) 	-c $(TARGET_CXXFLAGS) $(HOST_CPPFLAGS) $(HOST_INCLUDES) ${SRC_DIR}Hypercube.cpp -o $@
+
+${OBJ_DIR}Hypercube_HT.o : ${SRC_DIR}Hypercube_HT.cpp
+	${COMPILING}
+	$(MKDIR_P)		$(dir $@)
+	@$(CXX_HOST) 	-c $(TARGET_CXXFLAGS) $(HOST_CPPFLAGS) $(HOST_INCLUDES) ${SRC_DIR}Hypercube_HT.cpp -o $@
 ################################################################################
 #	 _____  _                                    _
 #	|  __ \| |                                  | |
@@ -377,7 +406,7 @@ runtestcube:
 	$(info running small dataset)
 	${BIN_DIR}cube -d ${TESTS_DIR}sample_datasets/siftsmall/input_small_id -q ${TESTS_DIR}sample_datasets/siftsmall/query_small_id -k 4 -M 5 -probes 100 -o ${TESTS_DIR}
 	$(info running big dataset)
-	${BIN_DIR}cube -d ${TESTS_DIR}sample_datasets/siftbig/input_big_id -q ${TESTS_DIR}sample_datasets/siftbig/query_big_id –k 4 -M 5 -probes 100 -o ${TESTS_DIR}
+	${BIN_DIR}cube -d ${TESTS_DIR}sample_datasets/siftbig/input_b_id -q ${TESTS_DIR}sample_datasets/siftbig/query_b_id –k 4 -M 5 -probes 100 -o ${TESTS_DIR}
 #..............................................................................#
 #	Documentation
 
@@ -432,11 +461,9 @@ ${BIN_DIR}lsh: $(OBJS1)
 
 cube: ##@build cube with points.
 cube: ${BIN_DIR}cube
-${BIN_DIR}cube: 
-	$(error *** Creating cube executable ***  )
+${BIN_DIR}cube: $(OBJS2)
 	${BUILDING}
 	$(MKDIR_P)		$(dir $@)
-	$(OBJS2)
 	@$(CXX_HOST)  $(OBJS2) -o $@
 
 curve_grid_lsh: ##@build curve Lsh.
