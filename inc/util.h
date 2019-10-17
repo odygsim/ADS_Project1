@@ -1,4 +1,7 @@
 
+#ifndef ADS_PROJECT1_UTIL_H
+#define ADS_PROJECT1_UTIL_H
+
 #include <iostream>
 #include <cstdlib>
 #include <sstream>
@@ -305,3 +308,5 @@ int meanDistanceBetweenPoints(TD &data) {
 std::chrono::steady_clock::time_point initTime();
 
 double getElapsed(std::chrono::steady_clock::time_point start);
+
+#endif //ADS_PROJECT1_UTIL_H
