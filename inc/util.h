@@ -18,7 +18,10 @@
 #include <values.h>
 #include <chrono>
 
-int pow(int a, int b, int c);
+#define FIVEARY_CUTOFF 8
+#define lint long long int
+#define ll long long
+#define S second
 
 std::string getDatetime(bool);
 
@@ -119,9 +122,75 @@ void splitToPoint3(const std::string &s, char delimiter, CX &dataList, CY &label
     labelList.push_back(name);
 }
 
+bool scanDelimiter(const std::string &s, char &delimiter) {
+    std::string token;
+    std::istringstream tokenStream(s);
+    std::string name;
+
+    if (std::getline(tokenStream, token, delimiter) && !token.empty()) {
+        return token.size() <= 30;
+    }
+    return false;
+}
+
+template<class CX, class CY, class X, class Y>
+char
+splitFirstLine(const std::string &s, char &delimiter, CX &dataList, CY &labelList, double &radius, bool &isDouble) {
+    /**
+     * @brief Parses first line looking for format of file.
+     * @param s string to parse.
+     * @param dataList The object that the data will be stored.
+     * @param labelList The object that the labels will be stored.
+     * @return The fLabelList, fDataList, by parameter.
+     */
+    char delimiters[3] = {'\t', ',', ' '};
+    char delim;
+    int j = 0, i = 0;
+    X tokens;
+    std::string token;
+    std::istringstream tokenStream(s);
+    std::string name;
+    // Scan delimiter part.
+    if (delimiter != 0 && scanDelimiter(s, delimiter)) {
+        delim = delimiter;
+    } // given delimiter is right.
+    else {
+        for (j = 0; j < 3; ++j) { // scan delimiters
+            if (scanDelimiter(s, delimiters[j])) // if a right delimiter was found break
+                break;
+        }
+        if (j >= 3) {
+            std::cerr << getDatetime(false) << "\t\t\t\t" << "Could not find delimiter."
+                                                             "Please set delimiter one of {TAB,SPACE,COMMA}"
+                      << std::endl;
+            exit(-2);
+        }
+        delim = delimiters[j];
+    }
+    // end of scan delimiter
+    if (std::getline(tokenStream, token, delim) && !token.empty())              // try get radius
+    {
+        if (token[0] == 'R' && token[token.size() - 1] == ':') { // get radius
+            if (std::getline(tokenStream, token, delim) && !token.empty()) // get radius
+                radius = stod(token);
+        } else { // first part if not Radius:, is a label, so get a value to check for double.
+            if (std::getline(tokenStream, token, delim)) {
+                if (token.find('.') || token.find(','))
+                    isDouble = true;
+            }
+        }
+    }
+    if (isDouble) {
+
+    }
+    // radius scan end
+    dataList.push_back(tokens);
+    labelList.push_back(name);
+}
+
 template<class CX, class CY, class X, class Y>
 //data container , data labels
-bool readDataAndLabelsFromFile2(const std::string &fileName, CX &fDataList, CY &fLabelList) {
+bool readDataAndLabelsFromFile2(const std::string &fileName, CX &fDataList, CY &fLabelList, double radius = 0.0) {
     /**
      * @brief Read data and label to objects CX and CY accordingly.
      * @param fileName string filename to read.
@@ -131,7 +200,7 @@ bool readDataAndLabelsFromFile2(const std::string &fileName, CX &fDataList, CY &
      */
     std::ifstream file;
     std::string tmp;
-    char space = ' ';
+    char space = ' ', newlineUnix = '\n', newlineWindows = '\r';
 
     // Check filenames
     if (file.fail()) {
@@ -143,6 +212,16 @@ bool readDataAndLabelsFromFile2(const std::string &fileName, CX &fDataList, CY &
     if (!file) {
         std::cerr << "Unable to open file : " << fileName << std::endl;
         exit(1);
+    }
+    if (!file.eof()) {
+        // Do checks for Radius: , split character. which file i read..
+        getline(file, tmp, newlineUnix);
+        if (tmp[tmp.size() - 1] == newlineWindows)
+            tmp.erase(tmp.end() - 1); // remove /r
+        if (tmp[0] == 'R') // got radius must read it.
+
+            if (!tmp.empty())
+                splitToPoint3<CX, CY, X, Y>(tmp, space, fDataList, fLabelList);
     }
     // Iterate over input file and store each Point's dimension data in a vector
     while (!file.eof()) {
@@ -197,8 +276,8 @@ std::string calculateStats(std::list<double> &distanceListEA, std::list<double> 
 
 template<class Y, class D, class TY>
 std::tuple<std::string, std::string>
-unrollResult(std::list<std::tuple<double, std::list<std::tuple<Y, D>>>> & listExact,
-             std::list<std::tuple<double, std::list<std::tuple<Y, D>>>> & listAprox, TY & y) {
+unrollResult(std::list<std::tuple<double, std::list<std::tuple<Y, D>>>> &listExact,
+             std::list<std::tuple<double, std::list<std::tuple<Y, D>>>> &listAprox, TY &y) {
     /**
      * @brief Unroll the results of Approximate and Exact Algorithms and calculate some numbers for statistics.
      * @param listExaxt The list that contains objects of (timeValue, (label, distance)).
@@ -308,5 +387,17 @@ int meanDistanceBetweenPoints(TD &data) {
 std::chrono::steady_clock::time_point initTime();
 
 double getElapsed(std::chrono::steady_clock::time_point start);
+
+
+/// Test function for modulus exponentiation
+
+ll modular_pow(ll base, ll exponent, int modulus);
+
+int pow(int a, int b, int c);
+
+lint modex(lint base, lint exponent, lint mod);
+
+
+int power(int x, unsigned int y, int p);
 
 #endif //ADS_PROJECT1_UTIL_H

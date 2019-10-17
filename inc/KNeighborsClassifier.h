@@ -5,13 +5,6 @@
 #ifndef ADS_PROJECT1_KNEIGHBORSCLASSIFIER_H
 #define ADS_PROJECT1_KNEIGHBORSCLASSIFIER_H
 
-#include <string>
-#include <list>
-#include <utility>
-#include <vector>
-#include <iostream>
-#include <chrono>
-//#include "util.h"
 #include "LSH_HT.h"
 
 
@@ -75,18 +68,15 @@ std::list<std::tuple<Y, D>> ExactKNeighbors<TD, TID, D, TY, Y>::queryPoint(TID &
     listTuples labelDistanceList;
     IteratorListTuples iterListTuples;
     int j;
-
+    // Calculate distance from query point against all data.
     for (iteratorData = data.begin(), iteratorLabels = labels.begin();
          iteratorData != itDE; ++iteratorData, ++iteratorLabels) {
-        distanceList.push_back(std::make_pair(*iteratorLabels, f(*iteratorData, (x))));
+        distanceList.push_back(std::make_pair(*iteratorLabels, f(*iteratorData, (x)))); // Append distances to a list.
     }
-//    for (unsigned long i = 0; i < data.size(); ++i)
-//        distanceList.push_back(std::make_pair(labels[i], f(data[i], (x))));
-    distanceList.sort(TupleLess<1>()); // sort by neighbors
-    IteratorListTuples itS = distanceList.begin();
+    distanceList.sort(TupleLess<1>()); // sort distance list by neighbors
     IteratorListTuples itE = distanceList.end();
-    // Now append the nearest neighbors
-    for (j = 0, iterListTuples = itS; (j < this->n_neighbors) && (iterListTuples != itE); ++j, ++iterListTuples) {
+    // Now append the nearest neighbors to the return list
+    for (j = 0, iterListTuples = distanceList.begin(); (j < this->n_neighbors) && (iterListTuples != itE); ++j, ++iterListTuples) {
         labelDistanceList.push_back(*iterListTuples);
     }
 
@@ -142,7 +132,7 @@ void KNeighborsClassifier<A, TD, TID, D, TY, Y>::fit(TD &x, TY &y) {
     tyIt iteratorLabels; // Iterator on the list of strings
     data = x;
     labels = y;
-
+    // fit all data to alg algorithm's structure.
     for (iteratorData = data.begin(), iteratorLabels = labels.begin();
          iteratorData != itDE; ++iteratorData, ++iteratorLabels) {
         alg->addPoint(*iteratorData, *iteratorLabels); // Add a vector<int> and string
@@ -168,24 +158,23 @@ KNeighborsClassifier<A, TD, TID, D, TY, Y>::predictWithTimeAndDistance(TD &x) {
     typedef typename TD::iterator IteratorTD; // Iterator typedef on data
     typedef std::list<std::tuple<Y, D>> listTuples; // list of tuples <label,distances> , needed to calculcate neighbors
     typedef typename listTuples::iterator lTIt; // Iterator typedef on list of tuples
-
-    listTuples distanceList; // distanceList to store all neighbors
+    typedef std::chrono::steady_clock::time_point timePoint;
     typedef std::list<std::tuple<double, std::list<std::tuple<Y, D>>>> returnL; // typedef the return type because its big
+
+    timePoint start;
+    double elapsed;
+    listTuples distanceList; // distanceList to store all neighbors
     lTIt iteratorListTuples; // Iterator on list of tuples
     returnL returnList; // definition of return list
-    double elapsed;
 
     IteratorTD e1 = x.end();
     IteratorTD iteratorData;
     for (iteratorData = x.begin(); iteratorData != e1; ++iteratorData) {
         listTuples labelDistanceList; // every query has new labelDistanceList
-        // Start Time
-        std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+        start = initTime(); // Start Time
         labelDistanceList = alg->queryPoint(*iteratorData); // Query the point here send a vector<int>
-        std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-        elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() / 1000000.0;
-        // End Time
-        returnList.push_back(std::make_pair(elapsed, labelDistanceList));
+        elapsed = getElapsed(start); // End Time
+        returnList.push_back(std::make_pair(elapsed, labelDistanceList)); // Append to the return list the time and the distance list return by alg query method
     }
 
     return returnList;
@@ -209,36 +198,35 @@ runLSH(int id, std::string &iFileName, std::string &qFileName, std::string &outF
     typedef LSH<X, TX, Y> LSH_;
     typedef ExactKNeighbors<CX, X, TX, CY, Y> EKNN_;
     typedef chrono::steady_clock::time_point timePoint;
-//    list<tuple<double, list<tuple<Y, D>>>> A;
-//    list<tuple<double, list<tuple<Y, D>>>> E;
+    // these list are returned by predictWithTime method.
     std::list<std::tuple<double, std::list<std::tuple<Y, D>>>> A, E;
-//    resultList A;
-//    resultList E;
 
-    timePoint start;
-    timePoint AppStart = initTime();
-    int topLimit = topLimi * 4, dimension;
+    timePoint start; // start variable for each method execution.
+    timePoint AppStart = initTime(); // start variable for whole program.
+    int topLimit = topLimi, dimension;
     string newline = "\n", space = " ", metric_name = "manhattan", stats, result;
     tuple<string, string> results;
+    // declare train list, test train list, query list, test query list
     CX iDataList, qDataList, testIDataList, testQDataList;
     CY iLabelList, qLabelList, testILabelList, testQLabelList;
-    vector<double> timeList;
+    vector<double> timeList;                                    // This vector is used to store time values.
     string oFileName, output;
     ofstream oFile;
-
+    // Read Train data and query data.
     readDataAndLabelsFromFile2<CX, CY, X, Y>(iFileName, iDataList, iLabelList);
     readDataAndLabelsFromFile2<CX, CY, X, Y>(qFileName, qDataList, qLabelList);
-    typename CX::iterator iterData1;
+    typename CX::iterator iterData1; // some iterators
     typename CY::iterator iterLabel1;
     typename CX::iterator iterQData;
     typename CY::iterator iterQLabel;
 
-    dimension = iDataList.front().size();
+    dimension = iDataList.front().size(); // get dimension of data
+    // Initialize algorithms
     LSH_ *lsh = new LSH<X, TX, Y>(w, dimension, k, L, m, numNeighbors, topLimit, metric_name);
     auto *clLsh = new KNeighborsClassifier<LSH_ *, CX, X, TX, CY, Y>(numNeighbors, lsh);
     auto *eknn = new EKNN_(numNeighbors, metric_name);
     auto *clEknn = new KNeighborsClassifier<EKNN_ *, CX, X, TX, CY, Y>(numNeighbors, eknn);
-    /// Find r, for small input takes ~5min, and r ~= 1200
+    /// Uncomment next 2 lines if you want to get a w based on r. Find r, for small input takes ~5min, and r ~= 1200
 //    r = meanDisVtanceBetweenPoints<list<vector<int>>, vector<int>, int>(iDataList);
 //    w = 4*r;
 
@@ -272,11 +260,9 @@ runLSH(int id, std::string &iFileName, std::string &qFileName, std::string &outF
     A = clLsh->predictWithTimeAndDistance(qDataList);           // predict Approx knn
     timeList.push_back(getElapsed(start));                      // timestamp end
     /// Calculate results and stats also
-    results = unrollResult<Y, TX, CY> (E, A, qLabelList);
+    results = unrollResult<Y, TX, CY> (E, A, qLabelList);       // unroll the results and the stats to tuple strings.
     timeList.push_back(getElapsed(AppStart));                      // timestamp App End
 
-//    results = unrollResult(clEknn->predictWithTimeAndDistance(qDataList), clLsh->predictWithTimeAndDistance(qDataList),
-//                           qLabelList);
     // Write result, stats to according files
     string fields  = "AlgorithmName,id,datetime,L,w,m,k,topLimitLsh,numNeighbors,dimension,Accuracy,Time,iFileName,trainSize,fitExactTime,predictExactTime,fitApproxTime,predictApproxtime,AppTime\n";
     oFile.open("tests/lsh_results/test3/stats.csv", std::ios::out | std::ios::app);
@@ -303,50 +289,6 @@ runLSH(int id, std::string &iFileName, std::string &qFileName, std::string &outF
     delete clEknn;
     delete lsh;
     delete clLsh;
-//    for (vector<const Point *>::iterator it = iDataList.begin(); it != iDataList.end(); ++it) { delete *it; }
-//    for (vector<const Point *>::iterator it = qDataList.begin(); it != qDataList.end(); ++it) { delete *it; }
 }
-/************ Test Code ************/
-
-//template<class A, class TD, class TID, class D, class TY, class Y>
-/*Usually A:Algorithm to run class, TD: list<vector<int>>, TID: vector<int>, D: int, TY list<string>, Y string*/
-//std::list<std::list<Y>> KNeighborsClassifier<A, TD, TID, D, TY, Y>::predict(TD &x) {
-//    /* Classic Predict OUT OF SCOPE of this homework, return a list of labels */
-//
-//    typedef typename TD::iterator tdIt;
-//    typedef typename TY::iterator tyIt;
-//    typedef std::list<std::tuple<Y, D>> listTuples;
-//    typedef typename listTuples::iterator lTIt;
-//    listTuples distanceList;
-//    typedef std::list<std::list<Y>> returnL;
-//    lTIt it;
-//    returnL returnList;
-//    int j;
-//    tdIt itD;
-//    tdIt itDE = data.end();
-//    tyIt itY;
-//
-//    tdIt e1 = x.end();
-//    tdIt dItx;
-//    if (algorithm_name == "bruteforce") {
-//
-//        for (dItx = x.begin(); dItx != e1; ++dItx) {
-//            std::list<Y> labelList;
-//
-//            for (itD = data.begin(), itY = labels.begin(); itD != itDE; ++itD, ++itY)
-//                distanceList.push_back(std::make_pair(*itY, f(*itD, *dItx)));
-////                                                      manhattanDistance<int, std::vector<int>>(data[i]->getList(), (*dItx)->getList())));
-//            distanceList.sort(TupleLess<1>());
-//            lTIt itS = distanceList.begin();
-//            lTIt itE = distanceList.end();
-//            for (j = 0, it = itS; (j < this->n_neighbors) && (it != itE); ++j, ++it) {
-//                labelList.push_back(std::get<0>(*it));
-//            }
-//            returnList.push_back(labelList);
-//        }
-//    }
-//
-//    return returnList;
-//}
 
 #endif //ADS_PROJECT1_KNEIGHBORSCLASSIFIER_H

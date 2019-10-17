@@ -1,12 +1,12 @@
 //
 // Created by user on 10/12/19.
 //
-#include <string>
-#include <vector>
 
 #ifndef ADS_PROJECT1_POINT_H
 #define ADS_PROJECT1_POINT_H
 
+#include <string>
+#include <vector>
 
 class Point {
     std::string name;

@@ -242,6 +242,7 @@ void LSH<TID, D, Y>::addPoint(TID &x, Y &y) {
      * @param y The second object with label.
      * @return void.
      */
+     std:: cout << "LSH: Adding Point " << y << std::endl;
     for (auto ht : htList) {
         ht->addPoint(x, y);
     }
