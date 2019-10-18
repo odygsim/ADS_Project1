@@ -262,7 +262,7 @@ std::string calculateStats(std::list<double> &distanceListEA, std::list<double> 
 template<class Y, class D, class TY>
 std::tuple<std::string, std::string> unrollResult(std::list<std::tuple<double, std::list<std::tuple<Y, D>>>> &listExact,
                                                   std::list<std::tuple<double, std::list<std::tuple<Y, D>>>> &listAprox,
-                                                  TY &y) {
+                                                  TY &y, const std::string algName = "LSH") {
     /**
      * @brief Unroll the results of Approximate and Exact Algorithms and calculate some numbers for statistics.
      * @param listExaxt The list that contains objects of (timeValue, (label, distance)).
@@ -284,6 +284,8 @@ std::tuple<std::string, std::string> unrollResult(std::list<std::tuple<double, s
     std::list<double> maxDistanceAdivE;
     double timeA, questionA, questionB;
     D distanceA, distanceE;
+    std::string timeApproxName = "t" + algName + ": ";
+    std::string distanceApproxName = "t" + algName + ": ";
 
 
     for (itY = y.begin(), itListEx = listExact.begin(), itListAp = listAprox.begin(); (itY !=
@@ -297,7 +299,7 @@ std::tuple<std::string, std::string> unrollResult(std::list<std::tuple<double, s
         distanceE = std::get<1>(curLE.front());
         distanceA = std::get<1>(curLA.front());
         maxDistanceAdivE.push_back(distanceA / distanceE);
-        result += "distanceLSH: " + std::to_string(distanceA) + delim;
+        result += distanceApproxName; result += std::to_string(distanceA) + delim;
         result += "distanceTrue: " + std::to_string(distanceE) + delim;
 ////            sprintf(str, "%.2f", result->getDistance());   // these are commented in case
                                                                /// we need the double with less digits.
@@ -306,7 +308,7 @@ std::tuple<std::string, std::string> unrollResult(std::list<std::tuple<double, s
 ////            output += a + space;// std::to_string(result->getDistance()) + "\n";
         timeA = std::get<0>(*itListAp);
         meanTimeA.push_back(timeA);
-        result += "tLSH: " + std::to_string(timeA) + delim;
+        result += timeApproxName; result += std::to_string(timeA) + delim;
         result += "tTrue: " + std::to_string(std::get<0>(*itListEx)) + delim;
         if (curLA.size() > 1) {
             result += "R-near neighbors:\n";
