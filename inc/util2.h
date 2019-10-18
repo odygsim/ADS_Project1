@@ -18,7 +18,7 @@ int set_int_bit_value(int num, int pos, int bitValue);
 
 int readDataAndLabelsFromFile(std::string rFile, std::list<std::vector<int>>  &iDataList, std::list<std::string> &iLabelList);
 
-unsigned int truemod(long a, long b);
+unsigned int trueMod(long a, long b);
 
 unsigned int calcModOfNumberInPower(long num, int power, long modulator,  std::vector<unsigned int> &modArray);
 

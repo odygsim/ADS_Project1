@@ -36,7 +36,7 @@ int readDataAndLabelsFromFile(std::string rFile, std::list<std::vector<int>>  &f
     return 0;
 }
 
-unsigned int truemod(long a, long b){
+unsigned int trueMod(long a, long b){
 
     long res;
     res = ( (a % b) + b ) % b;
@@ -47,12 +47,17 @@ unsigned int truemod(long a, long b){
 unsigned int calcModOfNumberInPower(long num, int power, long modulator,  std::vector<unsigned int> &modArray){
 
     long iRes, currRes;
-
-    iRes = truemod(num, modulator);
+    // Add mod for m^0
+    modArray.push_back(1);
+    // Calc mod for m^1
+    iRes = trueMod(num, modulator);
+    // Keep as current
     currRes = iRes;
+    // Add mod for m^1
     modArray.push_back(iRes);
     for(int i=1; i<power; i++){
-        currRes = truemod(currRes * iRes, modulator);
+        // Calc and add mod for m^(i+1)
+        currRes = trueMod(currRes * iRes, modulator);
         modArray.push_back(currRes);
     }
 
