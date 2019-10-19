@@ -418,6 +418,7 @@ lint modex(lint base, lint exponent, lint mod);
 
 
 int power(int x, unsigned int y, int p);
+
 //def getAccuracy(testSet, predictions):
 //correct = 0
 //for x in range(len(testSet)):
@@ -435,6 +436,14 @@ std::list<unsigned  int> find_path(const unsigned char *path , int  m, int n);
 template <typename CurveX, typename PointX, typename PrimitiveType>
 std::tuple<double, std::list<std::tuple<int,int>>> dtw(CurveX & a, CurveX & b, PrimitiveType (*f) (PointX &, PointX &))
 {
+    /**
+     * @brief Calculates dtw distance between 2 curves/lines and the path.
+     * @param a First curve to compare.
+     * @param b Second curve to compare.
+     * @param f The metric method tha will be used to calculate distances.
+     * @return A tuple of {double, list({int,int})} that are distance, path points i,j in a list.
+     */
+
     using namespace std;
     const int m = a.size() ;
     const int n = b.size() ;
@@ -463,43 +472,9 @@ std::tuple<double, std::list<std::tuple<int,int>>> dtw(CurveX & a, CurveX & b, P
         i = get<1>(DTW[i][j]);                  // Get i
         j = get<2>(DTW[i][j]);                  // get j
     }
-
+        // get total distance, path and return them.
 return  {get<0>(DTW[m-1][n-1]), Path};
 
 }
-/**
-def __dtw(x, y, window, dist):
-    len_x, len_y = len(x), len(y)
-    if window is None:
-        window = [(i, j) for i in range(len_x) for j in range(len_y)]
-    window = ((i + 1, j + 1) for i, j in window)
-    D = defaultdict(lambda: (float('inf'),))
-    D[0, 0] = (0, 0, 0)
-    for i, j in window:
-        dt = dist(x[i-1], y[j-1])
-        D[i, j] = min((D[i-1, j][0]+dt, i-1, j), (D[i, j-1][0]+dt, i, j-1),
-                      (D[i-1, j-1][0]+dt, i-1, j-1), key=lambda a: a[0])
-    path = []
-    i, j = len_x, len_y
-    while not (i == j == 0):
-        path.append((i-1, j-1))
-        i, j = D[i, j][1], D[i, j][2]
-    path.reverse()
-    return (D[len_x, len_y][0], path)
-	*/
-
-
-//        def is200(a, b):
-//# 200m, haversine returns km
-//# lat = lat2 - lat1
-//# lng = lng2 - lng1
-//# d = sin(lat * 0.5) ** 2 + cos(lat1) * cos(lat2) * sin(lng * 0.5) ** 2
-//# h = 2 * AVG_EARTH_RADIUS * asin(sqrt(d))
-//#     return h  # in kilometers
-//return haversine(a, b) < 0.200
-
-
-//# End of dtw #
-//##################################
 
 #endif //ADS_PROJECT1_UTIL_H
