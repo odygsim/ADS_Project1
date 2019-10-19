@@ -355,3 +355,31 @@ void scanRadius(const std::string &s, double &radius, char &delimiter) {
         }
     }
 }
+
+std::list<unsigned  int> find_path(unsigned char *path , int  m, int n){
+    /**
+     * @brief Creates a path from given array.
+     * @param path  A 2D array with the path.
+     * @param m rows
+     * @param n cols
+     */
+    std::list<unsigned  int> path_in;
+    unsigned char U = 0;
+    unsigned char D = 1;
+    unsigned char L = 2;
+
+    while (m > 0 && n > 0) {
+        if (path[m*n + n] == U)
+            m--;
+        else if (path[m*n +  n] == D) {
+//            node1.total_points += 1;
+//# insert in a list the pos of the step
+            path_in.push_front(m);
+            n--;
+            m--;
+        } else if (path[m*n + n] == L)
+            n--;
+    }
+
+    return path_in;
+}

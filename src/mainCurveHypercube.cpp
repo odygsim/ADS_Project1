@@ -14,11 +14,12 @@ void runCurveGridHypercube(int id, std::string &iFileName, std::string &qFileNam
      */
 
     using namespace std;
-    typedef vector<tuple<double, double>> X;
+    typedef vector<double> PointX;
+    typedef vector<PointX> X; // X is a Curve
     typedef list<X> CX;
     typedef list<string> CY;
     typedef string Y;
-//    typedef double TX;
+    typedef double TX;
 //    typedef LSH<X, TX, Y> LSH_;
 //    typedef ExactKNeighbors<CX, X, TX, CY, Y> EKNN_;
     typedef chrono::steady_clock::time_point timePoint;
@@ -38,8 +39,9 @@ void runCurveGridHypercube(int id, std::string &iFileName, std::string &qFileNam
     ofstream oFile;
     // Read Train data and query data.
     start = initTime();                                         // timestamp start
-    readTrajectories<CX, CY, X, Y>(iFileName, iDataList, iLabelList);
-    readTrajectories<CX, CY, X, Y>(qFileName, qDataList, qLabelList);
+    readTrajectories<CX, CY, X, TX>(iFileName, iDataList, iLabelList);
+    readTrajectories<CX, CY, X, TX>(qFileName, qDataList, qLabelList);
+    list< unsigned int> path = LCS<X, PointX, TX>(iDataList.front(), qDataList.front(), &manhattanDistance<TX, vector<TX>>);
     cout << "Time to read files : " << getElapsed(start) << " list Sizes " << iDataList.size() << " " << iLabelList.size() << " " << qDataList.size()<< endl;
     exit(1);
     typename CX::iterator iterData1; // some iterators
@@ -118,7 +120,7 @@ void runCurveGridHypercube(int id, std::string &iFileName, std::string &qFileNam
 //    delete clLsh;
 }
 
-int imain(int argc, char **argv) {
+int main(int argc, char **argv) {
     using namespace std;
 
     int L1, k1, L = 5, k = 4, w = 5000, numNeighbors = 1, topLimit =
@@ -130,7 +132,7 @@ int imain(int argc, char **argv) {
     string oFileName, iFileName, qFileName, output;
 
     //Read args
-    if (argc != 13) {
+    if (argc != 15) {
         fprintf(stderr, "Usage : %s -d <input file> -q <query file> -k <int> -L <int> -o <output file>\n", argv[0]);
         return 1;
     }

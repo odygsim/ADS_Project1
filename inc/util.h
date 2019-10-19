@@ -111,7 +111,7 @@ void splitToPoint3(const std::string &s, char delimiter, CX &dataList, CY &label
 }
 
 
-template<class CX, class CY, class X, class Y>
+template<class CX, class CY, class X, class PrimitiveType>
 void splitToCurve(char *str, CX &dataList, CY &labelList) {
     /**
      * @brief Parse data and label to objects CX and CY accordingly.
@@ -134,12 +134,20 @@ void splitToCurve(char *str, CX &dataList, CY &labelList) {
     sscanf(str, "%s\t%d\t", name, &tokens_size);
     tokenC = strtok(++found, LP); // done need it
     sscanf(tokenC, "%lf, %lf", &x, &y);
-    tokens.push_back(std::make_pair(x, y));
+    std::vector<PrimitiveType> token;
+    token.push_back(x);
+    token.push_back(y);
+    token.clear();
+    tokens.push_back(token);
     tokens.reserve(tokens_size);
     while (tokenC != NULL && tokenC[0] != '\n') {
         tokenC = strtok(NULL, LP);
         sscanf(tokenC, " (%lf, %lf", &x, &y);
-        tokens.push_back(std::make_pair(x, y));
+//        std::vector<X> token;
+        token.push_back(x);
+        token.push_back(y);
+        tokens.push_back(token);
+        token.clear();
     }
     dataList.push_back(tokens);
     labelList.push_back(std::string(name));
@@ -155,9 +163,10 @@ void readTrajectories(const std::string &filename, CX &dataList, CY &labelList) 
      *
      */
     FILE *fp = fopen(filename.c_str(), "r");
-    if (fp == NULL)
+    if (fp == NULL){
+        std::cerr << "File: " + filename +  " was not found.\n";
         exit(EXIT_FAILURE);
-
+    }
     char *line = NULL;
     size_t len = 0;
     while ((getline(&line, &len, fp)) != -1) {
@@ -387,5 +396,97 @@ lint modex(lint base, lint exponent, lint mod);
 
 
 int power(int x, unsigned int y, int p);
+//def getAccuracy(testSet, predictions):
+//correct = 0
+//for x in range(len(testSet)):
+//if testSet[x][0] is predictions[x]:
+//correct += 1
+//return (correct / float(len(testSet))) * 100.0
+
+
+std::list<unsigned  int> find_path(unsigned char *path , int  m, int n);
+/**
+ *
+ * @tparam X  is a vector<double> the point Type.
+ */
+
+template <typename CurveX, typename PointX, typename PrimitiveType>
+std::list<unsigned  int> LCS(CurveX & a, CurveX & b, PrimitiveType (*f) (PointX &, PointX &))
+{
+    unsigned char U = 0;
+    unsigned char D = 1;
+    unsigned char L = 2;
+    const int m = a.size() + 1;
+    const int n = b.size() + 1;
+    // Alloc 2-d array.
+//            (i*n + j)  // dereference array
+    int * ArrayValues = new int [m*n]; // The array m * n that hold the values calculated.
+    unsigned char * ArrayLabels = new unsigned char [m*n]; // The Array that will hold the path.
+    //Init 2-d array
+    for (int i = 0; i < m; i++) {
+        for (int j = 0; i < n; j++) {
+            ArrayLabels[i * n + j] = 0;
+            ArrayValues[i * n + j] = 0;
+        }
+    }
+
+    for (int i = 1; i < m; ++i) {                   // For all rows
+        for (int j = 1; j < n; ++j) {               // For all columns
+            if ( f(a[i - 1], b[j - 1]) == 0) {      // if distance is 0 from point to point.
+
+                ArrayValues[i*n + j] = ArrayValues[(i - 1)*n + j - 1] + 1; // go down
+                ArrayLabels[i*n + j] = D;
+            }
+            else if (ArrayValues[(i - 1)*n + j] >= ArrayValues[i *n  + j - 1]){
+                ArrayValues[i*n + j] = ArrayValues[(i - 1)*n +  j]; // go up
+                ArrayLabels[i*n + j] = U;
+            }
+            else{
+            ArrayValues[i*n + j] = ArrayValues[i*n + j - 1]; // go left
+            ArrayLabels[i*n + j] = L;
+            }
+        }
+    }
+    std::list<unsigned  int> returnList = find_path(ArrayLabels, m-1, n-1);
+    delete [] ArrayLabels;
+    delete [] ArrayValues;
+
+return  returnList;
+
+}
+/**
+def __dtw(x, y, window, dist):
+    len_x, len_y = len(x), len(y)
+    if window is None:
+        window = [(i, j) for i in range(len_x) for j in range(len_y)]
+    window = ((i + 1, j + 1) for i, j in window)
+    D = defaultdict(lambda: (float('inf'),))
+    D[0, 0] = (0, 0, 0)
+    for i, j in window:
+        dt = dist(x[i-1], y[j-1])
+        D[i, j] = min((D[i-1, j][0]+dt, i-1, j), (D[i, j-1][0]+dt, i, j-1),
+                      (D[i-1, j-1][0]+dt, i-1, j-1), key=lambda a: a[0])
+    path = []
+    i, j = len_x, len_y
+    while not (i == j == 0):
+        path.append((i-1, j-1))
+        i, j = D[i, j][1], D[i, j][2]
+    path.reverse()
+    return (D[len_x, len_y][0], path)
+	*/
+
+
+//        def is200(a, b):
+//# 200m, haversine returns km
+//# lat = lat2 - lat1
+//# lng = lng2 - lng1
+//# d = sin(lat * 0.5) ** 2 + cos(lat1) * cos(lat2) * sin(lng * 0.5) ** 2
+//# h = 2 * AVG_EARTH_RADIUS * asin(sqrt(d))
+//#     return h  # in kilometers
+//return haversine(a, b) < 0.200
+
+
+//# End of LCS #
+//##################################
 
 #endif //ADS_PROJECT1_UTIL_H
