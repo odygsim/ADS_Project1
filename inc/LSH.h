@@ -18,7 +18,7 @@ template<class TID, class D, class Y>
 class LSH {
     int L, radius, topLimit;                // L is the number of hash tables, radius the number of neighbors to return.
     // topLimit is the number of max points to search in bucket of each hash table.
-    std::string metric_name = "manhattan";  // the metric name to init the function that will calc distance.
+    std::string metric_name = "manhattan", name = "LSH";  // the metric name to init the function that will calc distance.
     std::list<LSH_HT<TID, Y> *> htList;    // The list that will store the L hash tables.
 
     D (*f)(TID &, TID &); /* This is the function Pointer to selected metric its declaration is here
@@ -30,6 +30,8 @@ public:
     LSH(int w, int d, int m, int radius, int topLimit, std::string); // Constructor 2.
 
     ~LSH() { for (auto ht : htList) delete ht; }; // Destructor.
+
+    std::string getName() const {return name;}
 
     void addPoint(TID &x, Y &y);  // Add point to structure.
 
@@ -100,7 +102,7 @@ void LSH<TID, D, Y>::addPoint(TID &x, Y &y) {
      * @param y The second object with label.
      * @return void.
      */
-    std::cout << "LSH: Adding Point " << y << std::endl ;
+//    std::cout << "LSH: Adding Point " << y << std::endl ;
     for (auto ht : htList) {
         ht->addPoint(x, y);
     }

@@ -20,27 +20,18 @@ template<class TID, class Y>
 /*Usually TID: vector<int>, Y string*/
 class LSH_HT {
     int w, k, d, m, radius, topLimit;
-//    std::unordered_map<int, const Point *> ht;
-    std::unordered_multimap<int, std::tuple<Y, TID> > ht; // The type of hash table that will be created.
+    std::unordered_multimap<unsigned int, std::tuple<Y &, TID &> > ht; // The type of hash table that will be created.
     std::list<FunctionH<TID> *> hList;               // The list that will store the L hash tables.
 
-    int calculateG(TID &);
-
-//    int calculateG(const Point * p) ;
+    unsigned int calculateG(TID &);
 
 public:
     LSH_HT(int w, int d, int, int, int, int);
 
-//    LSH_HT<TD, D, TY, Y>::LSH_HT(int w, int d, int k = 4, int r=1000):w(w),k(k),d(d),r(r)
     ~LSH_HT();
 
     void addPoint(TID &, Y &); // Add a Vector of int with its label
-    std::list<std::tuple<Y, TID>> getPoint(TID &);
-
-//    void addPoint(const Point *) ;
-//    void LSH_HT<TD, D, TY, Y>::addPoint(D, Y);
-//    std::list<const Point *> getPoint(const Point *, int, int);
-    /* Return a list of tuples <string, vector<int>> */
+    std::list<std::tuple<Y &, TID &>> getPoint(TID &);
 
 };
 
@@ -88,25 +79,23 @@ void LSH_HT<TID, Y>::addPoint(TID &x, Y &y) {
      * @param y The second object with label.
      * @return void.
      */
-    std::tuple<Y, TID> result(y, x);
-//    /*Add Point to the hashtable */ ht[calculateG(x)] = result;
-    /*Add Point to the hashtable */ ht.insert(
-            std::pair<int, std::tuple<Y, TID>>(calculateG(x), result));//[calculateG(x)] = result;
+    std::tuple<Y &, TID &> result(y, x);
+    /*Add Point to the hashtable */ ht.insert(std::pair<int, std::tuple<Y &, TID &>>(calculateG(x), result));
 }
 
 template<class TID, class Y>
 /*Usually TID: vector<int>, Y string*/
-std::list<std::tuple<Y, TID>> LSH_HT<TID, Y>::getPoint(TID &x) {
+std::list<std::tuple<Y &, TID & >> LSH_HT<TID, Y>::getPoint(TID &x) {
     /**
      * @brief Get a point from this ht.
      * @param x The object with data that the query will be executed.
      * @return A newly-constructed list, containing tuples<label,objectData>. objectData = (vector<int>)
      */
 
-    std::list<std::tuple<Y, TID>> dataList;
+    std::list<std::tuple<Y &, TID & >> dataList;
     /* Gather radius values from calculated g Key and return them in a list */
     // Create a type of hashTable <int, tuple<label,vector<x>>
-    typedef typename std::unordered_multimap<int, std::tuple<Y, TID>>::iterator umapIt;
+    typedef typename std::unordered_multimap<unsigned int, std::tuple<Y &, TID &>>::iterator umapIt;
     int g = 0, i;
     int limit = radius * topLimit; // multiply because if we want 5 neighbors we should get 5*topLimit
 
@@ -125,26 +114,23 @@ std::list<std::tuple<Y, TID>> LSH_HT<TID, Y>::getPoint(TID &x) {
 
 template<class TID, class Y>
 /*Usually TID: vector<int>, Y string*/
-int LSH_HT<TID, Y>::calculateG(TID &x) {
+unsigned int LSH_HT<TID, Y>::calculateG(TID &x) {
     /**
      * @brief Calculate the g hash value of given object.
      * @param x The object with data that the hash function g will be calculated.
      * @return int number the value of hash_function g.
      */
     /* Calculate the g from the k Hi */
-    std::vector<int> hValues;
-    int g = 0;
+    std::vector<unsigned int> hValues;
+    unsigned int g = 0;
     //Calculate the values of each h
     for (auto h: hList) {
         hValues.push_back(h->calculatePoint(x));
     }
     g = hValues[0];
-    std::cout << hValues[0] << "| ";
     for (int i = 1; i < k; ++i) {
-        std::cout << hValues[i] << "| ";
         g = (g << k) | hValues[i]; //concatenate the k bits of all Hi
     }
-    std::cout << " = " << g << "\n";
     return g;
 }
 

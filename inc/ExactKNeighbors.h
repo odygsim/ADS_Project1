@@ -13,7 +13,7 @@ template<class TD, class TID, class D, class TY, class Y>
 class ExactKNeighbors {
     /* This class is used as an algorithm for exact NN and has 2 methods addPoint, QueryPoint */
     int n_neighbors;            // Number of Neighbors to search.
-    std::string metric_name;    // metric that will be used.
+    std::string metric_name, name = "ENN";    // metric that will be used.
     TD data;                    // object that will store the data
     TY labels;                  // object that will store the labels
 
@@ -25,7 +25,7 @@ public:
         if (metric_name == "manhattan")     /* definition of the metric depending */
             f = &manhattanDistance<D, TID>;  /* on the metric_name argument passed to the constructor*/
     }
-
+    std::string getName() const {return name;}
     void addPoint(TID &, Y &); // Add a Vector of int with its label
     std::list<std::tuple<Y, D>> queryPoint(TID &x); // Query a Point it return a list of tuples (label, distance)
 };

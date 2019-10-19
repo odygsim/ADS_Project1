@@ -1,6 +1,7 @@
 // This file will be the main of lsh
 #include "../inc/KNeighborsClassifier.h"
-
+//#include<future>
+//#include <thread>
 template<typename D>
 void
 runLSH(int id, std::string &iFileName, std::string &qFileName, std::string &outFile, int L = 5, int k = 4, int w = 5000,
@@ -93,8 +94,12 @@ runLSH(int id, std::string &iFileName, std::string &qFileName, std::string &outF
 int main(int argc, char **argv) {
     using namespace std;
 
-    int L = 5, k = 4, w = 1000, numNeighbors = 1, topLimit =
-            4 * L, r = 0, dimension = 0, m = 0 ;// INT32_MAX - 5;
+//    std::cout << "Number of threads = "
+//              <<  std::thread::hardware_concurrency() << std::endl;
+//    return 0;
+
+    int L = 5, k = 4, w = 3000, numNeighbors = 1, topLimit =
+            3 * L, r = 0, dimension = 0, m =  INT32_MAX - 5;
     int id = 0;
     char *pEnd;
     const char *arg;

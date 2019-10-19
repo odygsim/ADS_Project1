@@ -14,10 +14,12 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include <pthread.h>
 #include <getopt.h>
 #include <values.h>
 #include <chrono>
 #include <cstring>
+#include <assert.h>
 //#include "Point.h"
 
 #define __STDC_WANT_LIB_EXT1__ 1
@@ -285,7 +287,7 @@ std::tuple<std::string, std::string> unrollResult(std::list<std::tuple<double, s
     double timeA, questionA, questionB;
     D distanceA, distanceE;
     std::string timeApproxName = "t" + algName + ": ";
-    std::string distanceApproxName = "t" + algName + ": ";
+    std::string distanceApproxName = "distance" + algName + ": ";
 
 
     for (itY = y.begin(), itListEx = listExact.begin(), itListAp = listAprox.begin(); (itY !=
@@ -293,7 +295,7 @@ std::tuple<std::string, std::string> unrollResult(std::list<std::tuple<double, s
 // Get for each tuple second arg the list of points
         listTuples curLE = std::get<1>(*itListEx);
         listTuples curLA = std::get<1>(*itListAp);
-
+        assert(!curLA.empty());
         result += "Query: " + *(itY) + delim;
         result += "Nearest neighbor: " + std::get<0>(curLA.front()) + delim;
         distanceE = std::get<1>(curLE.front());
