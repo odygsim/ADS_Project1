@@ -20,6 +20,8 @@
 #include <chrono>
 #include <cstring>
 #include <assert.h>
+#include <algorithm>
+#include <unordered_map>
 //#include "Point.h"
 
 #define __STDC_WANT_LIB_EXT1__ 1
@@ -65,6 +67,26 @@ RT manhattanDistance(DT &point1, DT &point2) {
     return sum;
 }
 
+template<typename RT, typename DT>
+RT euclideanDistance(DT &point1, DT &point2) {
+    /**
+     * @brief calculates l1 distance from given vectors/lists.
+     * @point1 An object that has a point with a big dimension.
+     * @point2 An object that has a point with a big dimension.
+     * @return the sum of l1 distance.
+     */
+    RT sum = 0;
+
+    typename DT::iterator e1 = point1.end();
+    typename DT::iterator e2 = point2.end();
+    typename DT::iterator it1;
+    typename DT::iterator it2;
+    for (it1 = point1.begin(), it2 = point2.begin(); (it1 != e1) && (it2 != e2); ++it1, ++it2) {
+        sum += (*it1-*it2)*(*it1 - *it2);
+    }
+
+    return sqrt(sum);
+}
 
 template<class X, class Y>
 std::tuple<Y, X> splitToPoint2(const std::string &s, char delimiter) {
@@ -137,8 +159,8 @@ void splitToCurve(char *str, CX &dataList, CY &labelList) {
     std::vector<PrimitiveType> token;
     token.push_back(x);
     token.push_back(y);
-    token.clear();
     tokens.push_back(token);
+    token.clear();
     tokens.reserve(tokens_size);
     while (tokenC != NULL && tokenC[0] != '\n') {
         tokenC = strtok(NULL, LP);
@@ -404,54 +426,45 @@ int power(int x, unsigned int y, int p);
 //return (correct / float(len(testSet))) * 100.0
 
 
-std::list<unsigned  int> find_path(unsigned char *path , int  m, int n);
+std::list<unsigned  int> find_path(const unsigned char *path , int  m, int n);
 /**
  *
  * @tparam X  is a vector<double> the point Type.
  */
 
 template <typename CurveX, typename PointX, typename PrimitiveType>
-std::list<unsigned  int> LCS(CurveX & a, CurveX & b, PrimitiveType (*f) (PointX &, PointX &))
+std::tuple<double, std::list<std::tuple<int,int>>> dtw(CurveX & a, CurveX & b, PrimitiveType (*f) (PointX &, PointX &))
 {
-    unsigned char U = 0;
-    unsigned char D = 1;
-    unsigned char L = 2;
-    const int m = a.size() + 1;
-    const int n = b.size() + 1;
+    using namespace std;
+    const int m = a.size() ;
+    const int n = b.size() ;
+    double distance;
+    typedef tuple<double, int, int> TUP; // The Array keeps a tuple of { currentCost, i Position, j Position}
+    list<tuple<int, int>> Path;         // The Path is return in a list of tuples {i,j}
+    int i, j;
     // Alloc 2-d array.
-//            (i*n + j)  // dereference array
-    int * ArrayValues = new int [m*n]; // The array m * n that hold the values calculated.
-    unsigned char * ArrayLabels = new unsigned char [m*n]; // The Array that will hold the path.
-    //Init 2-d array
-    for (int i = 0; i < m; i++) {
-        for (int j = 0; i < n; j++) {
-            ArrayLabels[i * n + j] = 0;
-            ArrayValues[i * n + j] = 0;
+    vector<vector<TUP>> DTW(m, vector<TUP> (n, {MAXDOUBLE, 0, 0})); // The array m * n that hold the values calculated.
+
+    DTW[0][0] = {0,0,0};                         // init 0 position with 0, the start pos.
+    for (i = 1; i < m; ++i) {                   // For all rows
+        for (j = 1; j < n; ++j) {               // For all columns
+            distance = f(a[i - 1], b[j - 1]);         // Calculate Distance from point to point.
+            // Add to a vector the 3 neighbors (i-1, j), (i, j-1) , (i-1,j-1) to sort them by cost.
+            vector< TUP > TempVector{ {get<0>(DTW[i-1][j])+distance,i-1,j}, {get<0>(DTW[i][j-1])+distance,i,j-1},
+                                      {get<0>(DTW[i-1][j-1])+distance,i-1,j-1}};
+            sort(begin(TempVector), end(TempVector), TupleLess<0>());
+              DTW[i][j] = TempVector[0];
+              TempVector.clear();
         }
     }
-
-    for (int i = 1; i < m; ++i) {                   // For all rows
-        for (int j = 1; j < n; ++j) {               // For all columns
-            if ( f(a[i - 1], b[j - 1]) == 0) {      // if distance is 0 from point to point.
-
-                ArrayValues[i*n + j] = ArrayValues[(i - 1)*n + j - 1] + 1; // go down
-                ArrayLabels[i*n + j] = D;
-            }
-            else if (ArrayValues[(i - 1)*n + j] >= ArrayValues[i *n  + j - 1]){
-                ArrayValues[i*n + j] = ArrayValues[(i - 1)*n +  j]; // go up
-                ArrayLabels[i*n + j] = U;
-            }
-            else{
-            ArrayValues[i*n + j] = ArrayValues[i*n + j - 1]; // go left
-            ArrayLabels[i*n + j] = L;
-            }
-        }
+    i = m-1 , j = n-1 ;
+    while (i > 0 && j > 0) {
+        Path.push_front({i-1,j-1});
+        i = get<1>(DTW[i][j]);                  // Get i
+        j = get<2>(DTW[i][j]);                  // get j
     }
-    std::list<unsigned  int> returnList = find_path(ArrayLabels, m-1, n-1);
-    delete [] ArrayLabels;
-    delete [] ArrayValues;
 
-return  returnList;
+return  {get<0>(DTW[m-1][n-1]), Path};
 
 }
 /**
@@ -486,7 +499,7 @@ def __dtw(x, y, window, dist):
 //return haversine(a, b) < 0.200
 
 
-//# End of LCS #
+//# End of dtw #
 //##################################
 
 #endif //ADS_PROJECT1_UTIL_H

@@ -20,6 +20,7 @@ void runCurveGridHypercube(int id, std::string &iFileName, std::string &qFileNam
     typedef list<string> CY;
     typedef string Y;
     typedef double TX;
+    tuple<double, list<tuple<int,int>>>  CostAndPath;
 //    typedef LSH<X, TX, Y> LSH_;
 //    typedef ExactKNeighbors<CX, X, TX, CY, Y> EKNN_;
     typedef chrono::steady_clock::time_point timePoint;
@@ -41,8 +42,14 @@ void runCurveGridHypercube(int id, std::string &iFileName, std::string &qFileNam
     start = initTime();                                         // timestamp start
     readTrajectories<CX, CY, X, TX>(iFileName, iDataList, iLabelList);
     readTrajectories<CX, CY, X, TX>(qFileName, qDataList, qLabelList);
-    list< unsigned int> path = LCS<X, PointX, TX>(iDataList.front(), qDataList.front(), &manhattanDistance<TX, vector<TX>>);
+    iDataList.pop_front();
+    CostAndPath = dtw<X, PointX, TX>(iDataList.front(), qDataList.front(), &euclideanDistance<TX, vector<TX>>);
     cout << "Time to read files : " << getElapsed(start) << " list Sizes " << iDataList.size() << " " << iLabelList.size() << " " << qDataList.size()<< endl;
+    cout << "Distance of first Points: " << get<0>(CostAndPath) << " and Path:\n";
+    for(auto item : get<1>(CostAndPath)){
+        cout << "( " << get<0>(item) << ", " << get<1>(item) << "), ";
+    }
+    cout << endl;
     exit(1);
     typename CX::iterator iterData1; // some iterators
     typename CY::iterator iterLabel1;
@@ -136,7 +143,8 @@ int main(int argc, char **argv) {
         fprintf(stderr, "Usage : %s -d <input file> -q <query file> -k <int> -L <int> -o <output file>\n", argv[0]);
         return 1;
     }
-    while (--argc && argc > 6) {
+   // -d tests/sample_datasets/trajectories_dataset -q tests/sample_datasets/trajectories_test1 -k_hypercube 4 -probes 5 -M 5 -L_grid 6 -o tests/traj_output1.txt
+    while (--argc && argc > 8) {
         arg = *++argv;
         if (arg == NULL) break;
         if (!strcmp(arg, "-o")) {
