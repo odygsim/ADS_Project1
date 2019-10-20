@@ -82,6 +82,24 @@ RT euclideanDistance(DT &point1, DT &point2) {
     return sqrt(sum);
 }
 
+template<typename RT, typename DT>
+RT lpNorm(DT &point1, DT &point2, unsigned int p=1) {
+    /**
+     * @brief calculates lp distance from given vectors/lists.
+     * @point1 An object that has a point with a big dimension.
+     * @point2 An object that has a point with a big dimension.
+     * @return the sum of lp distance.
+     */
+    RT sum = 0;
+    typename DT::iterator e1 = point1.end(), e2 = point2.end(), it1, it2;
+
+    for (it1 = point1.begin(), it2 = point2.begin(); (it1 != e1) && (it2 != e2); ++it1, ++it2) {
+        sum += powl(abs(*it1-*it2), p);
+    }
+
+    return (RT) powl(sum, 1.0/p);
+}
+
 template<class X, class Y>
 std::tuple<Y, X> splitToPoint2(const std::string &s, char delimiter) {
     X tokens;
@@ -404,7 +422,7 @@ double getElapsed(std::chrono::steady_clock::time_point start);
  * @tparam PointX  is a vector<double> the point Type.
  */
 template <typename CurveX, typename PointX, typename PrimitiveType>
-std::tuple<double, std::list<std::tuple<int,int>>> dtw(CurveX & a, CurveX & b, PrimitiveType (*f) (PointX &, PointX &))
+std::tuple<double, std::list<std::tuple<int,int>>> dtw(CurveX & a, CurveX & b, unsigned int p = 2)
 {
     /**
      * @brief Calculates dtw distance between 2 curves/lines and the path.
@@ -416,23 +434,30 @@ std::tuple<double, std::list<std::tuple<int,int>>> dtw(CurveX & a, CurveX & b, P
 
     using namespace std;
     int i, j;
-    const int m = a.size() , n = b.size() ;
+    const int n = a.size() , m = b.size() ;
     double distance;
+    PrimitiveType (*f) (PointX &, PointX &, unsigned int) = &lpNorm<PrimitiveType,PointX>; //method for distance calculation
     typedef tuple<double, int, int> TUP; // The Array keeps a tuple of { currentCost, i Position, j Position}
     list<tuple<int, int>> Path;         // The Path is return in a list of tuples {i,j}
     // Alloc 2-d array.
-    vector<vector<TUP>> DTW(m, vector<TUP> (n, {MAXDOUBLE, 0, 0})); // The array m * n that hold the values calculated.
+    vector<vector<TUP>> DTW(n, vector<TUP> (m, {MAXDOUBLE, 0, 0})); // The array m * n that hold the values calculated.
 
     DTW[0][0] = {0,0,0};                         // init 0 position with 0, the start pos.
-    for (i = 1; i < m; ++i) {                   // For all rows
-        for (j = 1; j < n; ++j) {               // For all columns
-            distance = f(a[i - 1], b[j - 1]);         // Calculate Distance from point to point.
+    for (i = 1; i < n; ++i) {                   // For all rows
+        for (j = 1; j < m; ++j) {               // For all columns
+            DTW[i][j] = {0,0,0};
+        }
+    }
+
+    for (i = 1; i < n; ++i) {                   // For all rows
+        for (j = 1; j < m; ++j) {               // For all columns
+            distance = f(a[i - 1], b[j - 1], 2);         // Calculate euclidean Distance from point to point.
             // Add to a vector the 3 neighbors (i-1, j), (i, j-1) , (i-1,j-1) to sort them by cost.
-            vector< TUP > TempVector{ {get<0>(DTW[i-1][j])+distance,i-1,j}, {get<0>(DTW[i][j-1])+distance,i,j-1},
-                                      {get<0>(DTW[i-1][j-1])+distance,i-1,j-1}};
-            sort(begin(TempVector), end(TempVector), TupleLess<0>());
-              DTW[i][j] = TempVector[0];
-              TempVector.clear();
+            list< TUP > TempList{{get<0>(DTW[i - 1][j]) + distance, i - 1, j}, {get<0>(DTW[i][j - 1]) + distance, i, j - 1},
+                                 {get<0>(DTW[i-1][j-1])+distance,i-1,j-1}};
+            TempList.sort(TupleLess<0>());
+              DTW[i][j] = TempList.front();
+              TempList.clear();
         }
     }
     i = m-1 , j = n-1 ;
@@ -443,6 +468,62 @@ std::tuple<double, std::list<std::tuple<int,int>>> dtw(CurveX & a, CurveX & b, P
     }
         // get total distance, path and return them.
 return  {get<0>(DTW[m-1][n-1]), Path};
+
+}
+
+
+/**
+ *
+ * @tparam PointX  is a vector<double> the point Type.
+ */
+template <typename CurveX, typename PointX, typename PrimitiveType>
+std::tuple<double, std::list<std::tuple<int,int>>> dtwWindow(CurveX & a, CurveX & b, int w = 3, unsigned int p = 2)
+{
+    /**
+     * @brief Calculates dtw distance between 2 curves/lines and the path.
+     * @param a First curve to compare.
+     * @param b Second curve to compare.
+     * @param f The metric method tha will be used to calculate distances.
+     * @return A tuple of {double, list({int,int})} that are distance, path points i,j in a list.
+     */
+
+    using namespace std;
+    int i, j;
+    const int n = a.size() , m = b.size() ;
+    double distance;
+    typedef tuple<double, int, int> TUP; // The Array keeps a tuple of { currentCost, i Position, j Position}
+    PrimitiveType (*f) (PointX &, PointX &, unsigned int) = &lpNorm<PrimitiveType,PointX>;
+    list<tuple<int, int>> Path;         // The Path is return in a list of tuples {i,j}
+    w = max(w,abs(n-m));  // adapt window size (*)
+    // Alloc 2-d array.
+    vector<vector<TUP>> DTW(n, vector<TUP> (m, {MAXDOUBLE, 0, 0})); // The array m * n that hold the values calculated.
+
+    DTW[0][0] = {0,0,0};                         // init 0 position with 0, the start pos.
+    for (i = 1; i < n; ++i) {                   // For all rows
+        for (j = max(1, i-w); j < min(m,i+w); ++j) {               // For all columns
+            DTW[i][j] = {0,0,0};
+        }
+    }
+
+    for (i = 1; i < n; ++i) {                   // For all rows
+        for (j =max(1, i-w); j < min(m,i+w); ++j) {               // For all columns
+            distance = f(a[i - 1], b[j - 1], p);         // Calculate Distance from point to point.
+            // Add to a vector the 3 neighbors (i-1, j), (i, j-1) , (i-1,j-1) to sort them by cost.
+            vector< TUP > TempVector{ {get<0>(DTW[i-1][j])+distance,i-1,j}, {get<0>(DTW[i][j-1])+distance,i,j-1},
+                                      {get<0>(DTW[i-1][j-1])+distance,i-1,j-1}};
+            sort(begin(TempVector), end(TempVector), TupleLess<0>());
+            DTW[i][j] = TempVector[0];
+            TempVector.clear();
+        }
+    }
+    i = m-1 , j = n-1 ;
+    while (i > 0 && j > 0) {
+        Path.push_front({i-1,j-1});
+        i = get<1>(DTW[i][j]);                  // Get i
+        j = get<2>(DTW[i][j]);                  // get j
+    }
+    // get total distance, path and return them.
+    return  {get<0>(DTW[m-1][n-1]), Path};
 
 }
 
