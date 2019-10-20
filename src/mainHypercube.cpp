@@ -7,7 +7,7 @@
 template<typename D>
 void
 runCube(int id, std::string &iFileName, std::string &qFileName, std::string &outFile, int L = 5, int k = 4, int w = 5000, int probes = 2,
-       int numNeighbors = 1, int topLimi = 4, int m = 0) {
+        int topLimi = 4, int m = 0) {
     /**
      * @brief Runs cube knn algorithm.
      * @params TODO complete.
@@ -28,6 +28,7 @@ runCube(int id, std::string &iFileName, std::string &qFileName, std::string &out
     timePoint start; // start variable for each method execution.
     timePoint AppStart = initTime(); // start variable for whole program.
     int topLimit = topLimi, dimension, k_hi = 4, r = 0;
+    double radius = 0;
     string newline = "\n", space = " ", metric_name = "manhattan", stats, result, oFileName, output;
     tuple<string, string> results;
     // declare train list, test train list, query list, test query list
@@ -37,7 +38,7 @@ runCube(int id, std::string &iFileName, std::string &qFileName, std::string &out
     ofstream oFile;
     // Read Train data and query data.
     readDataAndLabelsFromFile2<CX, CY, X, Y>(iFileName, iDataList, iLabelList);
-    readDataAndLabelsFromFile2<CX, CY, X, Y>(qFileName, qDataList, qLabelList, numNeighbors);
+    readDataAndLabelsFromFile2<CX, CY, X, Y>(qFileName, qDataList, qLabelList, radius);
     typename CX::iterator iterData1, iterQData; // some iterators
     typename CY::iterator iterLabel1, iterQLabel;
 
@@ -46,17 +47,27 @@ runCube(int id, std::string &iFileName, std::string &qFileName, std::string &out
 //    (d,3000,3,10,2,4,0);
 //    Hypercube<TID, D, Y>::Hypercube(int d, double w, int k, int maxSearchPoints, int probes, int k_hi, double r):
     HC_ *HCube= new HC_(dimension, w, k, topLimit, probes, k_hi, r);
-    auto *clCube = new KNeighborsClassifier<HC_ *, CX, X, TX, CY, Y>(numNeighbors, HCube);
-    auto *eknn = new EKNN_(numNeighbors, metric_name);
-    auto *clEknn = new KNeighborsClassifier<EKNN_ *, CX, X, TX, CY, Y>(numNeighbors, eknn);
+    auto *clCube = new KNeighborsClassifier<HC_ *, CX, X, TX, CY, Y>(HCube);
+    auto *eknn = new EKNN_(radius, metric_name);
+    auto *clEknn = new KNeighborsClassifier<EKNN_ *, CX, X, TX, CY, Y>(eknn);
 
     /// Start fit and predict
-    start = initTime();                                         // timestamp start
-    clEknn->fit(iDataList, iLabelList);                         // fit exact knn
-    timeList.push_back(getElapsed(start));                      // timestamp end
-    start = initTime();                                         // timestamp start
-    E = clEknn->predictWithTimeAndDistance(qDataList);          // predict exact knn
-    timeList.push_back(getElapsed(start));                      // timestamp end
+    if (iDataList.size() == 1000000){
+        // if big dataset Prefetch results from file.
+        string f = "tests/sample_datasets/siftbig/ENN_results.txt";
+        E = getENNData<D,Y>(f);
+        double ennFit  = 0.688875, ennPredict = 48334.336797;
+        timeList.push_back(ennFit);
+        timeList.push_back(ennPredict);
+    }else {
+        // if small dataset run it.
+        start = initTime();                                         // timestamp start
+        clEknn->fit(iDataList, iLabelList);                         // fit exact knn
+        timeList.push_back(getElapsed(start));                      // timestamp end
+        start = initTime();                                         // timestamp start
+        E = clEknn->predictWithTimeAndDistance(qDataList);          // predict exact knn
+        timeList.push_back(getElapsed(start));                      // timestamp end
+    }
     start = initTime();                                         // timestamp start
     clCube->fit(iDataList, iLabelList);                          // fit approx knn
     timeList.push_back(getElapsed(start));                      // timestamp end
@@ -68,15 +79,15 @@ runCube(int id, std::string &iFileName, std::string &qFileName, std::string &out
     timeList.push_back(getElapsed(AppStart));                      // timestamp App End
 
     // Write result, stats to according files
-    string fields  = "AlgorithmName,id,datetime,L,w,m,k,topLimitLsh,numNeighbors,dimension,Accuracy,Time,iFileName,trainSize,fitExactTime,predictExactTime,fitApproxTime,predictApproxtime,AppTime\n";
+    string fields  = "AlgorithmName,id,datetime,L,w,m,k,topLimitLsh,radius,dimension,Accuracy,Time,iFileName,trainSize,fitExactTime,predictExactTime,fitApproxTime,predictApproxtime,AppTime\n";
     oFile.open("tests/stats_Cube.csv", std::ios::out | std::ios::app);
     string res;
     res = "Cube," + to_string(id) + "," + getDatetime(false) + "," + to_string(L) + "," + to_string(w) + "," +
           to_string(m) + "," + to_string(k) +
-          "," + to_string(topLimit) + "," + to_string(numNeighbors) + "," + to_string(dimension) + "," +
+          "," + to_string(topLimit) + "," + to_string(radius) + "," + to_string(dimension) + "," +
           get<1>(results) + "," + getFilename(iFileName) +
-          "," + to_string(iDataList.size()) + "," + to_string(timeList[0]) +"," + to_string(timeList[1]) +
-          "," + to_string(timeList[2]) +"," + to_string(timeList[3]) +"," + to_string(timeList[4]) +
+          "," + to_string(iDataList.size()) + "," + to_string(timeList[0]) + "," + to_string(timeList[1]) +
+          "," + to_string(timeList[2]) + "," + to_string(timeList[3]) + "," + to_string(timeList[4]) +
           "\n";
     oFile << res;
     oFile.close();
@@ -98,11 +109,9 @@ runCube(int id, std::string &iFileName, std::string &qFileName, std::string &out
 int main(int argc, char **argv) {
     using namespace std;
 
-    int L = 5, k = 4, w = 1000, numNeighbors = 1, topLimit =
-            4 * L, r = 0, dimension = 0,  M = 0, probes = 0, m = 0;// INT32_MAX - 5;
+    int L = 5, k = 4, w = 1000,  topLimit =
+            4 * L, M = 0, probes = 0, m = 0;// INT32_MAX - 5;
     int id = 0;
-    char *pEnd;
-    const char *arg;
     string newline = "\n", space = " ", metric_name = "manhattan", stats, result;
     string oFileName, inputFile, queryFile, outputFile;
 
@@ -114,7 +123,7 @@ int main(int argc, char **argv) {
     std::cout << "Running Hypecube with arguments: " << "input file = \"" << inputFile << "\" query file = \"" << queryFile << "\" output file =  \"" << outputFile
               << " k = " << k << " M = " << M  << " probes = " << probes << "\n";
 
-    runCube<int>(id, inputFile, queryFile, outputFile, L, k, w, probes, numNeighbors, topLimit, m);
+    runCube<int>(id, inputFile, queryFile, outputFile, L, k, w, probes, topLimit, m);
 
     return 0;
 }

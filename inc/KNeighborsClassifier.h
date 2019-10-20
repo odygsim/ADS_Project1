@@ -16,13 +16,12 @@
 template<class A, class TD, class TID, class D, class TY, class Y>
 /*Usually A:Algorithm to run class, TD: list<vector<int>>, TID: vector<int>, D: int, TY list<string>, Y string*/
 class KNeighborsClassifier {
-    int n_neighbors;
     A alg;
-    int dataSize;
+//    int dataSize;
 
 public:
 
-    KNeighborsClassifier(int n_neighbors, A &alg) : n_neighbors(n_neighbors), alg(alg) {
+    KNeighborsClassifier(A &alg) : alg(alg) {
         /**
          * @brief Constructor of this object.
          * @param n_neighbors The integer with the number of max neighbors to search.
@@ -55,9 +54,9 @@ void KNeighborsClassifier<A, TD, TID, D, TY, Y>::fit(TD &x, TY &y) {
     tdIt iteratorData; // Init Iterator on list of vectors
     tdIt itDE = x.end(); // end of data iterator
     tyIt iteratorLabels; // Iterator on the list of strings
-    dataSize = x.size();
+//    dataSize = x.size();
 //    assert(alg->getName());
-    std::string cl = alg->getName();
+//    std::string cl = alg->getName();
 
     // fit all data to alg algorithm's structure.
     for (iteratorData = x.begin(), i = 0, iteratorLabels = y.begin();
@@ -91,9 +90,10 @@ KNeighborsClassifier<A, TD, TID, D, TY, Y>::predictWithTimeAndDistance(TD &x) {
 
     timePoint start;
 //    assert(alg->getName());
-    std::string cl = alg->getName();
+//    std::string cl = alg->getName();
     double elapsed;
     int i ;
+//    int qDataSize = x.size();
     listTuples distanceList; // distanceList to store all neighbors
     lTIt iteratorListTuples; // Iterator on list of tuples
     returnL returnList; // definition of return list
@@ -102,7 +102,7 @@ KNeighborsClassifier<A, TD, TID, D, TY, Y>::predictWithTimeAndDistance(TD &x) {
     IteratorTD iteratorData;
     for (iteratorData = x.begin(), i = 0 ; iteratorData != e1; ++iteratorData, i++) {
         listTuples labelDistanceList; // every query has new labelDistanceList
-//        std:: cout << getDatetime(false) << "\t\t\t\tQuery data of " << cl << " : " << i << "/" << dataSize << std::endl;
+//        std:: cout << getDatetime(false) << "\t\t\t\tQuery data of " << cl << " : " << i << "/" << qDataSize << std::endl;
         start = initTime(); // Start Time
 //        auto future = std::async(std::launch::async, [this, iteratorData](){ return this->alg->queryPoint(*iteratorData);});
 //        labelDistanceList = future.get();

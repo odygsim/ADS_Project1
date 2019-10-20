@@ -21,8 +21,6 @@ class FunctionH {
     void initialize();
 
 public:
-    // Calculates h(x) old version
-    int calculatePoint_old(const TID &x);
     // Calculates h(x)
     unsigned int calculatePoint(const TID &x);
     // Ai factors calculation
@@ -32,7 +30,7 @@ public:
     // Calculate final h
     unsigned int h_calculation(TID x);
 
-    FunctionH(unsigned int w, unsigned int d, unsigned int k);
+    FunctionH(unsigned int w, unsigned int d=0, unsigned int k=4);
 
     FunctionH(unsigned int w, unsigned int d, unsigned int k, int m);
 
@@ -80,52 +78,6 @@ FunctionH<TID>::FunctionH(unsigned int w, unsigned int d, unsigned int k, int m)
     initialize();
 }
 
-template<class TID>
-/* TID : usually vector<int> */
-int FunctionH<TID>::calculatePoint_old(const TID &x) {
-    /**
-     * @brief Calculate the hi hash value of given object.
-     * @param x The object with data that the hash function will be calculated.
-     * @return int number the value of hash_function hi.
-     */
-    std::vector<int> A;
-    int h = 0, maxA = INT32_MIN, di = 0;
-
-    // Calculate ai integers
-    A.reserve(d); //reserve size for ai
-    double test;
-    double testA;
-    for (int i = 0; i < d; ++i) {
-        test = x[i] - S[i];     // xi - si
-        testA = (test / w);     // (xi - si) / w
-        A.push_back(floor(testA)); // add the floor integer
-        if (A[i] > maxA) maxA = A[i];
-    }
-    if (m == 0) { m = maxA + 3; } // m > maxAi }
-    // declare iterators
-    typename TID::iterator itS = A.begin();
-    typename TID::iterator itE = --A.end();
-    typename TID::iterator iterAi;
-
-    int t1, t2, t3, t4, mm = INT32_MAX - 5, t11, t12, t13, t14, h2 = 0;
-    // Calculate sum (ai d1-1 * m^d0 +....+ ) % M , if m = big prime => lower it by modulo.
-    for (di = 0, iterAi = itE; (di < d) && (iterAi != itS); --iterAi, di++) {
-        // if m = big prime => lower it by modulo.
-        if (m == mm){
-            t1 = power(m, di, M);     // (m^di)% M
-        }  // else m is max ai + 3
-        else {
-            t1 = pow(m, di);        // m^di
-        }
-        // calculate  ai * m^di
-        t3 = (*iterAi) * t1;
-        // add each calculated component to sum.
-        h += t3;
-    }
-    h = power(h, 1, M);
-
-    return h;
-}
 
 template<class TID>
 /* TID : usually vector<int> */

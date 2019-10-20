@@ -56,10 +56,7 @@ RT manhattanDistance(DT &point1, DT &point2) {
      */
     RT sum = 0;
 
-    typename DT::iterator e1 = point1.end();
-    typename DT::iterator e2 = point2.end();
-    typename DT::iterator it1;
-    typename DT::iterator it2;
+    typename DT::iterator e1 = point1.end(), e2 = point2.end(), it1, it2;
     for (it1 = point1.begin(), it2 = point2.begin(); (it1 != e1) && (it2 != e2); ++it1, ++it2) {
         sum += abs(*it1 - *it2);
     }
@@ -77,10 +74,7 @@ RT euclideanDistance(DT &point1, DT &point2) {
      */
     RT sum = 0;
 
-    typename DT::iterator e1 = point1.end();
-    typename DT::iterator e2 = point2.end();
-    typename DT::iterator it1;
-    typename DT::iterator it2;
+    typename DT::iterator e1 = point1.end(), e2 = point2.end(), it1, it2;
     for (it1 = point1.begin(), it2 = point2.begin(); (it1 != e1) && (it2 != e2); ++it1, ++it2) {
         sum += (*it1-*it2)*(*it1 - *it2);
     }
@@ -290,7 +284,7 @@ readHypercubeParameters(int argc, char **argv, std::string &inputFile, std::stri
                         int &k, int &M, int &probes);
 
 
-std::string calculateStats(std::list<double> &distanceListEA, std::list<double> &timeListE);
+std::string calculateStats(std::list<double> &distanceListEA, std::list<double> &timeListE, double & accuracy);
 
 template<class Y, class D, class TY>
 std::tuple<std::string, std::string> unrollResult(std::list<std::tuple<double, std::list<std::tuple<Y, D>>>> &listExact,
@@ -306,16 +300,11 @@ std::tuple<std::string, std::string> unrollResult(std::list<std::tuple<double, s
     typedef std::list<std::tuple<double, std::list<std::tuple<Y, D>>>> Ltl;
     typedef std::list<std::tuple<Y, D>> listTuples;
     std::string result, stats, delim = " ";
-//    typedef std::list<std::tuple<double, std::list<Y, D>>> Ltl;
-    typename TY::iterator yE = y.end();
-    typename Ltl::iterator lE1 = listExact.end();
-    typename Ltl::iterator lE2 = listAprox.end();
-    typename TY::iterator itY;
-    typename Ltl::iterator itListEx;
-    typename Ltl::iterator itListAp;
-    std::list<double> meanTimeA;
-    std::list<double> maxDistanceAdivE;
-    double timeA, questionA, questionB;
+    typename TY::iterator yE = y.end(), itY;
+    typename Ltl::iterator lE1 = listExact.end(), lE2 = listAprox.end(), itListEx, itListAp;
+    std::list<double> meanTimeA, maxDistanceAdivE;
+    int correct = 0;
+    double timeA, accuracy;
     D distanceA, distanceE;
     std::string timeApproxName = "t" + algName + ": ";
     std::string distanceApproxName = "distance" + algName + ": ";
@@ -331,6 +320,7 @@ std::tuple<std::string, std::string> unrollResult(std::list<std::tuple<double, s
         result += "Nearest neighbor: " + std::get<0>(curLA.front()) + delim;
         distanceE = std::get<1>(curLE.front());
         distanceA = std::get<1>(curLA.front());
+        if (distanceA == distanceE) correct++;
         maxDistanceAdivE.push_back(distanceA / distanceE);
         result += distanceApproxName; result += std::to_string(distanceA) + delim;
         result += "distanceTrue: " + std::to_string(distanceE) + delim;
@@ -352,7 +342,10 @@ std::tuple<std::string, std::string> unrollResult(std::list<std::tuple<double, s
         }
         result += "\n";
     }
-    stats = calculateStats(maxDistanceAdivE, meanTimeA);
+
+    accuracy = (double)correct/y.size();
+
+    stats = calculateStats(maxDistanceAdivE, meanTimeA, accuracy);
 
     std::cout << result << std::endl;
     std::cout << stats << std::endl;
@@ -378,9 +371,8 @@ int meanDistanceBetweenPoints(TD &data) {
     int sum = 0, i = 0, size = data.size();
     double elapsed = 0;
     typedef typename TD::iterator tdIt; // Iterator on the list of vectors
-    tdIt iteratorData; // Init Iterator on list of vectors
-    tdIt iteratorDataJ; // Init Iterator on list of vectors
-    tdIt itDE = data.end(); // end of data iterator
+    // Init Iterator on list of vectors, Init Iterator on list of vectors, end of data iterator
+    tdIt iteratorData, iteratorDataJ, itDE = data.end();
     for (iteratorData = data.begin(); iteratorData != itDE; ++iteratorData) {
         std::cout << getDatetime(false) + "\t\t\t\tChecking point: " << i << "/" << size << std::endl;
         std::list<D> distanceList;
@@ -407,32 +399,10 @@ std::chrono::steady_clock::time_point initTime();
 
 double getElapsed(std::chrono::steady_clock::time_point start);
 
-
-/// Test function for modulus exponentiation
-
-ll modular_pow(ll base, ll exponent, int modulus);
-
-int pow(int a, int b, int c);
-
-lint modex(lint base, lint exponent, lint mod);
-
-
-int power(int x, unsigned int y, int p);
-
-//def getAccuracy(testSet, predictions):
-//correct = 0
-//for x in range(len(testSet)):
-//if testSet[x][0] is predictions[x]:
-//correct += 1
-//return (correct / float(len(testSet))) * 100.0
-
-
-std::list<unsigned  int> find_path(const unsigned char *path , int  m, int n);
 /**
  *
- * @tparam X  is a vector<double> the point Type.
+ * @tparam PointX  is a vector<double> the point Type.
  */
-
 template <typename CurveX, typename PointX, typename PrimitiveType>
 std::tuple<double, std::list<std::tuple<int,int>>> dtw(CurveX & a, CurveX & b, PrimitiveType (*f) (PointX &, PointX &))
 {
@@ -445,12 +415,11 @@ std::tuple<double, std::list<std::tuple<int,int>>> dtw(CurveX & a, CurveX & b, P
      */
 
     using namespace std;
-    const int m = a.size() ;
-    const int n = b.size() ;
+    int i, j;
+    const int m = a.size() , n = b.size() ;
     double distance;
     typedef tuple<double, int, int> TUP; // The Array keeps a tuple of { currentCost, i Position, j Position}
     list<tuple<int, int>> Path;         // The Path is return in a list of tuples {i,j}
-    int i, j;
     // Alloc 2-d array.
     vector<vector<TUP>> DTW(m, vector<TUP> (n, {MAXDOUBLE, 0, 0})); // The array m * n that hold the values calculated.
 
@@ -475,6 +444,85 @@ std::tuple<double, std::list<std::tuple<int,int>>> dtw(CurveX & a, CurveX & b, P
         // get total distance, path and return them.
 return  {get<0>(DTW[m-1][n-1]), Path};
 
+}
+
+template<class D, class Y >
+/*Usually A:Algorithm to run class, TD: list<vector<int>>, TID: vector<int>, D: int, TY list<string>, Y string*/
+std::list<std::tuple<double, std::list<std::tuple<Y, D>>>>
+getENNData(std::string & filename) {
+    /**
+     * @brief This method parses a file with results of eknn on big data(13h running)
+     *        to compare it with approximate nn (lsh, hypercube).
+     * @param filename The filename to parse.
+     * @return A newly-constructed list of tuples (timeValue, list(tuple<label, distance>))
+     *
+     * Each record of tuple is (timeValue, list(tuple(label,distanceValue))
+     * because each query has a time value and K neighbors, so will have a list of these tuples
+     * and for all queries a list of of tuples(time, listOfNeighbors)
+     *
+     */
+    typedef std::list<std::tuple<Y, D>> listTuples; // list of tuples <label,distances> , needed to calculcate neighbors
+    typedef typename listTuples::iterator lTIt; // Iterator typedef on list of tuples
+    typedef std::list<std::tuple<double, std::list<std::tuple<Y, D>>>> returnL; // typedef the return type because its big
+
+    std::ifstream file;
+    std::string tmp;
+    char delim = ' ', newlineUnix = '\n', newlineWindows = '\r';
+    double time = 0;
+    D distance;
+    std::string name;
+
+    int i;
+    listTuples distanceList; // distanceList to store all neighbors
+    lTIt iteratorListTuples; // Iterator on list of tuples
+    returnL returnList; // definition of return list
+
+    std::string token;
+
+
+    // Check filenames
+    if (file.fail()) {
+        std::cerr << "Error: Wrong filename / notFound" << std::endl;
+        exit(1);
+    }
+    // Test if file can be opened
+    file.open(filename);
+    if (!file) {
+        std::cerr << "Unable to open file : " << filename << std::endl;
+        exit(1);
+    }
+    // Iterate over input file and store each Point's dimension data in a vector
+    while (!file.eof()) {
+        // parse file
+        getline(file, tmp, newlineUnix);
+        if (!tmp.empty()) {
+            if (tmp[tmp.size() - 1] == newlineWindows)
+                tmp.erase(tmp.end() - 1); // remove /r
+
+            std::istringstream tokenStream(tmp);
+            i = 0;
+            // parse line
+            while (std::getline(tokenStream, token, ' ') && !token.empty()) {
+                switch (i) {
+                    case 1:
+                        name = token; // get query name
+                        break;
+                    case 8:
+                        distance = stoi(token); // get True distance
+                    case 12:
+                        time = stod(token);  // get true time
+                    default:
+                        break;
+                }
+                i++;
+            }
+            listTuples labelDistanceList; labelDistanceList.push_back ({name,distance}); // every query has new labelDistanceList
+
+            returnList.push_back({time, labelDistanceList}); // Append to the return list the time and the distance list return by alg query method
+        }
+    }
+    file.close();
+    return returnList;
 }
 
 #endif //ADS_PROJECT1_UTIL_H

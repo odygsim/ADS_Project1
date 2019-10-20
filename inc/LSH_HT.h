@@ -19,14 +19,15 @@
 template<class TID, class Y>
 /*Usually TID: vector<int>, Y string*/
 class LSH_HT {
-    int w, k, d, m, radius, topLimit;
+    int w, k, d, m, topLimit;
+    double radius;
     std::unordered_multimap<unsigned int, std::tuple<Y &, TID &> > ht; // The type of hash table that will be created.
     std::list<FunctionH<TID> *> hList;               // The list that will store the L hash tables.
 
     unsigned int calculateG(TID &);
 
 public:
-    LSH_HT(int w, int d, int, int, int, int);
+    LSH_HT(int w, int d, int k, int m, double radius, int topLimit);
 
     ~LSH_HT();
 
@@ -38,7 +39,7 @@ public:
 /************* LSH_HT Methods Definitions *********************/
 template<class TID, class Y>
 /*Usually TID: vector<int>, Y string*/
-LSH_HT<TID, Y>::LSH_HT(int w, int d, int k, int m, int radius, int topLimit):w(w), k(k), d(d), m(m), radius(radius),
+LSH_HT<TID, Y>::LSH_HT(int w, int d, int k, int m, double radius, int topLimit):w(w), k(k), d(d), m(m), radius(radius),
                                                                              topLimit(topLimit) {
 
     /**
@@ -62,9 +63,7 @@ template<class TID, class Y>
 LSH_HT<TID, Y>::~LSH_HT() {
     /* Destructor of lsh hashTable */
     typedef typename std::list<FunctionH<TID> *>::iterator functionHit;
-    functionHit itS = hList.begin();
-    functionHit itE = hList.end();
-    functionHit it;
+    functionHit itS = hList.begin(), itE = hList.end(), it;
     for (it = itS; it != itE; ++it) {
         delete *it;
     }
@@ -80,7 +79,7 @@ void LSH_HT<TID, Y>::addPoint(TID &x, Y &y) {
      * @return void.
      */
     std::tuple<Y &, TID &> result(y, x);
-    /*Add Point to the hashtable */ ht.insert(std::pair<int, std::tuple<Y &, TID &>>(calculateG(x), result));
+    ht.insert({calculateG(x), result}); /*Add Point to the hashtable */
 }
 
 template<class TID, class Y>
@@ -97,7 +96,7 @@ std::list<std::tuple<Y &, TID & >> LSH_HT<TID, Y>::getPoint(TID &x) {
     // Create a type of hashTable <int, tuple<label,vector<x>>
     typedef typename std::unordered_multimap<unsigned int, std::tuple<Y &, TID &>>::iterator umapIt;
     int g = 0, i;
-    int limit = radius * topLimit; // multiply because if we want 5 neighbors we should get 5*topLimit
+    int limit = topLimit; // multiply because if we want 5 neighbors we should get 5*topLimit
 
     g = calculateG(x);
     // It returns a pair representing the range of elements with key equal to g
