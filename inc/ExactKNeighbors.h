@@ -17,15 +17,21 @@ class ExactKNeighbors {
     TD data;                    // object that will store the data
     TY labels;                  // object that will store the labels
 
-    D (*f)(TID &, TID &); /* This is the function Pointer to selected metric its declaration is here
-                     * and the definition an initialization*/
+    D (*f)(TID &, TID &); /* This is the function Pointer to selected metric its declaration is here */
+
 public:
+//    ExactKNeighbors(double radius, D (*f1) (TID &, TID &)):radius(radius), f1(f1) { }
+
     ExactKNeighbors(double radius, std::string metric) : radius(radius), metric_name(metric) {
         /* Constructor and initialization */
         if (metric_name == "manhattan")     /* definition of the metric depending */
-            f = &manhattanDistance<D, TID>;  /* on the metric_name argument passed to the constructor*/
+            f = &manhattanDistance<D, TID>;
+        else if (metric_name == "euclidean")     /* definition of the metric depending */
+            f = &euclideanDistance<D, TID>;
     }
-    std::string getName() const {return name;}
+
+    std::string getName() const { return name; }
+
     void addPoint(TID &, Y &); // Add a Vector of int with its label
     std::list<std::tuple<Y, D>> queryPoint(TID &x); // Query a Point it return a list of tuples (label, distance)
 };
@@ -75,12 +81,12 @@ std::list<std::tuple<Y, D>> ExactKNeighbors<TD, TID, D, TY, Y>::queryPoint(TID &
     distanceList.sort(TupleLess<1>()); // sort distance list by neighbors
     IteratorListTuples itE = distanceList.end();
     // Now append the nearest neighbors to the return list
-    if ((radius) > 0){
-        for (iterListTuples = distanceList.begin(); (iterListTuples != itE) && (radius < std::get<1>(*iterListTuples)); ++iterListTuples) {
+    if ((radius) > 0) {
+        for (iterListTuples = distanceList.begin();
+             (iterListTuples != itE) && (radius < std::get<1>(*iterListTuples)); ++iterListTuples) {
             labelDistanceList.push_back(*iterListTuples);
         }
-    }
-    else{
+    } else {
         labelDistanceList.push_back(distanceList.front());
     }
 

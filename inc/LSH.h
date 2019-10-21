@@ -26,11 +26,12 @@ class LSH {
                      * and the definition an initialization*/
 
 public:
-    LSH(int d, int w = 6000,int k = 4, int L = 5, int m = 0 , double radius = 0, int top_limit = 0, std::string metric_name = "manhattan"); // Constructor 1.
+    LSH(int d, int w = 6000, int k = 4, int L = 5, int m = 0, double radius = 0, int top_limit = 0,
+        std::string metric_name = "manhattan"); // Constructor 1.
 
     ~LSH() { for (auto ht : htList) delete ht; }; // Destructor.
 
-    std::string getName() const {return name;}
+    std::string getName() const { return name; }
 
     void addPoint(TID &x, Y &y);  // Add point to structure.
 
@@ -41,11 +42,11 @@ public:
 template<class TID, class D, class Y>
 /*Usually TID: vector<int>, D: int, Y string*/
 LSH<TID, D, Y>::LSH(int d, int w, int k, int L, int m, double radius, int top_limit, std::string metric_name):L(L),
-                                                                                                           radius(radius),
-                                                                                                           topLimit(
-                                                                                                                   top_limit),
-                                                                                                           metric_name(
-                                                                                                                   metric_name) {
+                                                                                                              radius(radius),
+                                                                                                              topLimit(
+                                                                                                                      top_limit),
+                                                                                                              metric_name(
+                                                                                                                      metric_name) {
     /**
      * @brief Constructor of this object.
      * @param w The Value of w.
@@ -60,15 +61,16 @@ LSH<TID, D, Y>::LSH(int d, int w, int k, int L, int m, double radius, int top_li
      */
 
     if (metric_name == "manhattan")     /* definition of the metric depending */
-        f = &manhattanDistance<D, TID>;  /* on the metric_name argument passed to the constructor*/
-        // check if topLimit has been given.
-    if(topLimit == 0 ) topLimit = 3*L;
+        f = &manhattanDistance<D, TID>;
+    else if (metric_name == "euclidean")     /* definition of the metric depending */
+        f = &euclideanDistance<D, TID>;
+    // check if topLimit has been given.
+    if (topLimit == 0) topLimit = 3 * L;
     /* Create the k Hi functions in a list */
     for (int j = 0; j < L; ++j) {
         htList.push_back(new LSH_HT<TID, Y>(w, d, k, m, radius, topLimit));
     }
 }
-
 
 
 template<class TID, class D, class Y>
@@ -99,7 +101,7 @@ std::list<std::tuple<Y, D>> LSH<TID, D, Y>::queryPoint(TID &x) const {
     typedef typename listTuples::iterator IteratorListTuples;     // Declare Iterator of list of tuples.
 
     listTuples distanceList,                                      // List that stores the distances from neighbors.
-    labelDistanceList;                                 // List that stores the labels of neighbors.
+            labelDistanceList;                                 // List that stores the labels of neighbors.
     IteratorListTuples iterListTuples;                            // iterator to traverse the list.
     int j;
 
@@ -113,12 +115,12 @@ std::list<std::tuple<Y, D>> LSH<TID, D, Y>::queryPoint(TID &x) const {
     distanceList.sort(TupleLess<1>()); // sort by neighbors
     IteratorListTuples itE = distanceList.end(); // iterator for traverse the list.
     // Now append the nearest neighbors
-    if ((radius) > 0){
-        for (iterListTuples = distanceList.begin(); (iterListTuples != itE) && (radius < std::get<1>(*iterListTuples)); ++iterListTuples) {
+    if ((radius) > 0) {
+        for (iterListTuples = distanceList.begin();
+             (iterListTuples != itE) && (radius < std::get<1>(*iterListTuples)); ++iterListTuples) {
             labelDistanceList.push_back(*iterListTuples);
         }
-    }
-    else{
+    } else {
         labelDistanceList.push_back(distanceList.front());
     }
 

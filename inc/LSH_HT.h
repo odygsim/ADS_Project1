@@ -104,8 +104,15 @@ std::list<std::tuple<Y &, TID & >> LSH_HT<TID, Y>::getPoint(TID &x) {
     // Iterate over the range
     umapIt it;
     // Append to the list all the points between required range
-    for (i = 0, it = result.first; (i < limit) && (it != result.second); i++, it++) {
-        dataList.push_back(it->second);
+    if (radius > 0){
+        for (i = 0, it = result.first;  (it != result.second); i++, it++) {
+            dataList.push_back(it->second);
+        }
+    }
+    else{
+        for (i = 0, it = result.first; (i < limit) && (it != result.second); i++, it++) {
+            dataList.push_back(it->second);
+        }
     }
     return dataList;
 }

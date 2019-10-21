@@ -4,8 +4,9 @@
 
 #include<cstring>
 #include "../inc/KNeighborsClassifier.h"
+#include "../inc/PathFinder.h"
 
-void runCurveGridHypercube(int id, std::string &iFileName, std::string &qFileName, std::string &outFile, int L = 5,
+void runCurveProjectionHypercube(int id, std::string &iFileName, std::string &qFileName, std::string &outFile, int L = 5,
                            int k = 4, int w = 6000, int numNeighbors = 1, int topLimi = 4, int m = 0, int probes = 0,
                            int M = 0) {
     /**
@@ -20,7 +21,7 @@ void runCurveGridHypercube(int id, std::string &iFileName, std::string &qFileNam
     typedef list<string> CY;
     typedef string Y;
     typedef double TX;
-    tuple<double, list<tuple<int,int>>>  CostAndPath;
+    tuple<double, list<vector<int>>>  CostAndPath;
 //    typedef LSH<X, TX, Y> LSH_;
 //    typedef ExactKNeighbors<CX, X, TX, CY, Y> EKNN_;
     typedef chrono::steady_clock::time_point timePoint;
@@ -43,12 +44,27 @@ void runCurveGridHypercube(int id, std::string &iFileName, std::string &qFileNam
     readTrajectories<CX, CY, X, TX>(iFileName, iDataList, iLabelList);
     readTrajectories<CX, CY, X, TX>(qFileName, qDataList, qLabelList);
     iDataList.pop_front();
-    CostAndPath = dtwWindow<X, PointX, TX>(iDataList.front(), qDataList.front(), 3, 2);
-//    CostAndPath = dtw<X, PointX, TX>(iDataList.front(), qDataList.front(), 2);
+//    CostAndPath = dtwWindow<X, PointX, TX>(iDataList.front(), qDataList.front(), 3, 2);
+    PathFinder * pathFinder = new PathFinder(7, 5 );
+    list<list<vector<int>>> paths = pathFinder->RelevantPaths();
+    int i = 0;
+    for(auto path : paths){
+        cout << i <<".\t\t";
+        for (auto t : path){
+            cout << "(" << t[0] << ", " << t[1] << "), ";
+        }
+        cout << endl;
+        i++;
+    }
+    pathFinder->PrintTable();
+    iDataList.pop_front();
+    qDataList.pop_front();
+    CostAndPath = dtw<X, PointX, TX>(iDataList.front(), qDataList.front(), 2);
     cout << "Time to read files : " << getElapsed(start) << " list Sizes " << iDataList.size() << " " << iLabelList.size() << " " << qDataList.size()<< endl;
     cout << "Distance of first Points: " << get<0>(CostAndPath) << " and Path:\n";
     for(auto item : get<1>(CostAndPath)){
-        cout << "( " << get<0>(item) << ", " << get<1>(item) << "), ";
+        cout << "( " << item[0] << ", " << item[1] << "), ";
+//        i++;
     }
     cout << endl;
     exit(1);
@@ -165,7 +181,7 @@ int main(int argc, char **argv) {
             iFileName = *++argv;
     }
 
-    runCurveGridHypercube(0, iFileName, qFileName, output, L, k, w, numNeighbors, topLimit, m, M);
+    runCurveProjectionHypercube(0, iFileName, qFileName, output, L, k, w, numNeighbors, topLimit, m, M);
 
 
     return 0;

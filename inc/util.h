@@ -22,18 +22,10 @@
 #include <assert.h>
 #include <algorithm>
 #include <unordered_map>
-//#include "Point.h"
-
-#define __STDC_WANT_LIB_EXT1__ 1
-#define FIVEARY_CUTOFF 8
-#define lint long long int
-#define ll long long
-#define S second
 
 std::string getDatetime(bool);
 
 std::string getFilename(const std::string &str);
-
 
 template<int index>
 struct TupleLess {
@@ -42,7 +34,6 @@ struct TupleLess {
         return std::get<index>(left) < std::get<index>(right);
     }
 };
-
 
 std::vector<std::string> split(const std::string &s, char delimiter);
 
@@ -76,14 +67,14 @@ RT euclideanDistance(DT &point1, DT &point2) {
 
     typename DT::iterator e1 = point1.end(), e2 = point2.end(), it1, it2;
     for (it1 = point1.begin(), it2 = point2.begin(); (it1 != e1) && (it2 != e2); ++it1, ++it2) {
-        sum += (*it1-*it2)*(*it1 - *it2);
+        sum += (*it1 - *it2) * (*it1 - *it2);
     }
 
     return sqrt(sum);
 }
 
 template<typename RT, typename DT>
-RT lpNorm(DT &point1, DT &point2, unsigned int p=1) {
+RT lpNorm(DT &point1, DT &point2, unsigned int p = 1) {
     /**
      * @brief calculates lp distance from given vectors/lists.
      * @point1 An object that has a point with a big dimension.
@@ -94,10 +85,10 @@ RT lpNorm(DT &point1, DT &point2, unsigned int p=1) {
     typename DT::iterator e1 = point1.end(), e2 = point2.end(), it1, it2;
 
     for (it1 = point1.begin(), it2 = point2.begin(); (it1 != e1) && (it2 != e2); ++it1, ++it2) {
-        sum += powl(abs(*it1-*it2), p);
+        sum += powl(abs(*it1 - *it2), p);
     }
 
-    return (RT) powl(sum, 1.0/p);
+    return (RT) powl(sum, 1.0 / p);
 }
 
 template<class X, class Y>
@@ -197,8 +188,8 @@ void readTrajectories(const std::string &filename, CX &dataList, CY &labelList) 
      *
      */
     FILE *fp = fopen(filename.c_str(), "r");
-    if (fp == NULL){
-        std::cerr << "File: " + filename +  " was not found.\n";
+    if (fp == NULL) {
+        std::cerr << "File: " + filename + " was not found.\n";
         exit(EXIT_FAILURE);
     }
     char *line = NULL;
@@ -256,7 +247,7 @@ bool readDataAndLabelsFromFile2(const std::string &fileName, CX &fDataList, CY &
     while (!file.eof()) {
         getline(file, tmp, newlineUnix);
         if (!tmp.empty()) {
-            if ( tmp[tmp.size() - 1] == newlineWindows)
+            if (tmp[tmp.size() - 1] == newlineWindows)
                 tmp.erase(tmp.end() - 1); // remove /r
             splitToPoint3<CX, CY, X, Y>(tmp, delim, fDataList, fLabelList);
         }
@@ -302,7 +293,7 @@ readHypercubeParameters(int argc, char **argv, std::string &inputFile, std::stri
                         int &k, int &M, int &probes);
 
 
-std::string calculateStats(std::list<double> &distanceListEA, std::list<double> &timeListE, double & accuracy);
+std::string calculateStats(std::list<double> &distanceListEA, std::list<double> &timeListE, double &accuracy);
 
 template<class Y, class D, class TY>
 std::tuple<std::string, std::string> unrollResult(std::list<std::tuple<double, std::list<std::tuple<Y, D>>>> &listExact,
@@ -340,16 +331,18 @@ std::tuple<std::string, std::string> unrollResult(std::list<std::tuple<double, s
         distanceA = std::get<1>(curLA.front());
         if (distanceA == distanceE) correct++;
         maxDistanceAdivE.push_back(distanceA / distanceE);
-        result += distanceApproxName; result += std::to_string(distanceA) + delim;
+        result += distanceApproxName;
+        result += std::to_string(distanceA) + delim;
         result += "distanceTrue: " + std::to_string(distanceE) + delim;
 ////            sprintf(str, "%.2f", result->getDistance());   // these are commented in case
-                                                               /// we need the double with less digits.
+        /// we need the double with less digits.
 ////            string a(str, strlen(str));
 ////            output += "distanceTrue: " ;
 ////            output += a + space;// std::to_string(result->getDistance()) + "\n";
         timeA = std::get<0>(*itListAp);
         meanTimeA.push_back(timeA);
-        result += timeApproxName; result += std::to_string(timeA) + delim;
+        result += timeApproxName;
+        result += std::to_string(timeA) + delim;
         result += "tTrue: " + std::to_string(std::get<0>(*itListEx)) + delim;
         if (curLA.size() > 1) {
             result += "R-near neighbors:\n";
@@ -361,7 +354,7 @@ std::tuple<std::string, std::string> unrollResult(std::list<std::tuple<double, s
         result += "\n";
     }
 
-    accuracy = (double)correct/y.size();
+    accuracy = (double) correct / y.size();
 
     stats = calculateStats(maxDistanceAdivE, meanTimeA, accuracy);
 
@@ -421,9 +414,8 @@ double getElapsed(std::chrono::steady_clock::time_point start);
  *
  * @tparam PointX  is a vector<double> the point Type.
  */
-template <typename CurveX, typename PointX, typename PrimitiveType>
-std::tuple<double, std::list<std::tuple<int,int>>> dtw(CurveX & a, CurveX & b, unsigned int p = 2)
-{
+template<typename CurveX, typename PointX, typename PrimitiveType>
+std::tuple<double, std::list<std::vector<int>>> dtw(CurveX &a, CurveX &b, std::string metric_name ) {
     /**
      * @brief Calculates dtw distance between 2 curves/lines and the path.
      * @param a First curve to compare.
@@ -434,18 +426,23 @@ std::tuple<double, std::list<std::tuple<int,int>>> dtw(CurveX & a, CurveX & b, u
 
     using namespace std;
     int i, j;
-    const int n = a.size() , m = b.size() ;
+    const int n = a.size(), m = b.size();
     double distance;
-    PrimitiveType (*f) (PointX &, PointX &, unsigned int) = &lpNorm<PrimitiveType,PointX>; //method for distance calculation
+    PrimitiveType
+    (*f)(PointX &, PointX &); //method for distance calculation
     typedef tuple<double, int, int> TUP; // The Array keeps a tuple of { currentCost, i Position, j Position}
-    list<tuple<int, int>> Path;         // The Path is return in a list of tuples {i,j}
+    list <vector<int>> Path;         // The Path is return in a list of tuples {i,j}
     // Alloc 2-d array.
-    vector<vector<TUP>> DTW(n, vector<TUP> (m, {MAXDOUBLE, 0, 0})); // The array m * n that hold the values calculated.
+    vector<vector<TUP>> DTW(n, vector<TUP>(m, {MAXDOUBLE, 0, 0})); // The array m * n that hold the values calculated.
+    if (metric_name == "manhattan")     /* definition of the metric depending */
+        f = &manhattanDistance<PrimitiveType, PointX>;
+    else if (metric_name == "euclidean")     /* definition of the metric depending */
+        f = &euclideanDistance<PrimitiveType, PointX>;
 
-    DTW[0][0] = {0,0,0};                         // init 0 position with 0, the start pos.
+    DTW[0][0] = {0, 0, 0};                         // init 0 position with 0, the start pos.
     for (i = 1; i < n; ++i) {                   // For all rows
         for (j = 1; j < m; ++j) {               // For all columns
-            DTW[i][j] = {0,0,0};
+            DTW[i][j] = {0, 0, 0};
         }
     }
 
@@ -453,21 +450,22 @@ std::tuple<double, std::list<std::tuple<int,int>>> dtw(CurveX & a, CurveX & b, u
         for (j = 1; j < m; ++j) {               // For all columns
             distance = f(a[i - 1], b[j - 1], 2);         // Calculate euclidean Distance from point to point.
             // Add to a vector the 3 neighbors (i-1, j), (i, j-1) , (i-1,j-1) to sort them by cost.
-            list< TUP > TempList{{get<0>(DTW[i - 1][j]) + distance, i - 1, j}, {get<0>(DTW[i][j - 1]) + distance, i, j - 1},
-                                 {get<0>(DTW[i-1][j-1])+distance,i-1,j-1}};
+            list <TUP> TempList{{get<0>(DTW[i - 1][j]) + distance,     i - 1, j},
+                                {get<0>(DTW[i][j - 1]) + distance,     i,     j - 1},
+                                {get<0>(DTW[i - 1][j - 1]) + distance, i - 1, j - 1}};
             TempList.sort(TupleLess<0>());
-              DTW[i][j] = TempList.front();
-              TempList.clear();
+            DTW[i][j] = TempList.front();
+            TempList.clear();
         }
     }
-    i = m-1 , j = n-1 ;
+    i = n - 1, j = m - 1;
     while (i > 0 && j > 0) {
-        Path.push_front({i-1,j-1});
+        Path.push_front({i - 1, j - 1});
         i = get<1>(DTW[i][j]);                  // Get i
         j = get<2>(DTW[i][j]);                  // get j
     }
-        // get total distance, path and return them.
-return  {get<0>(DTW[m-1][n-1]), Path};
+    // get total distance, path and return them.
+    return {get<0>(DTW[m - 1][n - 1]), Path};
 
 }
 
@@ -476,9 +474,8 @@ return  {get<0>(DTW[m-1][n-1]), Path};
  *
  * @tparam PointX  is a vector<double> the point Type.
  */
-template <typename CurveX, typename PointX, typename PrimitiveType>
-std::tuple<double, std::list<std::tuple<int,int>>> dtwWindow(CurveX & a, CurveX & b, int w = 3, unsigned int p = 2)
-{
+template<typename CurveX, typename PointX, typename PrimitiveType>
+std::tuple<double, std::list<std::tuple<int, int>>> dtwWindow(CurveX &a, CurveX &b, int w = 3, unsigned int p = 2) {
     /**
      * @brief Calculates dtw distance between 2 curves/lines and the path.
      * @param a First curve to compare.
@@ -489,48 +486,49 @@ std::tuple<double, std::list<std::tuple<int,int>>> dtwWindow(CurveX & a, CurveX 
 
     using namespace std;
     int i, j;
-    const int n = a.size() , m = b.size() ;
+    const int n = a.size(), m = b.size();
     double distance;
     typedef tuple<double, int, int> TUP; // The Array keeps a tuple of { currentCost, i Position, j Position}
-    PrimitiveType (*f) (PointX &, PointX &, unsigned int) = &lpNorm<PrimitiveType,PointX>;
-    list<tuple<int, int>> Path;         // The Path is return in a list of tuples {i,j}
-    w = max(w,abs(n-m));  // adapt window size (*)
+    PrimitiveType (*f)(PointX &, PointX &, unsigned int) = &lpNorm<PrimitiveType, PointX>;
+    list <tuple<int, int>> Path;         // The Path is return in a list of tuples {i,j}
+    w = max(w, abs(n - m));  // adapt window size (*)
     // Alloc 2-d array.
-    vector<vector<TUP>> DTW(n, vector<TUP> (m, {MAXDOUBLE, 0, 0})); // The array m * n that hold the values calculated.
+    vector<vector<TUP>> DTW(n, vector<TUP>(m, {MAXDOUBLE, 0, 0})); // The array m * n that hold the values calculated.
 
-    DTW[0][0] = {0,0,0};                         // init 0 position with 0, the start pos.
+    DTW[0][0] = {0, 0, 0};                         // init 0 position with 0, the start pos.
     for (i = 1; i < n; ++i) {                   // For all rows
-        for (j = max(1, i-w); j < min(m,i+w); ++j) {               // For all columns
-            DTW[i][j] = {0,0,0};
+        for (j = max(1, i - w); j < min(m, i + w); ++j) {               // For all columns
+            DTW[i][j] = {0, 0, 0};
         }
     }
 
     for (i = 1; i < n; ++i) {                   // For all rows
-        for (j =max(1, i-w); j < min(m,i+w); ++j) {               // For all columns
+        for (j = max(1, i - w); j < min(m, i + w); ++j) {               // For all columns
             distance = f(a[i - 1], b[j - 1], p);         // Calculate Distance from point to point.
             // Add to a vector the 3 neighbors (i-1, j), (i, j-1) , (i-1,j-1) to sort them by cost.
-            vector< TUP > TempVector{ {get<0>(DTW[i-1][j])+distance,i-1,j}, {get<0>(DTW[i][j-1])+distance,i,j-1},
-                                      {get<0>(DTW[i-1][j-1])+distance,i-1,j-1}};
+            vector<TUP> TempVector{{get<0>(DTW[i - 1][j]) + distance,     i - 1, j},
+                                   {get<0>(DTW[i][j - 1]) + distance,     i,     j - 1},
+                                   {get<0>(DTW[i - 1][j - 1]) + distance, i - 1, j - 1}};
             sort(begin(TempVector), end(TempVector), TupleLess<0>());
             DTW[i][j] = TempVector[0];
             TempVector.clear();
         }
     }
-    i = m-1 , j = n-1 ;
+    i = m - 1, j = n - 1;
     while (i > 0 && j > 0) {
-        Path.push_front({i-1,j-1});
+        Path.push_front({i - 1, j - 1});
         i = get<1>(DTW[i][j]);                  // Get i
         j = get<2>(DTW[i][j]);                  // get j
     }
     // get total distance, path and return them.
-    return  {get<0>(DTW[m-1][n-1]), Path};
+    return {get<0>(DTW[m - 1][n - 1]), Path};
 
 }
 
-template<class D, class Y >
+template<class D, class Y>
 /*Usually A:Algorithm to run class, TD: list<vector<int>>, TID: vector<int>, D: int, TY list<string>, Y string*/
 std::list<std::tuple<double, std::list<std::tuple<Y, D>>>>
-getENNData(std::string & filename) {
+getENNData(std::string &filename) {
     /**
      * @brief This method parses a file with results of eknn on big data(13h running)
      *        to compare it with approximate nn (lsh, hypercube).
@@ -597,13 +595,27 @@ getENNData(std::string & filename) {
                 }
                 i++;
             }
-            listTuples labelDistanceList; labelDistanceList.push_back ({name,distance}); // every query has new labelDistanceList
+            listTuples labelDistanceList;
+            labelDistanceList.push_back({name, distance}); // every query has new labelDistanceList
 
-            returnList.push_back({time, labelDistanceList}); // Append to the return list the time and the distance list return by alg query method
+            returnList.push_back({time,
+                                  labelDistanceList}); // Append to the return list the time and the distance list return by alg query method
         }
     }
     file.close();
     return returnList;
+}
+
+template<typename D>
+D max(D a, D b) {
+    if (a > b) return a;
+    return b;
+}
+
+template<typename D>
+D min(D a, D b) {
+    if (a < b) return a;
+    return b;
 }
 
 #endif //ADS_PROJECT1_UTIL_H
