@@ -6,7 +6,7 @@
 #include "../inc/KNeighborsClassifier.h"
 
 void runCurveGridHypercube(int id, std::string &iFileName, std::string &qFileName, std::string &outFile, int L = 5,
-                           int k = 4, int w = 5000, int numNeighbors = 1, int topLimi = 4, int m = 0, int probes = 0,
+                           int k = 4, int w = 6000, int numNeighbors = 1, int topLimi = 4, int m = 0, int probes = 0,
                            int M = 0) {
     /**
      * @brief Runs lsh knn algorithm.
@@ -43,7 +43,8 @@ void runCurveGridHypercube(int id, std::string &iFileName, std::string &qFileNam
     readTrajectories<CX, CY, X, TX>(iFileName, iDataList, iLabelList);
     readTrajectories<CX, CY, X, TX>(qFileName, qDataList, qLabelList);
     iDataList.pop_front();
-    CostAndPath = dtw<X, PointX, TX>(iDataList.front(), qDataList.front(), &euclideanDistance<TX, vector<TX>>);
+    CostAndPath = dtwWindow<X, PointX, TX>(iDataList.front(), qDataList.front(), 3, 2);
+//    CostAndPath = dtw<X, PointX, TX>(iDataList.front(), qDataList.front(), 2);
     cout << "Time to read files : " << getElapsed(start) << " list Sizes " << iDataList.size() << " " << iLabelList.size() << " " << qDataList.size()<< endl;
     cout << "Distance of first Points: " << get<0>(CostAndPath) << " and Path:\n";
     for(auto item : get<1>(CostAndPath)){

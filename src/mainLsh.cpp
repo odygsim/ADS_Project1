@@ -4,7 +4,7 @@
 //#include <thread>
 template<typename D>
 void
-runLSH(int id, std::string &iFileName, std::string &qFileName, std::string &outFile, int L = 5, int k = 4, int w = 5000,
+runLSH(int id, std::string &iFileName, std::string &qFileName, std::string &outFile, int L = 6, int k = 6, int w = 5000,
         int topLimi = 4, int m = 0) {
     /**
      * @brief Runs lsh knn algorithm.
