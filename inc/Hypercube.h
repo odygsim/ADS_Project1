@@ -35,7 +35,7 @@ private :
 public:
 
     Hypercube(int d, double w = 3000, int k = 3, int maxSearchPoints = 10, int probes = 2, int k_hi = 4, double r = 0);
-    ~Hypercube();
+    ~Hypercube(){};
     // Adding a point with it's label to Hypercube Hash structure
     void addPoint(TID &x, Y &y);
     // Query a point : return a list of ANN in (label,distance) tuples
@@ -77,6 +77,7 @@ std::list<std::tuple<Y, D>> Hypercube<TID, D, Y>::queryPoint(TID &x) {
 
     int currVert, currDist;
     unsigned  int j;
+    int currSP = 0;
     std::list<std::tuple<Y, D>> distanceList;
     std::list<std::tuple<Y, D>> distanceLabelList;
 
@@ -106,6 +107,10 @@ std::list<std::tuple<Y, D>> Hypercube<TID, D, Y>::queryPoint(TID &x) {
 
             // Check all points within the bucket
             for (auto local_it = HQ_Buckets.begin(j); local_it != HQ_Buckets.end(j); ++local_it) {
+                //
+                if (++currSP > maxSearchPoints) {
+                    break;
+                }
                 // Get neighbor point data and label
                 TID currNeighbor = std::get<1>(local_it->second);
                 Y currNeighLabel = std::get<0>(local_it->second);
