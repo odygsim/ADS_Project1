@@ -159,13 +159,13 @@ std::list<std::tuple<Y, D>> Hypercube<TID, D, Y>::queryPoint(TID &x) {
                 distanceLabelList.push_back(*tupleIter);
             }
         }
-        // Return neighbors
-        return distanceLabelList;
+
     } else {
         // Return nearest neighbor
         distanceLabelList.push_back( distanceList.front() );
     }
 
+    // Return neighbors
     return distanceLabelList;
 }
 
