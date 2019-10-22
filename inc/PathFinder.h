@@ -7,18 +7,21 @@
 
 #include "util.h"
 
+typedef std::vector<int> Vector; // store x, y
+typedef std::list<Vector> Path; // store list of a path
+typedef std::list<Path> Paths;  // store many paths
 
 class PathFinder{
     int N, M; // rows, columns, window
 
-    typedef std::vector<int> Vector; // store x, y
-    typedef std::list<Vector> Path; // store list of a path
-    typedef std::list<Path> Paths;  // store many paths
-    std::list<std::vector<int>> PrintThesePaths;    // these paths are printed
-    std::list<std::vector<int>> MainD;  // store main diagonal elements
-    std::vector<std::vector<int>> ArrayJLimits;     // store i, jmin, jmax
+//    typedef std::vector<int> Vector; // store x, y
+//    typedef std::list<Vector> Path; // store list of a path
+//    typedef std::list<Path> Paths;  // store many paths
+    std::list<Vector> PrintThesePaths;    // these paths are printed
+    std::list<Vector> MainD;  // store main diagonal elements
+    std::vector<Vector> ArrayJLimits;     // store i, jmin, jmax
     // go N, E, NE
-    std::list<std::vector<int>> Actions{{1, 0}, {0,1},{1,1}};
+    std::list<Vector> Actions{{1, 0}, {0,1},{1,1}};
     // N, S, E, W , NW, SW
     std::list<std::vector<int>> MainDActions{{1, 0}, {-1,0},{0,1},{0,-1}, {1,-1}, {-1,1}};
     int red = 31, green = 32;
@@ -26,6 +29,7 @@ class PathFinder{
 
 public:
     PathFinder(int n, int m);
+    ~PathFinder(){};
     void PrintTable();
     Paths RelevantPaths();
     Paths FindPaths(int i, int j);
