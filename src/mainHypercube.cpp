@@ -6,8 +6,8 @@
 
 template<typename D>
 void
-runCube(int id, std::string &iFileName, std::string &qFileName, std::string &outFile, int L = 5, int k = 4, int w = 5000, int probes = 2,
-        int topLimi = 4, int m = 0) {
+runCube(int id, std::string &iFileName, std::string &qFileName, std::string &outFile, int M = 5, int k = 3, int w = 5000, int probes = 2,
+        int topLimi = 10, int m = 0) {
     /**
      * @brief Runs cube knn algorithm.
      * @params TODO complete.
@@ -46,7 +46,7 @@ runCube(int id, std::string &iFileName, std::string &qFileName, std::string &out
     // Initialize algorithms
 //    (d,3000,3,10,2,4,0);
 //    Hypercube<TID, D, Y>::Hypercube(int d, double w, int k, int maxSearchPoints, int probes, int k_hi, double r):
-    HC_ *HCube= new HC_(dimension, w, k, topLimit, probes, k_hi, r);
+    HC_ *HCube= new HC_(dimension, w, k, M, probes, k_hi, r);
     auto *clCube = new KNeighborsClassifier<HC_ *, CX, X, TX, CY, Y>(HCube);
     auto *eknn = new EKNN_(radius, metric_name);
     auto *clEknn = new KNeighborsClassifier<EKNN_ *, CX, X, TX, CY, Y>(eknn);
@@ -82,7 +82,7 @@ runCube(int id, std::string &iFileName, std::string &qFileName, std::string &out
     string fields  = "AlgorithmName,id,datetime,L,w,m,k,topLimitLsh,radius,dimension,Accuracy,Time,iFileName,trainSize,fitExactTime,predictExactTime,fitApproxTime,predictApproxtime,AppTime\n";
     oFile.open("tests/stats_Cube.csv", std::ios::out | std::ios::app);
     string res;
-    res = "Cube," + to_string(id) + "," + getDatetime(false) + "," + to_string(L) + "," + to_string(w) + "," +
+    res = "Cube," + to_string(id) + "," + getDatetime(false) + "," + to_string(M) + "," + to_string(w) + "," +
           to_string(m) + "," + to_string(k) +
           "," + to_string(topLimit) + "," + to_string(radius) + "," + to_string(dimension) + "," +
           get<1>(results) + "," + getFilename(iFileName) +
@@ -123,7 +123,7 @@ int main(int argc, char **argv) {
     std::cout << "Running Hypecube with arguments: " << "input file = \"" << inputFile << "\" query file = \"" << queryFile << "\" output file =  \"" << outputFile
               << " k = " << k << " M = " << M  << " probes = " << probes << "\n";
 
-    runCube<int>(id, inputFile, queryFile, outputFile, L, k, w, probes, topLimit, m);
+    runCube<int>(id, inputFile, queryFile, outputFile, M, k, w, probes, topLimit, m);
 
     return 0;
 }

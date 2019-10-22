@@ -404,9 +404,9 @@ runtestcube:
 	${RUNNING}
 	@$(ECHO)
 	$(info running small dataset)
-	${BIN_DIR}cube -d ${TESTS_DIR}sample_datasets/siftsmall/input_small_id -q ${TESTS_DIR}sample_datasets/siftsmall/query_small_id -k 4 -M 5 -probes 100 -o ${TESTS_DIR}
+	${BIN_DIR}cube -d ${TESTS_DIR}sample_datasets/siftsmall/input_small_id -q ${TESTS_DIR}sample_datasets/siftsmall/query_small_id -k 3 -M 10 -probes 2 -o ${TESTS_DIR}
 	$(info running big dataset)
-	${BIN_DIR}cube -d ${TESTS_DIR}sample_datasets/siftbig/input_b_id -q ${TESTS_DIR}sample_datasets/siftbig/query_b_id –k 4 -M 5 -probes 100 -o ${TESTS_DIR}
+	${BIN_DIR}cube -d ${TESTS_DIR}sample_datasets/siftbig/input_b_id -q ${TESTS_DIR}sample_datasets/siftbig/query_b_id –k 3 -M 10 -probes 2 -o ${TESTS_DIR}
 #..............................................................................#
 #	Documentation
 

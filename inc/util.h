@@ -202,11 +202,68 @@ void readTrajectories(const std::string &filename, CX &dataList, CY &labelList) 
         free(line);
 }
 
+template<class CX, class CY, class X>
+void ReduceTrajectories(CX &dataList, CY &labelList, CX &ReducedDataList, CY &ReducedLabelList, int dimension = 25,
+                        int count = 0, int start = 0, int end = 0) {
+    /**
+     * @brief Reduces Trajectories dimension and records.
+     * @param filename to parse.
+     * @param dataList An object of type list<vector<tuple<double,double>>
+     * @param labelList An object of type list<string>
+     * @param ReducedDataList An object of type list<vector<tuple<double,double>>
+     * @param ReducedLabelList An object of type list<string>
+     * @param dimension  of Curve meaning how many points it will have
+     * @param start The row of the data that will start
+     * @param end The row of the data that will end
+     *
+     */
+
+    typedef typename CX::iterator IteratorCX; // Iterator on the list of vectors
+    typedef typename CY::iterator IteratorCY; // iterator on the list of strings
+    typedef typename X::iterator IteratorX;
+    X TempX;
+    int i, k, l;
+
+    // Init Iterator on list of vectors, // end of data iterator
+    IteratorCX iterData, iterDataEnd = dataList.end();
+    IteratorCY iterLabels; // Iterator on the list of strings
+    IteratorX iterXEnd, iterX;
+//    IteratorY iterYEnd, iterY;
+    iterData = dataList.begin(), iterLabels = labelList.begin();
+    if (start != 0) {  // move forward the iterators
+        for (l = 0; l < start; ++l) {
+            *iterData++;
+            *iterLabels++;
+        }
+    }
+    if (end != 0) {
+        // move back the end iterator
+        for (l = 0; l < end; ++l) {
+            iterDataEnd--;
+        }
+    }
+    //  traverse the curves and reduce each one
+    for (i = 0;
+         iterData != iterDataEnd && i < count;
+         ++iterData, ++iterLabels) {
+        // got the curve now reduce its dimension
+        iterXEnd = (*iterData).end();
+        for (k = 0, iterX = (*iterData).begin(); k < dimension && iterX != iterXEnd; ++k, iterX++) {
+            TempX.push_back(*iterX);
+        }
+
+        ReducedDataList.push_back(TempX);
+        ReducedLabelList.push_back(*iterLabels);
+        // Clear the TempX for next curve.
+        TempX.clear();
+    }
+}
 
 void scanRadius(const std::string &s, double &radius, char &delimiter);
 
 template<class CX, class CY, class X, class Y>
 //data container , data labels
+
 bool readDataAndLabelsFromFile2(const std::string &fileName, CX &fDataList, CY &fLabelList, double radius = 0.0) {
     /**
      * @brief Read data and label to objects CX and CY accordingly.
@@ -415,7 +472,7 @@ double getElapsed(std::chrono::steady_clock::time_point start);
  * @tparam PointX  is a vector<double> the point Type.
  */
 template<typename CurveX, typename PointX, typename PrimitiveType>
-std::tuple<double, std::list<std::vector<int>>> dtw(CurveX &a, CurveX &b, std::string metric_name ) {
+std::tuple<double, std::list<std::vector<int>>> dtw(CurveX &a, CurveX &b, std::string metric_name) {
     /**
      * @brief Calculates dtw distance between 2 curves/lines and the path.
      * @param a First curve to compare.
@@ -448,7 +505,7 @@ std::tuple<double, std::list<std::vector<int>>> dtw(CurveX &a, CurveX &b, std::s
 
     for (i = 1; i < n; ++i) {                   // For all rows
         for (j = 1; j < m; ++j) {               // For all columns
-            distance = f(a[i - 1], b[j - 1], 2);         // Calculate euclidean Distance from point to point.
+            distance = f(a[i - 1], b[j - 1]);         // Calculate euclidean Distance from point to point.
             // Add to a vector the 3 neighbors (i-1, j), (i, j-1) , (i-1,j-1) to sort them by cost.
             list <TUP> TempList{{get<0>(DTW[i - 1][j]) + distance,     i - 1, j},
                                 {get<0>(DTW[i][j - 1]) + distance,     i,     j - 1},

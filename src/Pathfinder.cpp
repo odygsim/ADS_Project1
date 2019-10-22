@@ -162,7 +162,7 @@ std::list<std::list<std::vector<int>>> PathFinder::RelevantPaths(){
 
  std::list<std::list<std::vector<int>>> PathFinder::FindPaths(int i, int j){
     Paths paths;
-    int stepRow, stepColumn, stepStartColumn, stepEndColumn;
+    int stepRow, stepColumn;
     for (auto action:Actions){              // for every action do:
         stepRow = i + action[0];            // calculate new i
         stepColumn = j + action[1];         // calculate new j
