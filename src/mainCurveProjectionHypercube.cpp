@@ -6,9 +6,10 @@
 #include "../inc/KNeighborsClassifier.h"
 #include "../inc/PathFinder.h"
 
-void runCurveProjectionHypercube(int id, std::string &iFileName, std::string &qFileName, std::string &outFile, int L = 5,
-                           int k = 4, int w = 6000, int numNeighbors = 1, int topLimi = 4, int m = 0, int probes = 0,
-                           int M = 0) {
+void
+runCurveProjectionHypercube(int id, std::string &iFileName, std::string &qFileName, std::string &outFile, int L = 5,
+                            int k = 4, int w = 6000, int numNeighbors = 1, int topLimi = 4, int m = 0, int probes = 0,
+                            int M = 0) {
     /**
      * @brief Runs lsh knn algorithm.
      * @params TODO complete.
@@ -21,7 +22,7 @@ void runCurveProjectionHypercube(int id, std::string &iFileName, std::string &qF
     typedef list<string> CY;
     typedef string Y;
     typedef double TX;
-    tuple<double, list<vector<int>>>  CostAndPath;
+    tuple<double, list<vector<int>>> CostAndPath;
 //    typedef LSH<X, TX, Y> LSH_;
 //    typedef ExactKNeighbors<CX, X, TX, CY, Y> EKNN_;
     typedef chrono::steady_clock::time_point timePoint;
@@ -43,14 +44,20 @@ void runCurveProjectionHypercube(int id, std::string &iFileName, std::string &qF
     start = initTime();                                         // timestamp start
     readTrajectories<CX, CY, X, TX>(iFileName, iDataList, iLabelList);
     readTrajectories<CX, CY, X, TX>(qFileName, qDataList, qLabelList);
+    // Reduce Curves to dimension 25..
+    ReduceTrajectories<CX,CY,X>(iDataList,iLabelList,testIDataList, testILabelList, 25, iDataList.size());
+    // take the last 100 records of curves for query set.
+    ReduceTrajectories<CX,CY,X>(iDataList,iLabelList,testQDataList, testQLabelList, 25, iDataList.size()/10);
+    int kk = testQDataList.size();
+
     iDataList.pop_front();
 //    CostAndPath = dtwWindow<X, PointX, TX>(iDataList.front(), qDataList.front(), 3, 2);
-    PathFinder * pathFinder = new PathFinder(7, 5 );
+    PathFinder *pathFinder = new PathFinder(7, 5);
     list<list<vector<int>>> paths = pathFinder->RelevantPaths();
     int i = 0;
-    for(auto path : paths){
-        cout << i <<".\t\t";
-        for (auto t : path){
+    for (auto path : paths) {
+        cout << i << ".\t\t";
+        for (auto t : path) {
             cout << "(" << t[0] << ", " << t[1] << "), ";
         }
         cout << endl;
@@ -59,10 +66,11 @@ void runCurveProjectionHypercube(int id, std::string &iFileName, std::string &qF
     pathFinder->PrintTable();
     iDataList.pop_front();
     qDataList.pop_front();
-    CostAndPath = dtw<X, PointX, TX>(iDataList.front(), qDataList.front(), 2);
-    cout << "Time to read files : " << getElapsed(start) << " list Sizes " << iDataList.size() << " " << iLabelList.size() << " " << qDataList.size()<< endl;
+    CostAndPath = dtw<X, PointX, TX>(iDataList.front(), qDataList.front(), "euclidean");
+    cout << "Time to read files : " << getElapsed(start) << " list Sizes " << iDataList.size() << " "
+         << iLabelList.size() << " " << qDataList.size() << endl;
     cout << "Distance of first Points: " << get<0>(CostAndPath) << " and Path:\n";
-    for(auto item : get<1>(CostAndPath)){
+    for (auto item : get<1>(CostAndPath)) {
         cout << "( " << item[0] << ", " << item[1] << "), ";
 //        i++;
     }
@@ -160,7 +168,7 @@ int main(int argc, char **argv) {
         fprintf(stderr, "Usage : %s -d <input file> -q <query file> -k <int> -L <int> -o <output file>\n", argv[0]);
         return 1;
     }
-   // -d tests/sample_datasets/trajectories_dataset -q tests/sample_datasets/trajectories_test1 -k_hypercube 4 -probes 5 -M 5 -L_grid 6 -o tests/traj_output1.txt
+    // -d tests/sample_datasets/trajectories_dataset -q tests/sample_datasets/trajectories_test1 -k_hypercube 4 -probes 5 -M 5 -L_grid 6 -o tests/traj_output1.txt
     while (--argc && argc > 8) {
         arg = *++argv;
         if (arg == NULL) break;

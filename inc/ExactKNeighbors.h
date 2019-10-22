@@ -60,8 +60,8 @@ std::list<std::tuple<Y, D>> ExactKNeighbors<TD, TID, D, TY, Y>::queryPoint(TID &
 
     typedef typename TD::iterator tdIt; // Iterator on the list of vectors
     typedef typename TY::iterator tyIt; // iterator on the list of strings
-    tdIt iteratorData; // Init Iterator on list of vectors
-    tdIt itDE = data.end(); // end of data iterator
+    // Init Iterator on list of vectors, // end of data iterator
+    tdIt iteratorData, itDE = data.end();
     tyIt iteratorLabels; // Iterator on the list of strings
 
 
@@ -69,9 +69,8 @@ std::list<std::tuple<Y, D>> ExactKNeighbors<TD, TID, D, TY, Y>::queryPoint(TID &
     typedef std::list<std::tuple<Y, D>> listTuples;
     typedef typename listTuples::iterator IteratorListTuples;
 
-    listTuples distanceList;
-    listTuples labelDistanceList;
-    IteratorListTuples iterListTuples;
+    listTuples distanceList, labelDistanceList;
+    IteratorListTuples iterListTuples, itE;
     int j;
     // Calculate distance from query point against all data.
     for (iteratorData = data.begin(), iteratorLabels = labels.begin();
@@ -79,7 +78,7 @@ std::list<std::tuple<Y, D>> ExactKNeighbors<TD, TID, D, TY, Y>::queryPoint(TID &
         distanceList.push_back(std::make_pair(*iteratorLabels, f(*iteratorData, (x)))); // Append distances to a list.
     }
     distanceList.sort(TupleLess<1>()); // sort distance list by neighbors
-    IteratorListTuples itE = distanceList.end();
+    itE = distanceList.end();
     // Now append the nearest neighbors to the return list
     if ((radius) > 0) {
         for (iterListTuples = distanceList.begin();
