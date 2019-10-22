@@ -75,9 +75,13 @@ void Hypercube<TID, D, Y>::addPoint(TID &x, Y &y) {
 template<class TID, class D, class Y>
 std::list<std::tuple<Y, D>> Hypercube<TID, D, Y>::queryPoint(TID &x) {
 
-    int currVert, currDist;
+    // Hold current vertice and distance during search
+    int currVert;
+    D currDist;
     unsigned  int j;
+    // Hold current number of search points
     int currSP = 0;
+    // Hold (label,distance) neighbour tuples
     std::list<std::tuple<Y, D>> distanceList;
     std::list<std::tuple<Y, D>> distanceLabelList;
 
@@ -123,21 +127,43 @@ std::list<std::tuple<Y, D>> Hypercube<TID, D, Y>::queryPoint(TID &x) {
         }
     }
 
-    // Create a vector in order to sort Neighbors tuples
-    std::vector< std::tuple<Y,D> > neighResVector;
+//    // Create a vector in order to sort Neighbors tuples
+//    std::vector< std::tuple<Y,D> > neighResVector;
+//    typename std::list< std::tuple<Y, D>>::iterator tupleIter;
+//    typename std::vector< std::tuple<Y, D>>::iterator vecIter;
+//
+//    // Fill vector with distanceList tuple data
+//    for( tupleIter = distanceList.begin() ; tupleIter != distanceList.end(); tupleIter++ ){
+//        neighResVector.push_back(*tupleIter);
+//    }
+//    // Sort vector according to the distance element of tuples
+//    std::sort(begin(neighResVector), end(neighResVector), TupleLess<1>());
+//
+//    // Create new tupples distance list
+//    for( vecIter = neighResVector.begin() ; vecIter != neighResVector.end(); vecIter++ ){
+//        distanceLabelList.push_back(*vecIter);
+//    }
+
+    // Sort list according to the distance element of tuples (neighbor label, distance)
+    distanceList.sort(TupleLess<1>());
+
     typename std::list< std::tuple<Y, D>>::iterator tupleIter;
-    typename std::vector< std::tuple<Y, D>>::iterator vecIter;
-
-    // Fill vector with distanceList tuple data
-    for( tupleIter = distanceList.begin() ; tupleIter != distanceList.end(); tupleIter++ ){
-        neighResVector.push_back(*tupleIter);
-    }
-    // Sort vector according to the distance element of tuples
-    std::sort(begin(neighResVector), end(neighResVector), TupleLess<1>());
-
-    // Create new tupples distance list
-    for( vecIter = neighResVector.begin() ; vecIter != neighResVector.end(); vecIter++ ){
-        distanceLabelList.push_back(*vecIter);
+    // Radius or best neighbor results
+    if ( r > 0 ) {
+        // Get neighbors within radius r
+        for (tupleIter = distanceList.begin(); tupleIter != distanceList.end(); tupleIter++) {
+            // Get distance of current neighbor
+            currDist = std::get<1>(*tupleIter);
+            // Add neighbor if its distance is less than r
+            if ( currDist <= r ) {
+                distanceLabelList.push_back(*tupleIter);
+            }
+        }
+        // Return neighbors
+        return distanceLabelList;
+    } else {
+        // Return nearest neighbor
+        distanceLabelList.push_back( distanceList.front() );
     }
 
     return distanceLabelList;
