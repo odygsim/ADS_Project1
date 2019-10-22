@@ -7,6 +7,8 @@
 
 #include "LSH.h"
 #include "ExactKNeighbors.h"
+#include <thread>
+#include <future>
 
 
 /********************** KNeighbors Classifier Part**********************************************************/
@@ -14,14 +16,12 @@
 template<class A, class TD, class TID, class D, class TY, class Y>
 /*Usually A:Algorithm to run class, TD: list<vector<int>>, TID: vector<int>, D: int, TY list<string>, Y string*/
 class KNeighborsClassifier {
-    int n_neighbors;
     A alg;
-    TD data;
-    TY labels;
+//    int dataSize;
 
 public:
 
-    KNeighborsClassifier(int n_neighbors, A &alg) : n_neighbors(n_neighbors), alg(alg) {
+    KNeighborsClassifier(A &alg) : alg(alg) {
         /**
          * @brief Constructor of this object.
          * @param n_neighbors The integer with the number of max neighbors to search.
@@ -50,19 +50,23 @@ void KNeighborsClassifier<A, TD, TID, D, TY, Y>::fit(TD &x, TY &y) {
 
     typedef typename TD::iterator tdIt; // Iterator on the list of vectors
     typedef typename TY::iterator tyIt; // iterator on the list of strings
+    int i = 0;
     tdIt iteratorData; // Init Iterator on list of vectors
-    tdIt itDE = data.end(); // end of data iterator
+    tdIt itDE = x.end(); // end of data iterator
     tyIt iteratorLabels; // Iterator on the list of strings
-    data = x;
-    labels = y;
-    std:: cout << data.size() << std::endl;
+//    dataSize = x.size();
+//    assert(alg->getName());
+//    std::string cl = alg->getName();
+
     // fit all data to alg algorithm's structure.
-    for (iteratorData = data.begin(), iteratorLabels = labels.begin();
-         iteratorData != itDE; ++iteratorData, ++iteratorLabels) {
+    for (iteratorData = x.begin(), i = 0, iteratorLabels = y.begin();
+         iteratorData != itDE; ++iteratorData, ++iteratorLabels, i++) {
+//        std:: cout << "Adding data of " << cl << " : " << i << "/" << dataSize << std::endl;
         alg->addPoint(*iteratorData, *iteratorLabels); // Add a vector<int> and string
     }
 
 }
+
 
 template<class A, class TD, class TID, class D, class TY, class Y>
 /*Usually A:Algorithm to run class, TD: list<vector<int>>, TID: vector<int>, D: int, TY list<string>, Y string*/
@@ -85,16 +89,23 @@ KNeighborsClassifier<A, TD, TID, D, TY, Y>::predictWithTimeAndDistance(TD &x) {
     typedef std::list<std::tuple<double, std::list<std::tuple<Y, D>>>> returnL; // typedef the return type because its big
 
     timePoint start;
+//    assert(alg->getName());
+//    std::string cl = alg->getName();
     double elapsed;
+    int i ;
+//    int qDataSize = x.size();
     listTuples distanceList; // distanceList to store all neighbors
     lTIt iteratorListTuples; // Iterator on list of tuples
     returnL returnList; // definition of return list
 
     IteratorTD e1 = x.end();
     IteratorTD iteratorData;
-    for (iteratorData = x.begin(); iteratorData != e1; ++iteratorData) {
+    for (iteratorData = x.begin(), i = 0 ; iteratorData != e1; ++iteratorData, i++) {
         listTuples labelDistanceList; // every query has new labelDistanceList
+//        std:: cout << getDatetime(false) << "\t\t\t\tQuery data of " << cl << " : " << i << "/" << qDataSize << std::endl;
         start = initTime(); // Start Time
+//        auto future = std::async(std::launch::async, [this, iteratorData](){ return this->alg->queryPoint(*iteratorData);});
+//        labelDistanceList = future.get();
         labelDistanceList = alg->queryPoint(*iteratorData); // Query the point here send a vector<int>
         elapsed = getElapsed(start); // End Time
         returnList.push_back(std::make_pair(elapsed, labelDistanceList)); // Append to the return list the time and the distance list return by alg query method

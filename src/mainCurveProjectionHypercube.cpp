@@ -4,9 +4,10 @@
 
 #include<cstring>
 #include "../inc/KNeighborsClassifier.h"
+#include "../inc/PathFinder.h"
 
-void runCurveGridHypercube(int id, std::string &iFileName, std::string &qFileName, std::string &outFile, int L = 5,
-                           int k = 4, int w = 5000, int numNeighbors = 1, int topLimi = 4, int m = 0, int probes = 0,
+void runCurveProjectionHypercube(int id, std::string &iFileName, std::string &qFileName, std::string &outFile, int L = 5,
+                           int k = 4, int w = 6000, int numNeighbors = 1, int topLimi = 4, int m = 0, int probes = 0,
                            int M = 0) {
     /**
      * @brief Runs lsh knn algorithm.
@@ -14,11 +15,13 @@ void runCurveGridHypercube(int id, std::string &iFileName, std::string &qFileNam
      */
 
     using namespace std;
-    typedef vector<tuple<double, double>> X;
+    typedef vector<double> PointX;
+    typedef vector<PointX> X; // X is a Curve
     typedef list<X> CX;
     typedef list<string> CY;
     typedef string Y;
-//    typedef double TX;
+    typedef double TX;
+    tuple<double, list<vector<int>>>  CostAndPath;
 //    typedef LSH<X, TX, Y> LSH_;
 //    typedef ExactKNeighbors<CX, X, TX, CY, Y> EKNN_;
     typedef chrono::steady_clock::time_point timePoint;
@@ -38,9 +41,32 @@ void runCurveGridHypercube(int id, std::string &iFileName, std::string &qFileNam
     ofstream oFile;
     // Read Train data and query data.
     start = initTime();                                         // timestamp start
-    readTrajectories<CX, CY, X, Y>(iFileName, iDataList, iLabelList);
-    readTrajectories<CX, CY, X, Y>(qFileName, qDataList, qLabelList);
+    readTrajectories<CX, CY, X, TX>(iFileName, iDataList, iLabelList);
+    readTrajectories<CX, CY, X, TX>(qFileName, qDataList, qLabelList);
+    iDataList.pop_front();
+//    CostAndPath = dtwWindow<X, PointX, TX>(iDataList.front(), qDataList.front(), 3, 2);
+    PathFinder * pathFinder = new PathFinder(7, 5 );
+    list<list<vector<int>>> paths = pathFinder->RelevantPaths();
+    int i = 0;
+    for(auto path : paths){
+        cout << i <<".\t\t";
+        for (auto t : path){
+            cout << "(" << t[0] << ", " << t[1] << "), ";
+        }
+        cout << endl;
+        i++;
+    }
+    pathFinder->PrintTable();
+    iDataList.pop_front();
+    qDataList.pop_front();
+    CostAndPath = dtw<X, PointX, TX>(iDataList.front(), qDataList.front(), 2);
     cout << "Time to read files : " << getElapsed(start) << " list Sizes " << iDataList.size() << " " << iLabelList.size() << " " << qDataList.size()<< endl;
+    cout << "Distance of first Points: " << get<0>(CostAndPath) << " and Path:\n";
+    for(auto item : get<1>(CostAndPath)){
+        cout << "( " << item[0] << ", " << item[1] << "), ";
+//        i++;
+    }
+    cout << endl;
     exit(1);
     typename CX::iterator iterData1; // some iterators
     typename CY::iterator iterLabel1;
@@ -118,7 +144,7 @@ void runCurveGridHypercube(int id, std::string &iFileName, std::string &qFileNam
 //    delete clLsh;
 }
 
-int imain(int argc, char **argv) {
+int main(int argc, char **argv) {
     using namespace std;
 
     int L1, k1, L = 5, k = 4, w = 5000, numNeighbors = 1, topLimit =
@@ -130,11 +156,12 @@ int imain(int argc, char **argv) {
     string oFileName, iFileName, qFileName, output;
 
     //Read args
-    if (argc != 13) {
+    if (argc != 15) {
         fprintf(stderr, "Usage : %s -d <input file> -q <query file> -k <int> -L <int> -o <output file>\n", argv[0]);
         return 1;
     }
-    while (--argc && argc > 6) {
+   // -d tests/sample_datasets/trajectories_dataset -q tests/sample_datasets/trajectories_test1 -k_hypercube 4 -probes 5 -M 5 -L_grid 6 -o tests/traj_output1.txt
+    while (--argc && argc > 8) {
         arg = *++argv;
         if (arg == NULL) break;
         if (!strcmp(arg, "-o")) {
@@ -154,7 +181,7 @@ int imain(int argc, char **argv) {
             iFileName = *++argv;
     }
 
-    runCurveGridHypercube(0, iFileName, qFileName, output, L, k, w, numNeighbors, topLimit, m, M);
+    runCurveProjectionHypercube(0, iFileName, qFileName, output, L, k, w, numNeighbors, topLimit, m, M);
 
 
     return 0;

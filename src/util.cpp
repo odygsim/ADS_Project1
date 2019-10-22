@@ -105,7 +105,7 @@ int readHypercubeParameters(int argc, char **argv,
 }
 
 
-std::string calculateStats(std::list<double> &distanceListEA, std::list<double> &timeListE) {
+std::string calculateStats(std::list<double> &distanceListEA, std::list<double> &timeListE, double & accuracy) {
     /**
      * @brief Calculate the statistics A) max (distA / distanceE), B) meanTimeA
      * @param distanceList A list that contains distA/distE double numbers
@@ -117,10 +117,8 @@ std::string calculateStats(std::list<double> &distanceListEA, std::list<double> 
     std::string result;
 
     typedef std::list<double>::iterator IterListDouble;
-    IterListDouble distanceListEnd = distanceListEA.end();
-    IterListDouble timeListEnd = timeListE.end();
-    IterListDouble iterDistanceList;
-    IterListDouble iterTimeList;
+    IterListDouble distanceListEnd = distanceListEA.end(), timeListEnd = timeListE.end(), iterDistanceList, iterTimeList;
+
     for (iterDistanceList = distanceListEA.begin(), iterTimeList = timeListE.begin();
          (iterDistanceList != distanceListEnd); ++iterDistanceList, ++iterTimeList) {
         sum += *iterTimeList;
@@ -129,7 +127,7 @@ std::string calculateStats(std::list<double> &distanceListEA, std::list<double> 
     meanTimeA = sum / timeListE.size();
 
     result += std::to_string(maxDistance)
-              + "," + std::to_string(meanTimeA);
+              + "," + std::to_string(meanTimeA) + "," + std::to_string(accuracy);
     return result;
 }
 
@@ -175,168 +173,6 @@ double getElapsed(std::chrono::steady_clock::time_point start) {
     return std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() / 1000000.0;
 }
 
-//* Iterative Function to calculate (x^y)%p in O(log y) */
-int power(int x, unsigned int y, int p)
-{
-    int res = 1;      // Initialize result
-
-    x = x % p;  // Update x if it is more than or
-    // equal to p
-
-    while (y > 0)
-    {
-        // If y is odd, multiply x with result
-        if (y & 1)
-            res = (res*x) % p;
-
-        // y must be even now
-        y = y>>1; // y = y/2
-        x = (x*x) % p;
-    }
-    return res;
-}
-
-lint modex(lint base,lint exponent,lint mod){
-    if(base == 0){                                  // 0^x = 0.
-        return 0;
-    }
-    if(exponent == 0){
-        return 1;                                   // x^0 = 1.
-    }
-    if(exponent%2 == 0){
-        lint ans = modex(base,exponent/2,mod);      // as, a^b = (a^(b/2))*(a^(b/2)), we use recursion to effectively reduce the no.
-        return (ans*ans)%mod;                       // of operations required for computing.
-    }
-    return ((base%mod)*(modex(base,exponent-1,mod)))%mod;   // when exponent is odd, we reduce it by 1 to make it even, which again uses
-}                                                           // recursion for computation.
-
-/* For exponentiation, use the binary left-to-right algorithm
- * unless the exponent contains more than FIVEARY_CUTOFF digits.
- * In that case, do 5 bits at a time.  The potential drawback is that
- * a table of 2**5 intermediate results is computed.
- */
-
-static char * _digits_of_n(int n, int b) {
-//""" Return the list of the digits in the base 'b'
-//representation of n, from LSB to MSB
-//"""
-    std::vector<bool> digits;
-    char *ar= new char[32];
-
-    for(int i = 0; i < 32; i++){ //integer 32bits
-        digits.push_back(n % b);
-        n /= b;
-    }
-    return ar;
-}
-
-/*
- * Function to calculate modulus of x raised to the power y
- */
-
-ll modular_pow(ll base, ll exponent, int modulus)
-
-{
-
-    ll result = 1;
-
-    while (exponent > 0)
-
-    {
-
-        if (exponent % 2 == 1)
-
-            result = (result * base) % modulus;
-
-        exponent = exponent >> 1;
-
-        base = (base * base) % modulus;
-
-    }
-
-    return result;
-
-}
-
-int pow(int a, int b, int c) {
-    /**
-     * @brief Calculates a^b % c, or else modular exponentiation.
-     * @param a The number that will be the base.
-     * @param b The number that will be the power.
-     * @param c The number that will be the modulus.
-     * @return a^b % c
-     */
-    // ideas from https://eli.thegreenplace.net/2009/03/28/efficient-modular-exponentiation-algorithms
-    // http://cacr.uwaterloo.ca/hac/about/chap14.pdf
-    // https://raw.githubusercontent.com/python/cpython/master/Objects/longobject.c
-    int negativeOutput = 0;  /* if c<0 return negative output */
-    long z = 1; /* accumulated result */
-    long i, j, k, temp;/* counters */
-    char digit = 0;
-    k = 5;
-    /* 5-ary values.  If the exponent is large enough, table is
-     * precomputed so that table[i] == a**i % c for i in range(32).
-     */
-    long table[32] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-
-    /* if modulus == 1: return 0 */
-    if (c == 1) return 0;
-    /* Reduce base by modulus in some cases:
-       1. If base < 0.  Forcing the base non-negative makes things easier.
-       2. If base is obviously larger than the modulus.  The "small
-          exponent" case later can multiply directly by base repeatedly,
-          while the "large exponent" case multiplies directly by base 31
-          times.  It can be unboundedly faster to multiply by
-          base % modulus instead.
-       We could _always_ do this reduction, but l_divmod() isn't cheap,
-       so we only do it when it buys something. */
-//    if (a < 0 || a > c) {
-//        if ((temp = a % c) < 0){
-//            temp = 0 - a;
-//        }
-//        a = temp;
-//    }
-
-    /* At this point a, b, and c are guaranteed non-negative UNLESS
-       c is NULL, in which case a may be negative. */
-
-    /* Perform a modular reduction, X = X % c, but leave X alone if c
-     * is NULL.
-     */
-    if (b <= FIVEARY_CUTOFF) {
-        int base = 2;// << (5 -1);
-        digit = 0;
-        /* Left-to-right binary exponentiation (HAC Algorithm 14.79) */
-        /* http://www.cacr.math.uwaterloo.ca/hac/about/chap14.pdf    */
-        char *ar = _digits_of_n(b, base);
-        for (i = 32 - 1; 0 <= i;i--) {
-            digit = ar[i];
-            z = z * z % c;
-            if (digit == 1) { z = z * a % c; }
-        }
-        delete ar;
-    } else {
-        int base = 2 << (k - 1);
-
-        /* Left-to-right 5-ary exponentiation (HAC Algorithm 14.82) */
-        table[0] = z;
-        // Precompute the table exponents
-        for (i = 1; i < 32; ++i)
-            table[i] = table[i - 1] * a % c;//table[i];
-        char * ar = _digits_of_n(b, base);
-        for (i = 32 - 1; 0 <= i;i--) {
-            digit = ar[i];
-            for (k = 0; k < 5; ++k)
-                z = z * z % c;
-            if (digit == 1)
-                z = z * table[digit] % c;
-        }
-        delete ar;
-    }
-
-    return z;
-}
 
 void scanRadius(const std::string &s, double &radius, char &delimiter) {
     /**
@@ -355,3 +191,4 @@ void scanRadius(const std::string &s, double &radius, char &delimiter) {
         }
     }
 }
+

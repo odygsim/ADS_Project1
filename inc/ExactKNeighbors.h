@@ -12,19 +12,25 @@ template<class TD, class TID, class D, class TY, class Y>
 /*Usually TD: list<vector<int>>, TID: vector<int>, D: int, TY list<string>, Y string*/
 class ExactKNeighbors {
     /* This class is used as an algorithm for exact NN and has 2 methods addPoint, QueryPoint */
-    int n_neighbors;            // Number of Neighbors to search.
-    std::string metric_name;    // metric that will be used.
+    double radius;            // Number of Neighbors to search.
+    std::string metric_name, name = "ENN";    // metric that will be used.
     TD data;                    // object that will store the data
     TY labels;                  // object that will store the labels
 
-    D (*f)(TID &, TID &); /* This is the function Pointer to selected metric its declaration is here
-                     * and the definition an initialization*/
+    D (*f)(TID &, TID &); /* This is the function Pointer to selected metric its declaration is here */
+
 public:
-    ExactKNeighbors(int n_neighbors, std::string metric) : n_neighbors(n_neighbors), metric_name(metric) {
+//    ExactKNeighbors(double radius, D (*f1) (TID &, TID &)):radius(radius), f1(f1) { }
+
+    ExactKNeighbors(double radius, std::string metric) : radius(radius), metric_name(metric) {
         /* Constructor and initialization */
         if (metric_name == "manhattan")     /* definition of the metric depending */
-            f = &manhattanDistance<D, TID>;  /* on the metric_name argument passed to the constructor*/
+            f = &manhattanDistance<D, TID>;
+        else if (metric_name == "euclidean")     /* definition of the metric depending */
+            f = &euclideanDistance<D, TID>;
     }
+
+    std::string getName() const { return name; }
 
     void addPoint(TID &, Y &); // Add a Vector of int with its label
     std::list<std::tuple<Y, D>> queryPoint(TID &x); // Query a Point it return a list of tuples (label, distance)
@@ -75,8 +81,13 @@ std::list<std::tuple<Y, D>> ExactKNeighbors<TD, TID, D, TY, Y>::queryPoint(TID &
     distanceList.sort(TupleLess<1>()); // sort distance list by neighbors
     IteratorListTuples itE = distanceList.end();
     // Now append the nearest neighbors to the return list
-    for (j = 0, iterListTuples = distanceList.begin(); (j < this->n_neighbors) && (iterListTuples != itE); ++j, ++iterListTuples) {
-        labelDistanceList.push_back(*iterListTuples);
+    if ((radius) > 0) {
+        for (iterListTuples = distanceList.begin();
+             (iterListTuples != itE) && (radius < std::get<1>(*iterListTuples)); ++iterListTuples) {
+            labelDistanceList.push_back(*iterListTuples);
+        }
+    } else {
+        labelDistanceList.push_back(distanceList.front());
     }
 
     return labelDistanceList;
