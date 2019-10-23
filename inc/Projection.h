@@ -19,8 +19,9 @@ template<class D, class Y, class VH>
 class Projection {
     // store on vector<i,j> on Paths the paths for i,j, on VH the cube or LSH class
     typedef std::tuple<Paths, VH> TupleRevPaths;
+    typedef std::vector<std::vector<double>> curveX;
     std::vector<std::vector<TupleRevPaths>> ArrayTraversals;
-//    (n, vector<TupleRevPaths>(m, {MAXDOUBLE, 0, 0})); // The array m * n that hold the values calculated.
+    //    (n, vector<TupleRevPaths>(m, {MAXDOUBLE, 0, 0})); // The array m * n that hold the values calculated.
     std::vector<std::vector<double>> G; // keep G matrix here
     unsigned int d; // dimension , column limit of G
     unsigned int K; // row limit of G
@@ -34,6 +35,9 @@ public:
     Projection(int d, int w = 6000, int k = 4, int L = 5, int m = 0, double radius = 0, int top_limit = 0,
                std::string metric_name = "manhattan");
 
+    void addX(curveX &x, Y &y);  // Add point to structure.
+
+    std::list<std::tuple<Y, D>> queryX(CurveX &x) const; // Query a Point it return a list of tuples (label, distance).
     // Hypercube constructor
     Projection(int d, double w = 3000, int k = 3, int maxSearchPoints = 10, int probes = 2, int k_hi = 4, double r = 0);
 };
@@ -45,7 +49,7 @@ template<class D, class Y, class VH>
 Projection<D, Y, VH>::Projection(int d, int w, int k, int L, int m, double radius, int top_limit,
                                  std::string metric_name) {
 
-    // create the Array MXM
+    // create the Array MXM // TODO check if i need to start from 1.
     for (int i = 0; i < d; ++i) {
         for (int j = 0; j < d; ++j) {
             // Get Relevant Paths for i,j
