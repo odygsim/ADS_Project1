@@ -49,23 +49,33 @@ runCurveProjectionHypercube(int id, std::string &iFileName, std::string &qFileNa
     // take the last 100 records of curves for query set.
     ReduceTrajectories<CX,CY,X>(iDataList,iLabelList,testQDataList, testQLabelList, 25, iDataList.size()/10);
     int kk = testQDataList.size();
-
+list<list<vector<int>>> paths;
     iDataList.pop_front();
 //    CostAndPath = dtwWindow<X, PointX, TX>(iDataList.front(), qDataList.front(), 3, 2);
-    PathFinder *pathFinder = new PathFinder(7, 5);
-    list<list<vector<int>>> paths = pathFinder->RelevantPaths();
+    PathFinder *pathFinder = new PathFinder(3, 7, 2, 0 );
+    for (int i = 0; i < 10; ++i) {
+        for (int j = 0; j < 10; ++j) {
+            pathFinder->setNM(i,j);
+       paths = pathFinder->RelevantPaths();
+        }
+    }
+//    PathFinder *pathFinder = new PathFinder(1, 10, 2, 0 );
+//    paths = pathFinder->RelevantPaths();
     int i = 0;
-    for (auto path : paths) {
+    for (auto & path : paths) {
         cout << i << ".\t\t";
         for (auto t : path) {
             cout << "(" << t[0] << ", " << t[1] << "), ";
         }
-        cout << endl;
         i++;
+        cout << endl;
     }
+    cout << paths.size() << ", totalpaths "  << pathFinder->getSize() << endl;
+    cout << endl;
     pathFinder->PrintTable();
+    auto first = std::make_tuple(1, iDataList);
     iDataList.pop_front();
-    qDataList.pop_front();
+//    qDataList.pop_front();
     CostAndPath = dtw<X, PointX, TX>(iDataList.front(), qDataList.front(), "euclidean");
     cout << "Time to read files : " << getElapsed(start) << " list Sizes " << iDataList.size() << " "
          << iLabelList.size() << " " << qDataList.size() << endl;

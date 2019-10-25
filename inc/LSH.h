@@ -103,7 +103,6 @@ std::list<std::tuple<Y, D>> LSH<TID, D, Y>::queryPoint(TID &x) const {
     listTuples distanceList,                                      // List that stores the distances from neighbors.
             labelDistanceList;                                 // List that stores the labels of neighbors.
     IteratorListTuples iterListTuples;                            // iterator to traverse the list.
-    int j;
 
     for (auto ht: htList) { // for all hastTables getPoints!
         for (auto point : ht->getPoint(x)) {
