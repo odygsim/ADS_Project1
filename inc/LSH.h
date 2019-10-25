@@ -33,9 +33,9 @@ public:
 
     std::string getName() const { return name; }
 
-    void addPoint(TID &x, Y &y);  // Add point to structure.
+    void addX(TID &x, Y &y);  // Add point to structure.
 
-    std::list<std::tuple<Y, D>> queryPoint(TID &x) const; // Query a Point it return a list of tuples (label, distance).
+    std::list<std::tuple<Y, D>> queryX(TID &x) const; // Query a Point it return a list of tuples (label, distance).
 };
 
 
@@ -75,7 +75,7 @@ LSH<TID, D, Y>::LSH(int d, int w, int k, int L, int m, double radius, int top_li
 
 template<class TID, class D, class Y>
 /*Usually TID: vector<int>, D: int, Y string*/
-void LSH<TID, D, Y>::addPoint(TID &x, Y &y) {
+void LSH<TID, D, Y>::addX(TID &x, Y &y) {
     /**
      * @brief Add key and value to all hash tables.
      * @param x The first object with data.
@@ -90,7 +90,7 @@ void LSH<TID, D, Y>::addPoint(TID &x, Y &y) {
 
 template<class TID, class D, class Y>
 /*Usually TID: vector<int>, D: int, Y string*/
-std::list<std::tuple<Y, D>> LSH<TID, D, Y>::queryPoint(TID &x) const {
+std::list<std::tuple<Y, D>> LSH<TID, D, Y>::queryX(TID &x) const {
     /**
      * @brief Query a point.
      * @param x The object with data that the query will be executed.

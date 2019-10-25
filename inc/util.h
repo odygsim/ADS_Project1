@@ -91,6 +91,30 @@ RT lpNorm(DT &point1, DT &point2, unsigned int p = 1) {
     return (RT) powl(sum, 1.0 / p);
 }
 
+template<typename RT, typename DT>
+RT lpNorm(DT &point1, DT &point2, std::string metric_name) {
+    /**
+     * @brief calculates lp distance from given vectors/lists.
+     * @point1 An object that has a point with a big dimension.
+     * @point2 An object that has a point with a big dimension.
+     * @return the sum of lp distance.
+     */
+    unsigned int p;
+    if (metric_name == "manhattan")     /* definition of the metric depending */
+        p = 1;
+    else if (metric_name == "euclidean")     /* definition of the metric depending */
+        p = 2;
+
+    RT sum = 0;
+    typename DT::iterator e1 = point1.end(), e2 = point2.end(), it1, it2;
+
+    for (it1 = point1.begin(), it2 = point2.begin(); (it1 != e1) && (it2 != e2); ++it1, ++it2) {
+        sum += powl(abs(*it1 - *it2), p);
+    }
+
+    return (RT) powl(sum, 1.0 / p);
+}
+
 template<class X, class Y>
 std::tuple<Y, X> splitToPoint2(const std::string &s, char delimiter) {
     X tokens;
@@ -526,6 +550,60 @@ std::tuple<double, std::list<std::vector<int>>> dtw(CurveX &a, CurveX &b, std::s
 
 }
 
+template<typename CurveX, typename PointX, typename PrimitiveType>
+PrimitiveType dtwD(CurveX &a, CurveX &b, std::string metric_name) {
+    /**
+     * @brief Calculates dtw distance between 2 curves/lines and the path.
+     * @param a First curve to compare.
+     * @param b Second curve to compare.
+     * @param f The metric method tha will be used to calculate distances.
+     * @return Distance only.
+     */
+
+    using namespace std;
+    int i, j;
+    const int n = a.size(), m = b.size();
+    PrimitiveType distance;
+    PrimitiveType
+    (*f)(PointX &, PointX &, std::string); //method for distance calculation
+    typedef tuple<double, int, int> TUP; // The Array keeps a tuple of { currentCost, i Position, j Position}
+    list <vector<int>> Path;         // The Path is return in a list of tuples {i,j}
+    // Alloc 2-d array.
+    vector<vector<TUP>> DTW(n, vector<TUP>(m, {MAXDOUBLE, 0, 0})); // The array m * n that hold the values calculated.
+        f = &lpNorm<PrimitiveType, PointX>;
+//    if (metric_name == "manhattan")     /* definition of the metric depending */
+//        f = &manhattanDistance<PrimitiveType, PointX>;
+//    else if (metric_name == "euclidean")     /* definition of the metric depending */
+//        f = &euclideanDistance<PrimitiveType, PointX>;
+
+    DTW[0][0] = {0, 0, 0};                         // init 0 position with 0, the start pos.
+    for (i = 1; i < n; ++i) {                   // For all rows
+        for (j = 1; j < m; ++j) {               // For all columns
+            DTW[i][j] = {0, 0, 0};
+        }
+    }
+
+    for (i = 1; i < n; ++i) {                   // For all rows
+        for (j = 1; j < m; ++j) {               // For all columns
+            distance = f(a[i - 1], b[j - 1], metric_name);         // Calculate euclidean Distance from point to point.
+            // Add to a vector the 3 neighbors (i-1, j), (i, j-1) , (i-1,j-1) to sort them by cost.
+            list <TUP> TempList{{get<0>(DTW[i - 1][j]) + distance,     i - 1, j},
+                                {get<0>(DTW[i][j - 1]) + distance,     i,     j - 1},
+                                {get<0>(DTW[i - 1][j - 1]) + distance, i - 1, j - 1}};
+            TempList.sort(TupleLess<0>());
+            DTW[i][j] = TempList.front();
+            TempList.clear();
+        }
+    }
+    i = n - 1, j = m - 1;
+    while (i > 0 && j > 0) {
+        Path.push_front({i - 1, j - 1});
+        i = get<1>(DTW[i][j]);                  // Get i
+        j = get<2>(DTW[i][j]);                  // get j
+    }
+    // get total distance, path and return them.
+    return get<0>(DTW[m - 1][n - 1]);
+}
 
 /**
  *

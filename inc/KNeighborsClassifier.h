@@ -62,7 +62,7 @@ void KNeighborsClassifier<A, TD, TID, D, TY, Y>::fit(TD &x, TY &y) {
     for (iteratorData = x.begin(), i = 0, iteratorLabels = y.begin();
          iteratorData != itDE; ++iteratorData, ++iteratorLabels, i++) {
 //        std:: cout << "Adding data of " << cl << " : " << i << "/" << dataSize << std::endl;
-        alg->addPoint(*iteratorData, *iteratorLabels); // Add a vector<int> and string
+        alg->addX(*iteratorData, *iteratorLabels); // Add a vector<int> and string
     }
 
 }
@@ -106,7 +106,7 @@ KNeighborsClassifier<A, TD, TID, D, TY, Y>::predictWithTimeAndDistance(TD &x) {
         start = initTime(); // Start Time
 //        auto future = std::async(std::launch::async, [this, iteratorData](){ return this->alg->queryPoint(*iteratorData);});
 //        labelDistanceList = future.get();
-        labelDistanceList = alg->queryPoint(*iteratorData); // Query the point here send a vector<int>
+        labelDistanceList = alg->queryX(*iteratorData); // Query the point here send a vector<int>
         elapsed = getElapsed(start); // End Time
         returnList.push_back(std::make_pair(elapsed, labelDistanceList)); // Append to the return list the time and the distance list return by alg query method
     }

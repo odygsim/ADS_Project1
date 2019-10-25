@@ -50,10 +50,10 @@ public:
     Projection(int dimensionCurve, int dimensionPoint, int w = 6000, int k = 4, int L = 5, int m = 0, double radius = 0,
                int top_limit = 0, std::string metric_name = "euclidean");
 
-    void addCurve(curveX &x, Y &y);  // Add point to structure.
+    void addX(curveX &x, Y &y);  // Add point to structure.
 
     std::list<std::tuple<Y, D>>
-    queryCurve(curveX &x) const; // Query a Point it return a list of tuples (label, distance).
+    queryX(curveX &x) const; // Query a Point it return a list of tuples (label, distance).
     // Hypercube constructor
     Projection(int dimensionCurve, int dimensionPoint, double w = 3000, int k = 3, int maxSearchPoints = 10,
                int probes = 2, int k_hi = 4, double r = 0, std::string metric_name = "euclidean");
@@ -112,7 +112,7 @@ Projection<D, Y, VH>::Projection(int dimensionCurve, int dimensionPoint, double 
 
 template<class D, class Y, class VH>
 // Add point to structure.
-void Projection<D, Y, VH>::addCurve(curveX &x, Y &y) {
+void Projection<D, Y, VH>::addX(curveX &x, Y &y) {
     int numPoints = x.size();
     std::vector<double> hashedX;
     hashedX = mulCurveAndG(x);
@@ -177,7 +177,7 @@ std::list<std::tuple<Y, D>> Projection<D, Y, VH>::scanTraversals(curveX &x, int 
 
 template<class D, class Y, class VH>
 // Query a Point it return a list of tuples (label, distance).
-std::list<std::tuple<Y, D>> Projection<D, Y, VH>::queryCurve(curveX &x) const {
+std::list<std::tuple<Y, D>> Projection<D, Y, VH>::queryX(curveX &x) const {
 
     return scanTraversals(x);  // scan and return result
 }
