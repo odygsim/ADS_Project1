@@ -192,3 +192,5 @@ void scanRadius(const std::string &s, double &radius, char &delimiter) {
     }
 }
 
+
+unsigned int KCalculation(double e, int d){ return (-d*log2(e)) / (powl(e,2));}

@@ -39,7 +39,7 @@ class PathFinder{
 public:
     PathFinder(int n, int m, unsigned int w=1);
     PathFinder(int n, int m, unsigned int w, int k);
-    PathFinder(int n, int m);
+//    PathFinder(int n, int m);
     ~PathFinder(){};
     void PrintTable();
     int getSize(){return TotalPathsSize;}
