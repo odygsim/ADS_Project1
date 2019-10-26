@@ -27,8 +27,8 @@ class CurvesLSH {
 private:
 
     // Setting types for Curves and Points to be easily used throughout class
-    typedef std::vector< std::vector<D> > CurveType;
-    typedef std::vector< D > PointType;
+    typedef std::vector<std::vector<D> > CurveType;
+    typedef std::vector<D> PointType;
 
     // Dimension of points - delta to be used ( delta =< 4*d*min{m1,m2} / m1,m2 : number of points in curves )
     // Number of grid
@@ -43,21 +43,25 @@ private:
     // Metric to be used
     std::string strMetric;
     // List of 1d HashTables (LSH or Hypercube)
-    std::list< CurveGridHT<D, Y, VH>* > GridHT_ListP;
+    std::list<CurveGridHT<D, Y, VH> *> GridHT_ListP;
+
     // Pointer of the function calculating distance between curves
-    std::tuple<double, std::list<std::vector<int>>> (*fDist)(CurveType &a, CurveType &b, std::string metric_name );
+    std::tuple<double, std::list<std::vector<int>>> (*fDist)(CurveType &a, CurveType &b, std::string metric_name);
 
 public:
 
     CurvesLSH();
 
-    CurvesLSH(int pointDim, int delta, int kVecs, int maxPointsForPadding, int numGrids = 4, int w =3000, std::string metricName = "euclidean");
+    CurvesLSH(int pointDim, int delta, int kVecs, int maxPointsForPadding, int numGrids = 4, int w = 3000,
+              std::string metricName = "euclidean");
 
-    CurvesLSH(int pointDim, int delta, int kHypercube, int maxSearchPoints, int probes, int maxPointsForPadding, int numGrids = 4,
-              int w =3000, std::string metricName = "euclidean");
+    CurvesLSH(int pointDim, int delta, int kHypercube, int maxSearchPoints, int probes, int maxPointsForPadding,
+              int numGrids = 4,
+              int w = 3000, std::string metricName = "euclidean");
 
-    void addCurve ( CurveType &curve, Y &y);
-    void queryCurve ( CurveType &curve, Y &y);
+    void addCurve(CurveType &curve, Y &y);
+
+    void queryCurve(CurveType &curve, Y &y);
 
     virtual ~CurvesLSH() {
 
@@ -66,9 +70,10 @@ public:
 
 // Constructor initializing LSH Vector Hash
 template<class D, class Y, class VH>
-CurvesLSH<D, Y, VH>::CurvesLSH(int pointDim, int delta, int kVecs, int maxPointsInCurves, int numGrids, int w, std::string metricName)
+CurvesLSH<D, Y, VH>::CurvesLSH(int pointDim, int delta, int kVecs, int maxPointsInCurves, int numGrids, int w,
+                               std::string metricName)
         :pointDim(pointDim), delta(delta), numGrids(numGrids), k_vecs(kVecs), strMetric(metricName),
-        maxPointsForPadding(maxPointsInCurves), w(w) {
+         maxPointsForPadding(maxPointsInCurves), w(w) {
 
     // Create d number of gi hypercube hashTable functions
     for (int i = 0; i < numGrids; ++i) {
@@ -82,8 +87,9 @@ CurvesLSH<D, Y, VH>::CurvesLSH(int pointDim, int delta, int kVecs, int maxPoints
 
 // Constructor initializing Hypercube Vector Hash
 template<class D, class Y, class VH>
-CurvesLSH<D, Y, VH>::CurvesLSH(int pointDim, int delta, int kHypercube, int maxSearchPoints, int probes, int maxPointsInCurves, int numGrids,
-                              int w, std::string metricName)
+CurvesLSH<D, Y, VH>::CurvesLSH(int pointDim, int delta, int kHypercube, int maxSearchPoints, int probes,
+                               int maxPointsInCurves, int numGrids,
+                               int w, std::string metricName)
         :pointDim(pointDim), delta(delta), numGrids(numGrids), k_hypercube(kHypercube),
          maxSearchPoints(maxSearchPoints), probes(probes), strMetric(metricName),
          maxPointsForPadding(maxPointsInCurves), w(w) {
@@ -92,7 +98,9 @@ CurvesLSH<D, Y, VH>::CurvesLSH(int pointDim, int delta, int kHypercube, int maxS
 
     for (int i = 0; i < numGrids; ++i) {
         // Create the grid hash tables with Hypercube constructor
-        GridHT_ListP.push_back(new CurveGridHT<D, Y, VH>(pointDim, delta, maxPointsForPadding, k_hypercube, maxSearchPoints, probes, w));
+        GridHT_ListP.push_back(
+                new CurveGridHT<D, Y, VH>(pointDim, delta, maxPointsForPadding, k_hypercube, maxSearchPoints, probes,
+                                          w));
     }
 
     // Set the distance metric function to be used
@@ -102,12 +110,12 @@ CurvesLSH<D, Y, VH>::CurvesLSH(int pointDim, int delta, int kHypercube, int maxS
 
 // Function : Adding Curve to Grids
 template<class D, class Y, class VH>
-void CurvesLSH< D, Y, VH >::addCurve (std::vector< std::vector<D> > &curve, Y &y){
+void CurvesLSH<D, Y, VH>::addCurve(std::vector<std::vector<D> > &curve, Y &y) {
 
-    typename std::list< CurveGridHT<D, Y, VH>* >::iterator gridHT;
+    typename std::list<CurveGridHT<D, Y, VH> *>::iterator gridHT;
 
     // Add curve to all Grid HTables
-    for( gridHT = GridHT_ListP.begin(); gridHT != GridHT_ListP.end(); gridHT++ ) {
+    for (gridHT = GridHT_ListP.begin(); gridHT != GridHT_ListP.end(); gridHT++) {
 
         // Add curve to current grid
         (*gridHT)->addCurve(curve, y);
@@ -118,13 +126,13 @@ void CurvesLSH< D, Y, VH >::addCurve (std::vector< std::vector<D> > &curve, Y &y
 
 // Function : Querying for ANN Curve in Grids
 template<class D, class Y, class VH>
-void CurvesLSH< D, Y, VH >::queryCurve ( std::vector< std::vector<D> > &curve, Y &y){
+void CurvesLSH<D, Y, VH>::queryCurve(std::vector<std::vector<D> > &curve, Y &y) {
 
-    typename std::list< CurveGridHT<D, Y, VH>* >::iterator gridHT;
+    typename std::list<CurveGridHT<D, Y, VH> *>::iterator gridHT;
     std::list<std::tuple<Y, D>> distanceList;
 
     // Search curve in all Grid HTables
-    for( gridHT = GridHT_ListP.begin(); gridHT != GridHT_ListP.end(); gridHT++ ) {
+    for (gridHT = GridHT_ListP.begin(); gridHT != GridHT_ListP.end(); gridHT++) {
         // Search curve in current grid
         //TODO:: adding curve querying in grids functionality
     }

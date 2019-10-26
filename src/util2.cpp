@@ -63,3 +63,85 @@ unsigned int calcModOfNumberInPower(long num, int power, long modulator,  std::v
 
     return (unsigned int) currRes;
 }
+
+int readCurvesLSHWithHypercubeParameters(int argc, char **argv, std::string &inputFile, std::string &queryFile,
+                                         std::string &outputFile, int &k_hypercube, int &M, int &probes, int &L_grid) {
+    extern char *optarg;
+    int opt = 0;
+
+    //Set default parameters values
+    k_hypercube = 3;
+    M = 10;
+    probes = 2;
+    L_grid = 4;
+
+    //Specify expected options
+    static struct option grid_cube_options[] = {
+            {"d",      required_argument, 0, 'd'},
+            {"q",      required_argument, 0, 'q'},
+            {"o",      required_argument, 0, 'o'},
+            {"k_hypercube",      required_argument, 0, 'k'},
+            {"M",      required_argument, 0, 'M'},
+            {"probes", required_argument, 0, 'p'},
+            {"L_grid", required_argument, 0, 'l'}
+    };
+
+    int longIndex = 0;
+    int dflag = 0, qflag = 0, oflag = 0;
+
+    // Get options given
+    while ((opt = getopt_long_only(argc, argv, "",
+                                   grid_cube_options, &longIndex)) != -1) {
+        switch (opt) {
+            case 'd' :
+                dflag = 1;
+                inputFile = optarg;
+                break;
+            case 'q' :
+                qflag = 1;
+                queryFile = optarg;
+                break;
+            case 'o' :
+                oflag = 1;
+                outputFile = optarg;
+                break;
+            case 'k' :
+                k_hypercube = atoi(optarg);
+                break;
+            case 'M' :
+                M = atoi(optarg);
+                break;
+            case 'p' :
+                probes = atoi(optarg);
+                break;
+            case 'l' :
+                L_grid = atoi(optarg);
+                break;
+            default:
+                print_curvesLSHWithHypercube_usage();
+                exit(EXIT_FAILURE);
+        }
+    }
+
+    //  Check if necessary options have been provided
+    if (dflag == 0) {
+        fprintf(stderr, "cube: missing -d option\n");
+        print_cube_usage();
+        exit(EXIT_FAILURE);
+    } else if (qflag == 0) {
+        fprintf(stderr, "cube: missing -q option\n");
+        print_cube_usage();
+        exit(EXIT_FAILURE);
+    } else if (oflag == 0) {
+        fprintf(stderr, "cube: missing -o option\n");
+        print_cube_usage();
+        exit(EXIT_FAILURE);
+    }
+
+
+    return 0;
+}
+
+void print_curvesLSHWithHypercube_usage() {
+    fprintf(stderr, "Usage: curve_grid_hypecube -d <input file> -q <query file> -k_hypecube <int> -M <int> -probes <int> L_grid <int> -o <output file>\n");
+}
