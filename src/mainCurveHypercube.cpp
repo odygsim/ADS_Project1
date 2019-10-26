@@ -3,6 +3,7 @@
 //
 
 #include <string>
+#include <tuple>
 #include "../inc/util2.h"
 #include "../inc/CurvesLSH.h"
 #include "../inc/KNeighborsClassifier.h"
@@ -10,7 +11,7 @@
 
 
 void runCurveLSHWithHypercube( std::string &iFileName, std::string &qFileName, std::string &oFileName, std::string metric_name="euclidean",
-        int L_grid = 4, int k =3, int M =10, int w=3000, int probes = 2 ){
+        int L_grid = 4, int k =3, int M =10, double w=3000, int probes = 2 ){
 
     using namespace std;
 
@@ -63,12 +64,13 @@ void runCurveLSHWithHypercube( std::string &iFileName, std::string &qFileName, s
     // Create LSH for curves structure
     typedef double DX;
     typedef std::string DY;
-    typedef std::vector<DX> HQ_IDX;
-    typedef Hypercube<HQ_IDX, DX, DY> HQ_Struct;
-    typedef CurvesLSH<DX, DY, HQ_Struct > CLSH_Struct;
+    typedef std::vector<double> HQ_IDX;
+    typedef std::tuple<X,DY> HQ_SAVEDDATA;
+//    typedef Hypercube<HQ_IDX, double, HQ_SAVEDDATA> HQ_Struct;
+    typedef Hypercube< std::vector<double>, double, std::tuple< std::vector< std::vector<double> >, std::string >  > HQStruct;
+    typedef CurvesLSH< DX, DY, Hypercube< std::vector<double>, double, std::tuple< std::vector< std::vector<double> >, std::string >  > > CLSH_Struct;
 
-    CLSH_Struct *CLSH = new CLSH_Struct(dim, delta, k, M, probes, maxPointsInCurves,
-            L_grid , w , metric_name);
+    CLSH_Struct* CLSH = new CLSH_Struct(dim, delta, k, M, probes, maxPointsInCurves, L_grid , w , metric_name);
 
     CX::iterator CurveIter;
     CY::iterator CurveLblIter;
@@ -101,7 +103,7 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    runCurveLSHWithHypercube(iFileName, qFileName, oFileName, metric_name, L_grid, k, M, w, probes);
+    runCurveLSHWithHypercube(iFileName, qFileName, oFileName, metric_name, L_grid, k, M, (double) w, probes);
 
 
     return 0;

@@ -39,7 +39,7 @@ private:
     // Parameters for Hypercube
     int k_hypercube, maxSearchPoints, probes;
     // Parameters for both
-    int w;
+    double w;
     // Metric to be used
     std::string strMetric;
     // List of 1d HashTables (LSH or Hypercube)
@@ -52,12 +52,12 @@ public:
 
     CurvesLSH();
 
-    CurvesLSH(int pointDim, int delta, int kVecs, int maxPointsForPadding, int numGrids = 4, int w = 3000,
+    CurvesLSH(int pointDim, int delta, int kVecs, int maxPointsForPadding, int numGrids = 4, double w = 3000,
               std::string metricName = "euclidean");
 
     CurvesLSH(int pointDim, int delta, int kHypercube, int maxSearchPoints, int probes, int maxPointsForPadding,
               int numGrids = 4,
-              int w = 3000, std::string metricName = "euclidean");
+              double w = 3000, std::string metricName = "euclidean");
 
     void addCurve(CurveType &curve, Y &y);
 
@@ -70,7 +70,7 @@ public:
 
 // Constructor initializing LSH Vector Hash
 template<class D, class Y, class VH>
-CurvesLSH<D, Y, VH>::CurvesLSH(int pointDim, int delta, int kVecs, int maxPointsInCurves, int numGrids, int w,
+CurvesLSH<D, Y, VH>::CurvesLSH(int pointDim, int delta, int kVecs, int maxPointsInCurves, int numGrids, double w,
                                std::string metricName)
         :pointDim(pointDim), delta(delta), numGrids(numGrids), k_vecs(kVecs), strMetric(metricName),
          maxPointsForPadding(maxPointsInCurves), w(w) {
@@ -82,29 +82,33 @@ CurvesLSH<D, Y, VH>::CurvesLSH(int pointDim, int delta, int kVecs, int maxPoints
     }
 
     // Set the distance metric function to be used
-    fDist = &dtw<CurveType, PointType, strMetric>;
+    fDist = &dtw<CurveType, PointType, D>;
 }
 
 // Constructor initializing Hypercube Vector Hash
 template<class D, class Y, class VH>
 CurvesLSH<D, Y, VH>::CurvesLSH(int pointDim, int delta, int kHypercube, int maxSearchPoints, int probes,
                                int maxPointsInCurves, int numGrids,
-                               int w, std::string metricName)
+                               double w, std::string metricName)
         :pointDim(pointDim), delta(delta), numGrids(numGrids), k_hypercube(kHypercube),
          maxSearchPoints(maxSearchPoints), probes(probes), strMetric(metricName),
          maxPointsForPadding(maxPointsInCurves), w(w) {
 
-    // Create d number of gi hypercube hashTable functions
+    // Setting types for Curves and Points to be easily used throughout class
+//    typedef std::vector<std::vector<D> > CurveType;
+//    typedef std::vector<D> PointType;
 
+    // Create d number of gi hypercube hashTable functions
     for (int i = 0; i < numGrids; ++i) {
+
+//        CurveGridHT<D, Y, VH>* CG = new CurveGridHT<D, Y, VH>(pointDim, delta, maxPointsForPadding, k_hypercube, maxSearchPoints, probes, w);
+
         // Create the grid hash tables with Hypercube constructor
-        GridHT_ListP.push_back(
-                new CurveGridHT<D, Y, VH>(pointDim, delta, maxPointsForPadding, k_hypercube, maxSearchPoints, probes,
-                                          w));
+        GridHT_ListP.push_back( new CurveGridHT<D, Y, VH>(pointDim, delta, maxPointsForPadding, k_hypercube, maxSearchPoints, probes, w) );
     }
 
     // Set the distance metric function to be used
-    fDist = &dtw<CurveType, PointType, strMetric>;
+    fDist = &dtw<CurveType, PointType, D>;
 
 }
 

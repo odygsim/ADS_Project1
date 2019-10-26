@@ -23,7 +23,7 @@ private:
     typedef std::vector<double> GridPointType;
     // Setting type for LSH, Hypercube
     typedef LSH<std::vector<double>, double, std::tuple<CurveType,Y> > LSHType;
-    typedef Hypercube<std::vector<double>, double, std::tuple<CurveType,Y> > HQType;
+    typedef Hypercube< std::vector<double>, double, std::tuple< CurveType, Y > > HQType;
 
     // Dimension of points - delta to be used ( delta =< 4*d*min{m1,m2} / m1,m2 : number of points in curves )
     // Maximum number of points in a curve to apply padding for hashing 1d vectors - assume 10% more than max points of curves in dataset
@@ -33,22 +33,22 @@ private:
     // Parameters for Hypercube
     int k_hypercube, maxSearchPoints, probes;
     // Parameters for both
-    int w;
+    double w;
     // A uniformly random vector (1xd) and the resulting Grid Vector to snap points to
     std::vector<D> t, Gd;
     // Grid Point containing zeros for padding purposes
     GridPointType zeroGridPoint;
     // Hashing of resulting vector in one dimension
-    VH oneDimHashing;
+    VH* oneDimHashing;
 
 public:
     CurveGridHT() {}
 
     // Constructor for LSH one dim hashing
-    CurveGridHT(int pointDim, int delta, int maxPointsForPadding, int kVecs, int w = 3000) ;
+    CurveGridHT(int pointDim, int delta, int maxPointsForPadding, int kVecs, double w = 3000) ;
 
     // Constructor for Hypercube one dim hashing
-    CurveGridHT(int pointDim, int delta, int maxPointsForPadding, int kHypercube, int maxSearchPoints, int probes, int w =3000);
+    CurveGridHT(int pointDim, int delta, int maxPointsForPadding, int kHypercube, int maxSearchPoints, int probes, double w =3000);
 
     // Initialize grid
     void initializeGrid();
@@ -77,7 +77,7 @@ public:
 };
 
 template<class D, class Y, class VH>
-std::vector<std::vector<double> > CurveGridHT<D, Y, VH>::calcGridCurve(CurveGridHT::CurveType &curve) {
+std::vector< std::vector<double> > CurveGridHT<D, Y, VH>::calcGridCurve(CurveType &curve) {
 
     // Resulting grid curve
     GridCurveType gridCurve;
@@ -144,7 +144,7 @@ std::vector<double> CurveGridHT<D, Y, VH>::snappedToGrid(CurveGridHT::PointType 
 }
 
 template<class D, class Y, class VH>
-void CurveGridHT<D, Y, VH>::addCurve(CurveGridHT::CurveType &curve, Y &y) {
+void CurveGridHT<D, Y, VH>::addCurve(CurveType &curve, Y &y) {
 
     // Grid curve
     GridCurveType gCurve;
@@ -164,7 +164,7 @@ void CurveGridHT<D, Y, VH>::addCurve(CurveGridHT::CurveType &curve, Y &y) {
     std::tuple<CurveType, Y> curveData = std::make_tuple(curve, y);
 
     // Hash vector to one dim hash structure
-    oneDimHashing.addPoint( gCurve, curveData);
+    oneDimHashing->addPoint( gCurve, curveData);
 
 }
 
@@ -206,7 +206,7 @@ void CurveGridHT<D, Y, VH>::initZeroGridPoint() {
 }
 
 template<class D, class Y, class VH>
-CurveGridHT<D, Y, VH>::CurveGridHT(int pointDim, int delta, int maxPointsForPadding, int kVecs, int w) :
+CurveGridHT<D, Y, VH>::CurveGridHT(int pointDim, int delta, int maxPointsForPadding, int kVecs, double w) :
                         pointDim(pointDim), delta(delta), maxPointsForPadding(maxPointsForPadding), k_vecs(kVecs), w(w) {
 
     // Initialize grid and zero grid point for padding
@@ -214,21 +214,23 @@ CurveGridHT<D, Y, VH>::CurveGridHT(int pointDim, int delta, int maxPointsForPadd
     this->initZeroGridPoint();
 
     // Create a new LSH hash structure for one dimensional hashing of grid curve
-    LSHType *oneDimHashing = new LSHType(pointDim, w , k_vecs, 1, 0, INT32_MAX, 0, "manhattan");
+    oneDimHashing = new LSHType(pointDim, w , k_vecs, 1, 0, INT32_MAX, 0, "manhattan");
 
 }
 
 template<class D, class Y, class VH>
-CurveGridHT<D, Y, VH>::CurveGridHT(int pointDim, int delta, int maxPointsForPadding, int kHypercube, int maxSearchPoints, int probes, int w):
-pointDim(pointDim), delta(delta), maxPointsForPadding(maxPointsForPadding), k_hypercube(kHypercube),
-          maxSearchPoints(maxSearchPoints), probes(probes), w(w) {
+CurveGridHT<D, Y, VH>::CurveGridHT(int pointDim, int delta, int maxPointsForPadding, int kHypercube, int maxSearchPoints, int probes, double w):
+    pointDim(pointDim), delta(delta), maxPointsForPadding(maxPointsForPadding), k_hypercube(kHypercube), maxSearchPoints(maxSearchPoints), probes(probes), w(w) {
 
     // Initialize grid and zero grid point for padding
     this->initializeGrid();
     this->initZeroGridPoint();
 
+//    typedef Hypercube< std::vector<double>, double, std::tuple<CurveType,Y> > HQType;
+
     // Create a new Hypercube hash structure for one dimensional hashing of grid curve
-    HQType *oneDimHashing = new HQType(pointDim, w, k_hypercube, 0 , maxSearchPoints, probes, 4, INT32_MAX);
+    oneDimHashing = new HQType(pointDim, w, k_hypercube, maxSearchPoints, probes, 4, DBL_MAX);
+
 }
 
 #endif //ADS_PROJECT1_CURVEGRIDHT_H
