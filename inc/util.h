@@ -547,7 +547,9 @@ std::tuple<double, std::list<std::vector<int>>> dtw(CurveX &a, CurveX &b, std::s
         j = get<2>(DTW[i][j]);                  // get j
     }
     // get total distance, path and return them.
-    return {get<0>(DTW[m - 1][n - 1]), Path};
+//    std::cout <<
+    return std::make_tuple(get<0>(DTW[n - 1][m - 1]), Path);
+//    return {get<0>(DTW[m - 1][n - 1]), Path};
 
 }
 
@@ -603,7 +605,7 @@ PrimitiveType dtwD(CurveX &a, CurveX &b, std::string metric_name) {
         j = get<2>(DTW[i][j]);                  // get j
     }
     // get total distance, path and return them.
-    return get<0>(DTW[m - 1][n - 1]);
+    return get<0>(DTW[n - 1][m - 1]);
 }
 
 /**
