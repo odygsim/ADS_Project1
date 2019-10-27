@@ -8,6 +8,8 @@
 #include <vector>
 #include <random>
 #include <cmath>
+//#include <tuple>
+//#include <string>
 #include "LSH.h"
 #include "Hypercube.h"
 
@@ -21,6 +23,9 @@ private:
     typedef std::vector<std::vector<double> > GridCurveType;
     typedef std::vector<D> PointType;
     typedef std::vector<double> GridPointType;
+    typedef std::vector<double> ConcatVector;
+    typedef std::tuple<CurveType, Y> curveDataType;
+
     // Setting type for LSH, Hypercube
     typedef LSH<std::vector<double>, double, std::tuple<CurveType,Y> > LSHType;
     typedef Hypercube< std::vector<double>, double, std::tuple< CurveType, Y > > HQType;
@@ -28,6 +33,8 @@ private:
     // Dimension of points - delta to be used ( delta =< 4*d*min{m1,m2} / m1,m2 : number of points in curves )
     // Maximum number of points in a curve to apply padding for hashing 1d vectors - assume 10% more than max points of curves in dataset
     int pointDim, delta, maxPointsForPadding;
+    // Name for the metric to be used internally in fdist
+    std::string metric_name;
     // Parameters for LSH
     int k_vecs;
     // Parameters for Hypercube
@@ -40,15 +47,11 @@ private:
     GridPointType zeroGridPoint;
     // Hashing of resulting vector in one dimension
     VH* oneDimHashing;
+    // Uniform random generator for mapping g to {0,1} : f
+    std::mt19937 fgenerator;
 
-public:
-    CurveGridHT() {}
-
-    // Constructor for LSH one dim hashing
-    CurveGridHT(int pointDim, int delta, int maxPointsForPadding, int kVecs, double w = 3000) ;
-
-    // Constructor for Hypercube one dim hashing
-    CurveGridHT(int pointDim, int delta, int maxPointsForPadding, int kHypercube, int maxSearchPoints, int probes, double w =3000);
+    // Pointer of the function calculating distance between curves
+    std::tuple<double, std::list<std::vector<int>>> (*fDist)(CurveType &a, CurveType &b, std::string metric_name);
 
     // Initialize grid
     void initializeGrid();
@@ -62,17 +65,33 @@ public:
     // Get point snapped to grid
     GridPointType snappedToGrid(PointType &p);
 
+    // Concat grid points to single vector including padding
+    ConcatVector concatGridPointsToVector(GridCurveType &gCurve);
+
+
+public:
+    CurveGridHT() {}
+
+    // Constructor for LSH one dim hashing
+    CurveGridHT(int pointDim, int delta, int maxPointsForPadding, int kVecs, double w = 3000,
+            std::string metric_name = "euclidean") ;
+
+    // Constructor for Hypercube one dim hashing
+    CurveGridHT(int pointDim, int delta, int maxPointsForPadding, int kHypercube, int maxSearchPoints, int probes, double w =3000,
+            std::string metric_name = "euclidean");
+
+
     virtual ~CurveGridHT() {
 
     }
     // For LSH assume L=1 and k (num of hi(x)) could be given
     // For Hypercube all arguments k, M, probes are given - or default
 
-public:
     // Add curve to CurvesLSH
     void addCurve(CurveType &curve, Y &y);
 
     // Query a curve in Curves LSH
+//    std::tuple<Y, CurveType >
     void queryCurve(CurveType &curve);
 };
 
@@ -98,7 +117,7 @@ std::vector< std::vector<double> > CurveGridHT<D, Y, VH>::calcGridCurve(CurveTyp
     // Loop over all points and snap them to grid (if current different to previous grid point)
     for ( currPoint; currPoint != curve.end(); currPoint++ ){
         // Snap current point to curve
-        currGridPoint = snappedToGrid(currPoint);
+        currGridPoint = snappedToGrid((*currPoint) );
         // Check if it is the same with previous
         if ( currGridPoint != prevGridPoint ) {
             gridCurve.push_back(currGridPoint);
@@ -118,7 +137,7 @@ std::vector< std::vector<double> > CurveGridHT<D, Y, VH>::calcGridCurve(CurveTyp
 }
 
 template<class D, class Y, class VH>
-std::vector<double> CurveGridHT<D, Y, VH>::snappedToGrid(CurveGridHT::PointType &p) {
+std::vector<double> CurveGridHT<D, Y, VH>::snappedToGrid(PointType &p) {
 
     // Coordinate types for point and grid point
     typename PointType::iterator pCoord;
@@ -131,7 +150,7 @@ std::vector<double> CurveGridHT<D, Y, VH>::snappedToGrid(CurveGridHT::PointType 
     CurveGridHT::PointType snappedPoint;
 
     // Loop over i-th coordinates to find respective i-th grid coordinates
-    for (pCoord = p.begin(), gCoord = Gd.begin(); pCoord != p.end(), gCoord != p.end(); pCoord++, gCoord++) {
+    for (pCoord = p.begin(), gCoord = Gd.begin(); pCoord != p.end(), gCoord != Gd.end(); pCoord++, gCoord++) {
         // Divide to found nearest integer point in i-th dimension
         gCoordIndex = std::lround(*pCoord / *gCoord);
         // Get point coordinates in i-th dimension
@@ -141,6 +160,22 @@ std::vector<double> CurveGridHT<D, Y, VH>::snappedToGrid(CurveGridHT::PointType 
     }
 
     return snappedPoint;
+}
+
+template<class D, class Y, class VH>
+std::vector<double> CurveGridHT<D, Y, VH>::concatGridPointsToVector(GridCurveType &gCurve) {
+
+    // Grid point for : a) concatenation of grid points, b) as temp grid point of curve
+    ConcatVector gridConcatVector;
+
+    // Concatenate grid curve points to a vector
+    GridCurveType::iterator gPoint;
+    for ( gPoint = gCurve.begin() ; gPoint != gCurve.end(); gPoint++){
+        gridConcatVector.insert(gridConcatVector.end(), gPoint->begin(), gPoint->end() );
+    }
+
+    return gridConcatVector;
+
 }
 
 template<class D, class Y, class VH>
@@ -155,21 +190,71 @@ void CurveGridHT<D, Y, VH>::addCurve(CurveType &curve, Y &y) {
     gCurve = calcGridCurve( curve );
 
     // Concatenate grid curve points to a vector
-    GridCurveType::iterator gPoint;
-    for ( gPoint = gCurve.begin() ; gPoint != gCurve.end(); gPoint++){
-        gridConcatVector.insert(gridConcatVector.end(), gPoint->begin(), gPoint->end() );
-    }
+    gridConcatVector = concatGridPointsToVector(gCurve);
 
     // Make a tuple of (pointer to curve , curve label)
-    std::tuple<CurveType, Y> curveData = std::make_tuple(curve, y);
+    curveDataType curveData = std::make_tuple(curve, y);
 
     // Hash vector to one dim hash structure
-    oneDimHashing->addPoint( gCurve, curveData);
+    oneDimHashing->addPoint(gridConcatVector, curveData);
 
 }
 
+//std::tuple<Y, std::vector<std::vector<D> > >
 template<class D, class Y, class VH>
-void CurveGridHT<D, Y, VH>::queryCurve(CurveGridHT::CurveType &curve) {
+void CurveGridHT<D, Y, VH>::queryCurve(CurveType &curve){
+
+    // Type definition of query result
+    typedef std::list< std::tuple< std::tuple<CurveType, Y>, double > >  neighbList;
+    // Type definition of result p
+    typedef std::tuple< std::tuple<CurveType, Y>, double >* resPointer;
+    // Query results of one dim hashing
+    neighbList oneDimQueryResults;
+    // Set an iterator of neighbors
+    typename neighbList::iterator currNeigh;
+    // Current and Best Neighbor data holders
+    curveDataType currCurveData;
+    CurveType currCurve;
+    Y currCurveLabel;
+    Y bestCurveLabel;
+    double bestDist = DBL_MAX;
+    double currDist = 0;
+
+    // Grid curve
+    GridCurveType gCurve;
+
+    // Grid point for : a) concatenation of grid points, b) as temp grid point of curve
+    GridPointType gridConcatVector;
+
+    // Get respective grid curve
+    gCurve = calcGridCurve( curve );
+
+    // Concatenate grid curve points to a vector
+    gridConcatVector = concatGridPointsToVector(gCurve);
+
+    //Get neighbors stored in one dim Hash Table
+    oneDimQueryResults = oneDimHashing->queryPoint( gridConcatVector );
+
+    // Find the minimum distance neighbor
+    for ( currNeigh = oneDimQueryResults.begin(); currNeigh != oneDimQueryResults.end() ; currNeigh++ ) {
+        // Getting current neighbor curve data tuple : (Curve, label)
+        currCurveData = std::get<0>(*currNeigh);
+        // Getting curve from curve data tuple
+        currCurve = std::get<0>(currCurveData);
+        // Calculating distance between query and current curve
+        currDist = std::get<0>(fDist(curve, currCurve, metric_name));
+        if ( currDist < bestDist ) {
+            // Set new best distance
+            bestDist = currDist;
+            // Get and set new best curve data label
+            currCurveLabel = std::get<1>(currCurveData);
+            bestCurveLabel = currCurveLabel;
+        }
+    }
+
+//    // Hold (label,distance) best neihbour tuple
+//    std::list<std::tuple<Y, D>> distanceList;
+//    distanceList.push_back(std::make_pair(bestCurveLabel, bestDist));
 
 }
 
@@ -180,7 +265,7 @@ void CurveGridHT<D, Y, VH>::initializeGrid() {
     double ti, gdi;
 
     // Uniform random generator for mapping g to {0,1} : f
-    std::mt19937 fgenerator;
+//    std::mt19937 fgenerator;
     std::uniform_real_distribution<double> distr(0, pointDim);
 
     // Create Grid representing vector Gd
@@ -206,8 +291,12 @@ void CurveGridHT<D, Y, VH>::initZeroGridPoint() {
 }
 
 template<class D, class Y, class VH>
-CurveGridHT<D, Y, VH>::CurveGridHT(int pointDim, int delta, int maxPointsForPadding, int kVecs, double w) :
-                        pointDim(pointDim), delta(delta), maxPointsForPadding(maxPointsForPadding), k_vecs(kVecs), w(w) {
+CurveGridHT<D, Y, VH>::CurveGridHT(int pointDim, int delta, int maxPointsForPadding, int kVecs, double w, std::string metric_name) :
+                        pointDim(pointDim), delta(delta), maxPointsForPadding(maxPointsForPadding), k_vecs(kVecs), w(w), metric_name(metric_name),
+                        fgenerator((std::random_device())()){
+
+    // Set the distance metric function to be used
+    fDist = &dtw<CurveType, PointType, D>;
 
     // Initialize grid and zero grid point for padding
     this->initializeGrid();
@@ -219,14 +308,18 @@ CurveGridHT<D, Y, VH>::CurveGridHT(int pointDim, int delta, int maxPointsForPadd
 }
 
 template<class D, class Y, class VH>
-CurveGridHT<D, Y, VH>::CurveGridHT(int pointDim, int delta, int maxPointsForPadding, int kHypercube, int maxSearchPoints, int probes, double w):
-    pointDim(pointDim), delta(delta), maxPointsForPadding(maxPointsForPadding), k_hypercube(kHypercube), maxSearchPoints(maxSearchPoints), probes(probes), w(w) {
+CurveGridHT<D, Y, VH>::CurveGridHT(int pointDim, int delta, int maxPointsForPadding, int kHypercube, int maxSearchPoints,
+        int probes, double w, std::string metric_name):
+    pointDim(pointDim), delta(delta), maxPointsForPadding(maxPointsForPadding), k_hypercube(kHypercube),
+    maxSearchPoints(maxSearchPoints), probes(probes), w(w), metric_name(metric_name),
+    fgenerator((std::random_device())()){
+
+    // Set the distance metric function to be used
+    fDist = &dtw<CurveType, PointType, D>;
 
     // Initialize grid and zero grid point for padding
     this->initializeGrid();
     this->initZeroGridPoint();
-
-//    typedef Hypercube< std::vector<double>, double, std::tuple<CurveType,Y> > HQType;
 
     // Create a new Hypercube hash structure for one dimensional hashing of grid curve
     oneDimHashing = new HQType(pointDim, w, k_hypercube, maxSearchPoints, probes, 4, DBL_MAX);

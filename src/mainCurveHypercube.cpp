@@ -54,7 +54,7 @@ void runCurveLSHWithHypercube( std::string &iFileName, std::string &qFileName, s
     CX::iterator max_itr = max_element(iDataList.begin(),iDataList.end(),longestVec<double>);
     int max_curve_sz = max_itr->size();
     // Min number of points
-    CX::iterator min_itr = max_element(iDataList.begin(),iDataList.end(),longestVec<double>);
+    CX::iterator min_itr = max_element(iDataList.begin(),iDataList.end(),shortestVec<double>);
     int min_curve_sz = min_itr->size();
     // Set the max curve size to use
     int maxPointsInCurves = 1.1 * max_curve_sz;
@@ -75,11 +75,17 @@ void runCurveLSHWithHypercube( std::string &iFileName, std::string &qFileName, s
     CX::iterator CurveIter;
     CY::iterator CurveLblIter;
     // Add all train dataset curves to CLSH structure
-    for (CurveIter = iDataList.begin(), CurveLblIter = iLabelList.begin();
-        CurveIter != iDataList.end(), CurveLblIter != iLabelList.end() ; CurveIter++, CurveLblIter++ ) {
+    int i =0;
+    for (CurveIter = iDataList.begin(), CurveLblIter = iLabelList.begin(); CurveIter != iDataList.end(), CurveLblIter != iLabelList.end() ; CurveIter++, CurveLblIter++ ) {
+        i++;
         CLSH->addCurve(*CurveIter, *CurveLblIter);
+        if (i>5) break;
     }
 
+    CurveIter = iDataList.begin();
+
+//    std::list< std::tuple< std::string, std::vector<std::vector<double> > > > res =
+    CLSH->queryCurve((*CurveIter));
 
     std::cout << "max curves points " << max_curve_sz <<endl ;
 
