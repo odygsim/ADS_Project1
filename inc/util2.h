@@ -38,5 +38,6 @@ bool shortestVec(const std::vector< std::vector<D> > &A, const std::vector< std:
     return A.size() > B.size();
 }
 
+int inputFileMessageDialog( std::string askMessage, std::string errorMessage, std::string &fileName );
 
 #endif //ADS_PROJECT1_UTIL2_H

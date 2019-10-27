@@ -5,14 +5,12 @@
 #include "../inc/Hypercube.h"
 
 template<typename D>
-void
-runCube(int id, std::string &iFileName, std::string &qFileName, std::string &outFile, int M = 5, int k = 3, int w = 5000, int probes = 2,
+void runCube(int id, std::string &iFileName, std::string &qFileName, std::string &oFileName, int M = 5, int k = 3, int w = 3000, int probes = 2,
         int topLimi = 10, int m = 0) {
     /**
      * @brief Runs cube knn algorithm.
      * @params TODO complete.
      */
-
     using namespace std;
     typedef list<vector<D>> CX;
     typedef list<string> CY;
@@ -29,76 +27,138 @@ runCube(int id, std::string &iFileName, std::string &qFileName, std::string &out
     timePoint AppStart = initTime(); // start variable for whole program.
     int topLimit = topLimi, dimension, k_hi = 4, r = 0;
     double radius = 0;
-    string newline = "\n", space = " ", metric_name = "manhattan", stats, result, oFileName, output;
+    string newline = "\n", space = " ", metric_name = "manhattan", stats, result, output;
     tuple<string, string> results;
-    // declare train list, test train list, query list, test query list
+
+    // Declare train list, test train list, query list, test query list
     CX iDataList, qDataList, testIDataList, testQDataList;
     CY iLabelList, qLabelList, testILabelList, testQLabelList;
-    vector<double> timeList;                                    // This vector is used to store time values.
+    vector<double> timeList;  // This vector is used to store time values.
     ofstream oFile;
-    // Read Train data and query data.
-    readDataAndLabelsFromFile2<CX, CY, X, Y>(iFileName, iDataList, iLabelList);
-    readDataAndLabelsFromFile2<CX, CY, X, Y>(qFileName, qDataList, qLabelList, radius);
-    typename CX::iterator iterData1, iterQData; // some iterators
+
+    // Iterators for data
+    typename CX::iterator iterData1, iterQData;
     typename CY::iterator iterLabel1, iterQLabel;
 
-    dimension = iDataList.front().size(); // get dimension of data
-    // Initialize algorithms
-//    (d,3000,3,10,2,4,0);
-//    Hypercube<TID, D, Y>::Hypercube(int d, double w, int k, int maxSearchPoints, int probes, int k_hi, double r):
+    // Ask for input file if not given in arguments
+    if ( inputFileMessageDialog("Please provide the training dataset file path (or file name if in running directory)",
+                                "No input file has been provided! Program terminates..please try again",
+                                iFileName) != 0 ) { exit(EXIT_FAILURE); }
+
+    // Read Train data
+    readDataAndLabelsFromFile2<CX, CY, X, Y>(iFileName, iDataList, iLabelList);
+
+    // Get dimension of data
+    dimension = iDataList.front().size();
+
+    // Initialize algorithms ( Hypercube, HQ_Classifier, ExactKNN, EKNN_Classifier )
     HC_ *HCube= new HC_(dimension, w, k, M, probes, k_hi, r);
     auto *clCube = new KNeighborsClassifier<HC_ *, CX, X, TX, CY, Y>(HCube);
     auto *eknn = new EKNN_(radius, metric_name);
     auto *clEknn = new KNeighborsClassifier<EKNN_ *, CX, X, TX, CY, Y>(eknn);
 
-    /// Start fit and predict
-    if (iDataList.size() == 1000000){
-        // if big dataset Prefetch results from file.
-        string f = "tests/sample_datasets/siftbig/ENN_results.txt";
-        E = getENNData<D,Y>(f);
-        double ennFit  = 0.688875, ennPredict = 48334.336797;
-        timeList.push_back(ennFit);
-        timeList.push_back(ennPredict);
-    }else {
-        // if small dataset run it.
-        start = initTime();                                         // timestamp start
-        clEknn->fit(iDataList, iLabelList);                         // fit exact knn
-        timeList.push_back(getElapsed(start));                      // timestamp end
+    // KNN train set fitting
+    std::cout << " Fitting train set to Exact KNN..." << newline;
+    start = initTime();                                         // timestamp start
+    clEknn->fit(iDataList, iLabelList);                         // fit exact knn
+    timeList.push_back(getElapsed(start));                      // timestamp end
+
+    // Hypercube train set fitting
+    std::cout << " Fitting train set to Hypercube ANN..." << newline;
+    start = initTime();                                         // timestamp start
+    clCube->fit(iDataList, iLabelList);                         // fit approx knn
+    timeList.push_back(getElapsed(start));                      // timestamp end
+
+    // User's answer on repeated procedure (querying with new file)
+    std::string userAnswer = "Y";
+
+    // Repeat until user terminates
+    while ( userAnswer == "Y" || userAnswer == "y") {
+
+        // Ask for query file
+        if ( inputFileMessageDialog("Please provide the query dataset file path (or file name if in running directory)",
+                                    "No query file has been provided! Program terminates..please try again",
+                                    qFileName) != 0 ) { break; }
+
+        // Read Query data
+        std::cout << "Reading querying data..." << '\n';
+        if ( !readDataAndLabelsFromFile2<CX, CY, X, Y>(qFileName, qDataList, qLabelList, radius) ) { break; };
+
+        // Ask for output file
+        if ( inputFileMessageDialog("Please provide the output file path (or file name if in running directory)",
+                                    "No output file has been provided! Program terminates..please try again",
+                                    oFileName) != 0 ) { break; }
+
+        // Inform user for running case
+        std::cout << "Running Hypecube with arguments: " << "input file = \"" << iFileName << "\" query file = \"" << qFileName << "\" output file =  \"" << oFileName
+                  << " k = " << k << " M = " << M  << " probes = " << probes << "\n";
+
+        // KNN query set running
+        std::cout << " Running query set in Exact KNN..." << newline;
         start = initTime();                                         // timestamp start
         E = clEknn->predictWithTimeAndDistance(qDataList);          // predict exact knn
         timeList.push_back(getElapsed(start));                      // timestamp end
+
+        // Hypercube query set running
+        std::cout << " Running query set in Hypercube ANN..." << newline;
+        start = initTime();                                         // timestamp start
+        A = clCube->predictWithTimeAndDistance(qDataList);           // predict Approx knn
+        timeList.push_back(getElapsed(start));                      // timestamp end
+
+        /// Calculate results and stats also
+        results = unrollResult<Y, TX, CY> (E, A, qLabelList, "Hypercube");       // unroll the results and the stats to tuple strings.
+        timeList.push_back(getElapsed(AppStart));                      // timestamp App End
+
+        // Write result, stats to according files
+        string fields  = "AlgorithmName,id,datetime,L,w,m,k,topLimitLsh,radius,dimension,Accuracy,Time,iFileName,trainSize,fitExactTime,predictExactTime,fitApproxTime,predictApproxtime,AppTime\n";
+        oFile.open("stats_Cube.csv", std::ios::out | std::ios::app);
+        if ( ! oFile.is_open() ) {
+            break;
+        }
+        string res;
+        res = "Cube," + to_string(id) + "," + getDatetime(false) + "," + to_string(M) + "," + to_string(w) + "," +
+              to_string(m) + "," + to_string(k) +
+              "," + to_string(topLimit) + "," + to_string(radius) + "," + to_string(dimension) + "," +
+              get<1>(results) + "," + getFilename(iFileName) +
+              "," + to_string(iDataList.size()) + "," + to_string(timeList[0]) + "," + to_string(timeList[1]) +
+              "," + to_string(timeList[2]) + "," + to_string(timeList[3]) + "," + to_string(timeList[4]) +
+              "\n";
+        oFile << res;
+        oFile.close();
+        cout << getDatetime(false) << "\t\t\t\t" <<fields;
+        cout << getDatetime(false) << "\t\t\t\t" << res;
+
+        oFile.open(oFileName + "_" + getDatetime(true) + ".txt", std::ios::out);
+        oFile << get<0>(results);
+        oFile << "\n" + get<1>(results) + "\n";
+        oFile.close();
+
+        // Ask user for repeating
+        std::cout << "Would you like to continue with a new query file? (Y/N)" << '\n';
+        std::cin >> userAnswer ;
+        if ( userAnswer == "N" || userAnswer == "n") { break; }
+
+        // Clear files to repeat
+        qFileName = "";
+        oFileName = "";
+
+        // Clear query structures to start again
+        qDataList.clear();
+        qLabelList.clear();
+
     }
-    start = initTime();                                         // timestamp start
-    clCube->fit(iDataList, iLabelList);                          // fit approx knn
-    timeList.push_back(getElapsed(start));                      // timestamp end
-    start = initTime();                                         // timestamp start
-    A = clCube->predictWithTimeAndDistance(qDataList);           // predict Approx knn
-    timeList.push_back(getElapsed(start));                      // timestamp end
-    /// Calculate results and stats also
-    results = unrollResult<Y, TX, CY> (E, A, qLabelList, "Hypercube");       // unroll the results and the stats to tuple strings.
-    timeList.push_back(getElapsed(AppStart));                      // timestamp App End
 
-    // Write result, stats to according files
-    string fields  = "AlgorithmName,id,datetime,L,w,m,k,topLimitLsh,radius,dimension,Accuracy,Time,iFileName,trainSize,fitExactTime,predictExactTime,fitApproxTime,predictApproxtime,AppTime\n";
-    oFile.open("tests/stats_Cube.csv", std::ios::out | std::ios::app);
-    string res;
-    res = "Cube," + to_string(id) + "," + getDatetime(false) + "," + to_string(M) + "," + to_string(w) + "," +
-          to_string(m) + "," + to_string(k) +
-          "," + to_string(topLimit) + "," + to_string(radius) + "," + to_string(dimension) + "," +
-          get<1>(results) + "," + getFilename(iFileName) +
-          "," + to_string(iDataList.size()) + "," + to_string(timeList[0]) + "," + to_string(timeList[1]) +
-          "," + to_string(timeList[2]) + "," + to_string(timeList[3]) + "," + to_string(timeList[4]) +
-          "\n";
-    oFile << res;
-    oFile.close();
-    cout << getDatetime(false) << "\t\t\t\t" <<fields;
-    cout << getDatetime(false) << "\t\t\t\t" << res;
+//    /// Start fit and predict
+//    if (iDataList.size() == 1000000){
+//        // if big dataset Prefetch results from file.
+//        string f = "tests/sample_datasets/siftbig/ENN_results.txt";
+//        E = getENNData<D,Y>(f);
+//        double ennFit  = 0.688875, ennPredict = 48334.336797;
+//        timeList.push_back(ennFit);
+//        timeList.push_back(ennPredict);
+//    }else {
 
-    oFile.open("tests/Output_Cube__" + getDatetime(true) + ".txt", std::ios::out);
-    oFile << get<0>(results);
-    oFile << "\n" + get<1>(results) + "\n";
-    oFile.close();
-//    // Clean Up
+    // Clean Up
     delete eknn;
     delete clEknn;
     delete HCube;
@@ -109,20 +169,17 @@ runCube(int id, std::string &iFileName, std::string &qFileName, std::string &out
 int main(int argc, char **argv) {
     using namespace std;
 
-    int L = 5, k = 4, w = 1000,  topLimit =
+    int id=0, L = 5, k = 4, w = 1000,  topLimit =
             4 * L, M = 0, probes = 0, m = 0;// INT32_MAX - 5;
-    int id = 0;
     string newline = "\n", space = " ", metric_name = "manhattan", stats, result;
-    string oFileName, inputFile, queryFile, outputFile;
+    string inputFile, queryFile, outputFile;
 
     // Read/Verify program parameters
     if ( readHypercubeParameters(argc, argv, inputFile, queryFile, outputFile, k, M, probes) != 0 ){
         return -1;
     }
 
-    std::cout << "Running Hypecube with arguments: " << "input file = \"" << inputFile << "\" query file = \"" << queryFile << "\" output file =  \"" << outputFile
-              << " k = " << k << " M = " << M  << " probes = " << probes << "\n";
-
+    // Run Hypercube
     runCube<int>(id, inputFile, queryFile, outputFile, M, k, w, probes, topLimit, m);
 
     return 0;
@@ -148,6 +205,7 @@ int iimain(int argc, char **argv) {
     if ( readHypercubeParameters(argc, argv, inputFile, queryFile, outputFile, k, M, probes) != 0 ){
         return -1;
     }
+
 
     std::cout << "Running Hypecube with arguments: " << "input file = \"" << inputFile << "\" query file = \"" << queryFile << "\" output file =  \"" << outputFile
          << " k = " << k << " M = " << M  << " probes = " << probes << "\n";
@@ -180,14 +238,14 @@ int iimain(int argc, char **argv) {
     int i=0;
     for (iteratorData = data.begin(), iteratorLabels = labels.begin();
          iteratorData != itDE; ++iteratorData, ++iteratorLabels) {
-        HQ->addPoint(*iteratorData, *iteratorLabels); // Add a vector<int> and string
+        HQ->addX(*iteratorData, *iteratorLabels); // Add a vector<int> and string
         std::cout << i++ << "\n";
 //        if (i>10) break;
     }
 
     // Query for a point to test
     queryIterData = qDataList.begin();
-    list< tuple<std::string, int> > resList = HQ->queryPoint( *iteratorData);
+    list< tuple<std::string, int> > resList = HQ->queryX(*iteratorData);
 
     return 0;
 

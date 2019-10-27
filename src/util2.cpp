@@ -145,3 +145,16 @@ int readCurvesLSHWithHypercubeParameters(int argc, char **argv, std::string &inp
 void print_curvesLSHWithHypercube_usage() {
     fprintf(stderr, "Usage: curve_grid_hypecube -d <input file> -q <query file> -k_hypecube <int> -M <int> -probes <int> L_grid <int> -o <output file>\n");
 }
+
+int inputFileMessageDialog( std::string askMessage, std::string errorMessage, std::string &fileName) {
+    // Ask for input file if not given in arguments
+    if ( fileName == ""){
+        std::cout << askMessage << '\n';
+        std::cin >> fileName;
+        if (fileName == "") {
+            std::cout << errorMessage << '\n';
+            exit(EXIT_FAILURE);
+        }
+    }
+    return 0;
+}
