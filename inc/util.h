@@ -754,4 +754,5 @@ D min(D a, D b) {
     return b;
 }
 
+unsigned int KCalculation(double e, int d);
 #endif //ADS_PROJECT1_UTIL_H

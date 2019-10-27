@@ -22,15 +22,18 @@ class Projection {
      * each cell has many Relevant paths that why a vector was chosen.
      */
     // store on vector<i,j> on Paths the paths for i,j, on VH the cube or LSH class
-    typedef std::tuple<Path, VH> TupleReleventPath;     // Path, VH
+    typedef std::tuple<Path, VH *> TupleReleventPath;     // Path, VH
     typedef std::vector<TupleReleventPath> RelevantPaths;       // vector<{Path, VH}>
     typedef std::vector<std::vector<double>> curveX;            // curveX
+    typedef std::vector<double> pointX;            // curveX
     std::vector<std::vector<RelevantPaths>> ArrayTraversals;    // The array of Traversals MxM
     typedef std::tuple<std::string, std::vector<std::vector<double>> &> Y_Curve_ANN;
+    std::vector<Y_Curve_ANN> test1;
     //    (n, vector<TupleRevPaths>(m, {MAXDOUBLE, 0, 0})); // The array m * n that hold the values calculated.
 //    std::vector<std::vector<double>> G;
     unsigned int dimensionPoint, dimensionCurve; // dimension , column limit of G
     unsigned int K, window = 2; // row limit of G
+    double e;
     std::string metric_name;
 
     std::tuple<double, std::list<std::vector<int>>> (*f)(curveX &, curveX &, std::string);
@@ -48,7 +51,7 @@ public:
 
     // LSH constructor
     Projection(int dimensionCurve, int dimensionPoint, int w = 6000, int k = 4, int L = 5, int m = 0, double radius = 0,
-               int top_limit = 0, std::string metric_name = "euclidean");
+               int top_limit = 0, std::string metric_name = "euclidean", double e = 0.5);
 
     void addX(curveX &x, Y &y);  // Add point to structure.
 
@@ -65,12 +68,12 @@ public:
 //    std::string metric_name = "manhattan"); // Constructor 1.
 template<class D, class Y, class VH>
 Projection<D, Y, VH>::Projection(int dimensionCurve, int dimensionPoint, int w, int k, int L, int m, double radius,
-                                 int top_limit, std::string metric_name):metric_name(metric_name) {
+                                 int top_limit, std::string metric_name, double e):metric_name(metric_name), dimensionCurve(dimensionCurve), dimensionPoint(dimensionPoint), e(e) {
 
     initializer();
     // create the Array MXM // TODO check if i need to start from 1.
-    for (int i = 0; i < dimensionCurve; ++i) {
-        for (int j = 0; j < dimensionCurve; ++j) {
+    for (int i = 1; i < dimensionCurve; ++i) {
+        for (int j = 1; j < dimensionCurve; ++j) {
             // Get Relevant Paths for i,j
             PathFinder *pathFinder = new PathFinder(i, j, window);
             Paths paths = pathFinder->RelevantPaths();
@@ -78,9 +81,9 @@ Projection<D, Y, VH>::Projection(int dimensionCurve, int dimensionPoint, int w, 
             RelevantPaths relPathsVector;
             for (auto path: paths) { // const &?
                 // add to each path a Vector Hashtable lsh/cube
-                relPathsVector.push_back({path,
-                                          new LSH<Vector, D, Y_Curve_ANN>(dimensionPoint, w, k, L, m, radius, top_limit,
-                                                                          metric_name)});
+                relPathsVector.push_back(std::make_pair(path,
+                                          new LSH<pointX, D, Y_Curve_ANN>(dimensionPoint, w, k, L, m, radius, top_limit,
+                                                                          metric_name)));
             }
             ArrayTraversals.push_back({relPathsVector});
         }
@@ -102,7 +105,7 @@ Projection<D, Y, VH>::Projection(int dimensionCurve, int dimensionPoint, double 
             Paths paths = pathFinder->RelevantPaths();
             delete pathFinder;
             ArrayTraversals.push_back({paths,
-                                       new Hypercube<Vector, D, Y_Curve_ANN>(dimensionPoint, w, k, maxSearchPoints,
+                                       new Hypercube<pointX, D, Y_Curve_ANN>(dimensionPoint, w, k, maxSearchPoints,
                                                                              probes, k_hi, r)});
         }
     }
@@ -116,11 +119,12 @@ void Projection<D, Y, VH>::addX(curveX &x, Y &y) {
     int numPoints = x.size();
     std::vector<double> hashedX;
     hashedX = mulCurveAndG(x);
+    test1.push_back({y, x});
 //    typedef std::vector<TupleReleventPath> RelevantPaths;       // vector<{Path, VH}>
     RelevantPaths &cur = ArrayTraversals[numPoints][numPoints];
     for (auto tup: cur) {         // for each path, VH
-        VH &vh = std::get<1>(tup);
-        vh.addPoint(hashedX, {y, x});       // add the point hashed vector and the labelwith the curve.
+        VH *vh = std::get<1>(tup);
+        vh->addX(hashedX, test1.back());       // add the point hashed vector and the labelwith the curve.
     }
 }
 
@@ -213,6 +217,7 @@ template<class D, class Y, class VH>
 // Init G
 void Projection<D, Y, VH>::initializer() {
     f = &dtw<curveX, std::vector<double>, double>;
+    K = KCalculation(e, dimensionPoint);
     std::random_device randDev;
     std::mt19937 generator(randDev());
     std::normal_distribution<double> distribution(0.0, 1.0);

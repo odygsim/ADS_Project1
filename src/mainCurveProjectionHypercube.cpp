@@ -5,6 +5,7 @@
 #include<cstring>
 #include "../inc/KNeighborsClassifier.h"
 #include "../inc/PathFinder.h"
+#include"../inc/Projection.h"
 
 void
 runCurveProjectionHypercube(int id, std::string &iFileName, std::string &qFileName, std::string &outFile, int L = 5,
@@ -26,12 +27,13 @@ runCurveProjectionHypercube(int id, std::string &iFileName, std::string &qFileNa
 //    typedef LSH<X, TX, Y> LSH_;
 //    typedef ExactKNeighbors<CX, X, TX, CY, Y> EKNN_;
     typedef chrono::steady_clock::time_point timePoint;
+    typedef std::tuple<std::string, std::vector<std::vector<double>> &> Y_Curve_ANN;
     // these list are returned by predictWithTime method.
 //    std::list<std::tuple<double, std::list<std::tuple<Y, D>>>> A, E;
 
     timePoint start; // start variable for each method execution.
     timePoint AppStart = initTime(); // start variable for whole program.
-    int topLimit = topLimi, dimension;
+    int topLimit = topLimi, dimension = 6;
     string newline = "\n", space = " ", metric_name = "manhattan", stats, result;
     tuple<string, string> results;
     // declare train list, test train list, query list, test query list
@@ -44,21 +46,32 @@ runCurveProjectionHypercube(int id, std::string &iFileName, std::string &qFileNa
     start = initTime();                                         // timestamp start
     readTrajectories<CX, CY, X, TX>(iFileName, iDataList, iLabelList);
     readTrajectories<CX, CY, X, TX>(qFileName, qDataList, qLabelList);
+
+    // Get points dimension and min and max number of points in curves dataset
+    int dim = iDataList.begin()->begin()->size();
+    // Set the max curve size to use
+
     // Reduce Curves to dimension 25..
-    ReduceTrajectories<CX,CY,X>(iDataList,iLabelList,testIDataList, testILabelList, 25, iDataList.size());
+    ReduceTrajectories<CX,CY,X>(iDataList,iLabelList,testIDataList, testILabelList, dimension, iDataList.size());
     // take the last 100 records of curves for query set.
-    ReduceTrajectories<CX,CY,X>(iDataList,iLabelList,testQDataList, testQLabelList, 25, iDataList.size()/10);
+    ReduceTrajectories<CX,CY,X>(iDataList,iLabelList,testQDataList, testQLabelList, dimension, iDataList.size()/10);
+    // Max number of points
+    CX::iterator max_itr = max_element(testIDataList.begin(),testIDataList.end(),longestVec<double>);
+    int max_curve_sz = max_itr->size();
+    // Min number of points
+    CX::iterator min_itr = max_element(testIDataList.begin(),testIDataList.end(),longestVec<double>);
+    int min_curve_sz = min_itr->size();
     int kk = testQDataList.size();
 list<list<vector<int>>> paths;
     iDataList.pop_front();
 //    CostAndPath = dtwWindow<X, PointX, TX>(iDataList.front(), qDataList.front(), 3, 2);
     PathFinder *pathFinder = new PathFinder(3, 7, 2, 0 );
-    for (int i = 0; i < 10; ++i) {
-        for (int j = 0; j < 10; ++j) {
-            pathFinder->setNM(i,j);
-       paths = pathFinder->RelevantPaths();
-        }
-    }
+//    for (int i = 0; i < 10; ++i) {
+//        for (int j = 0; j < 10; ++j) {
+//            pathFinder->setNM(i,j);
+//       paths = pathFinder->RelevantPaths();
+//        }
+//    }
 //    PathFinder *pathFinder = new PathFinder(1, 10, 2, 0 );
 //    paths = pathFinder->RelevantPaths();
     int i = 0;
@@ -73,7 +86,7 @@ list<list<vector<int>>> paths;
     cout << paths.size() << ", totalpaths "  << pathFinder->getSize() << endl;
     cout << endl;
     pathFinder->PrintTable();
-    auto first = std::make_tuple(1, iDataList);
+//    auto first = std::make_tuple(1, iDataList);
     iDataList.pop_front();
 //    qDataList.pop_front();
     CostAndPath = dtw<X, PointX, TX>(iDataList.front(), qDataList.front(), "euclidean");
@@ -85,12 +98,26 @@ list<list<vector<int>>> paths;
 //        i++;
     }
     cout << endl;
-    exit(1);
+//    exit(1);
     typename CX::iterator iterData1; // some iterators
     typename CY::iterator iterLabel1;
     typename CX::iterator iterQData;
     typename CY::iterator iterQLabel;
+    typedef Projection<double, std::string, LSH<std::vector<double>, double, Y_Curve_ANN>>  PR_;
+    PR_ * pr_lsh = new PR_(dimension, dim, 6000, 4, L=1, 0, 0, 100, "euclidean", 0.5);
 
+    CX::iterator CurveIter;
+    CY::iterator CurveLblIter;
+    // Add all train dataset curves to CLSH structure
+    for (CurveIter = iDataList.begin(), CurveLblIter = iLabelList.begin();
+         CurveIter != iDataList.end(), CurveLblIter != iLabelList.end() ; CurveIter++, CurveLblIter++ ) {
+        pr_lsh->addX(*CurveIter, *CurveLblIter);
+    }
+
+
+    std::cout << "max curves points " << max_curve_sz <<endl ;
+//    Projection(int dimensionCurve, int dimensionPoint, int w = 6000, int k = 4, int L = 5, int m = 0, double radius = 0,
+//            int top_limit = 0, std::string metric_name = "euclidean");
     dimension = iDataList.front().size(); // get dimension of data
     // Initialize algorithms
 //    LSH_ *lsh = new LSH<X, TX, Y>(w, dimension, k, L, m, numNeighbors, topLimit, metric_name);
