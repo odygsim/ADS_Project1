@@ -68,9 +68,15 @@ void runCurveLSHWithHypercube( std::string &iFileName, std::string &qFileName, s
     typedef std::tuple<X,DY> HQ_SAVEDDATA;
 //    typedef Hypercube<HQ_IDX, double, HQ_SAVEDDATA> HQ_Struct;
     typedef Hypercube< std::vector<double>, double, std::tuple< std::vector< std::vector<double> >, std::string >  > HQStruct;
-    typedef CurvesLSH< DX, DY, Hypercube< std::vector<double>, double, std::tuple< std::vector< std::vector<double> >, std::string >  > > CLSH_Struct;
+    typedef LSH< std::vector<double>, double, std::tuple< std::vector< std::vector<double> >, std::string >  > LSHStruct;
+    typedef CurvesLSH< DX, DY, Hypercube< std::vector<double>, double, std::tuple< std::vector< std::vector<double> >, std::string >  > > CLSH_HQ_Struct;
+    typedef CurvesLSH< DX, DY, LSHStruct > CLSH_LSH_Struct;
 
-    CLSH_Struct* CLSH = new CLSH_Struct(dim, delta, k, M, probes, maxPointsInCurves, L_grid , w , metric_name);
+////     Uncomment following line for running CurvesLSH with Hypercube
+//    CLSH_HQ_Struct* CLSH = new CLSH_HQ_Struct(dim, delta, k, M, probes, maxPointsInCurves, L_grid , w , metric_name);
+
+//     Uncomment following line for running CurvesLSH with LSH
+    CLSH_LSH_Struct* CLSH = new CLSH_LSH_Struct(dim, delta, k, maxPointsInCurves, L_grid , w , metric_name);
 
     CX::iterator CurveIter;
     CY::iterator CurveLblIter;
@@ -78,14 +84,17 @@ void runCurveLSHWithHypercube( std::string &iFileName, std::string &qFileName, s
     int i =0;
     for (CurveIter = iDataList.begin(), CurveLblIter = iLabelList.begin(); CurveIter != iDataList.end(), CurveLblIter != iLabelList.end() ; CurveIter++, CurveLblIter++ ) {
         i++;
-        CLSH->addCurve(*CurveIter, *CurveLblIter);
-        if (i>5) break;
+        CLSH->addX(*CurveIter, *CurveLblIter);
+//        if (i>5) break;
     }
 
-    CurveIter = iDataList.begin();
+    CurveIter = qDataList.begin();
 
 //    std::list< std::tuple< std::string, std::vector<std::vector<double> > > > res =
-    CLSH->queryCurve((*CurveIter));
+    CLSH->queryX((*CurveIter));
+
+    // Clean
+    delete CLSH;
 
     std::cout << "max curves points " << max_curve_sz <<endl ;
 

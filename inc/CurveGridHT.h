@@ -10,6 +10,8 @@
 #include <cmath>
 //#include <tuple>
 //#include <string>
+//#include "util.h"
+//#include "util2.h"
 #include "LSH.h"
 #include "Hypercube.h"
 
@@ -27,7 +29,7 @@ private:
     typedef std::tuple<CurveType, Y> curveDataType;
 
     // Setting type for LSH, Hypercube
-    typedef LSH<std::vector<double>, double, std::tuple<CurveType,Y> > LSHType;
+    typedef LSH< std::vector<double>, double, std::tuple< CurveType, Y > > LSHType;
     typedef Hypercube< std::vector<double>, double, std::tuple< CurveType, Y > > HQType;
 
     // Dimension of points - delta to be used ( delta =< 4*d*min{m1,m2} / m1,m2 : number of points in curves )
@@ -80,10 +82,9 @@ public:
     CurveGridHT(int pointDim, int delta, int maxPointsForPadding, int kHypercube, int maxSearchPoints, int probes, double w =3000,
             std::string metric_name = "euclidean");
 
+    // Destructor for LSH/Hypercube structures
+    virtual ~CurveGridHT() { delete oneDimHashing ; };
 
-    virtual ~CurveGridHT() {
-
-    }
     // For LSH assume L=1 and k (num of hi(x)) could be given
     // For Hypercube all arguments k, M, probes are given - or default
 
@@ -92,7 +93,7 @@ public:
 
     // Query a curve in Curves LSH
 //    std::tuple<Y, CurveType >
-    void queryCurve(CurveType &curve);
+    std::list<std::tuple<Y, D>> queryCurve(CurveType &curve);
 };
 
 template<class D, class Y, class VH>
@@ -196,21 +197,21 @@ void CurveGridHT<D, Y, VH>::addCurve(CurveType &curve, Y &y) {
     curveDataType curveData = std::make_tuple(curve, y);
 
     // Hash vector to one dim hash structure
-    oneDimHashing->addPoint(gridConcatVector, curveData);
+    oneDimHashing->addX(gridConcatVector, curveData);
 
 }
 
-//std::tuple<Y, std::vector<std::vector<D> > >
 template<class D, class Y, class VH>
-void CurveGridHT<D, Y, VH>::queryCurve(CurveType &curve){
+std::list<std::tuple<Y, D>> CurveGridHT<D, Y, VH>::queryCurve(CurveType &curve){
 
     // Type definition of query result
     typedef std::list< std::tuple< std::tuple<CurveType, Y>, double > >  neighbList;
     // Type definition of result p
     typedef std::tuple< std::tuple<CurveType, Y>, double >* resPointer;
+
     // Query results of one dim hashing
     neighbList oneDimQueryResults;
-    // Set an iterator of neighbors
+    // Iterator of neighbors in one dim hash results
     typename neighbList::iterator currNeigh;
     // Current and Best Neighbor data holders
     curveDataType currCurveData;
@@ -233,16 +234,18 @@ void CurveGridHT<D, Y, VH>::queryCurve(CurveType &curve){
     gridConcatVector = concatGridPointsToVector(gCurve);
 
     //Get neighbors stored in one dim Hash Table
-    oneDimQueryResults = oneDimHashing->queryPoint( gridConcatVector );
+    oneDimQueryResults = oneDimHashing->queryX( gridConcatVector );
 
     // Find the minimum distance neighbor
     for ( currNeigh = oneDimQueryResults.begin(); currNeigh != oneDimQueryResults.end() ; currNeigh++ ) {
+
         // Getting current neighbor curve data tuple : (Curve, label)
         currCurveData = std::get<0>(*currNeigh);
         // Getting curve from curve data tuple
         currCurve = std::get<0>(currCurveData);
         // Calculating distance between query and current curve
         currDist = std::get<0>(fDist(curve, currCurve, metric_name));
+
         if ( currDist < bestDist ) {
             // Set new best distance
             bestDist = currDist;
@@ -252,9 +255,11 @@ void CurveGridHT<D, Y, VH>::queryCurve(CurveType &curve){
         }
     }
 
-//    // Hold (label,distance) best neihbour tuple
-//    std::list<std::tuple<Y, D>> distanceList;
-//    distanceList.push_back(std::make_pair(bestCurveLabel, bestDist));
+    // Hold (label,distance) best neighbour tuple
+    std::list<std::tuple<Y, D>> distanceList;
+    distanceList.push_back(std::make_tuple(bestCurveLabel, bestDist));
+
+    return distanceList;
 
 }
 
@@ -303,7 +308,7 @@ CurveGridHT<D, Y, VH>::CurveGridHT(int pointDim, int delta, int maxPointsForPadd
     this->initZeroGridPoint();
 
     // Create a new LSH hash structure for one dimensional hashing of grid curve
-    oneDimHashing = new LSHType(pointDim, w , k_vecs, 1, 0, INT32_MAX, 0, "manhattan");
+    oneDimHashing = new LSHType(pointDim, w , k_vecs, 1, 0, DBL_MAX, 0, "manhattan");
 
 }
 

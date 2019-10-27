@@ -8,6 +8,7 @@
 #include <list>
 #include <vector>
 #include "util.h"
+#include "util2.h"
 #include "CurveGridHT.h"
 
 /***** Class implementing LSH for curves ******************
@@ -60,15 +61,14 @@ public:
               double w = 3000, std::string metricName = "euclidean");
 
     // Adding a curve with label y to CurvesLSH structure
-    void addCurve(CurveType &curve, Y &y);
+    void addX(CurveType &curve, Y &y);
 
     // Searching for best curve in CurvesLSH structure according to metric
-//    std::list< std::tuple<Y, CurveType > >
-    void queryCurve(CurveType &curve);
+    std::list<std::tuple<Y, D>> queryX(CurveType &curve);
 
-    virtual ~CurvesLSH() {
+    // Destructor : eliminates all Grid HashTable structures
+    virtual ~CurvesLSH() { for (auto gHT : GridHT_ListP) delete gHT; };
 
-    }
 };
 
 // Constructor initializing LSH Vector Hash
@@ -112,7 +112,7 @@ CurvesLSH<D, Y, VH>::CurvesLSH(int pointDim, int delta, int kHypercube, int maxS
 
 // Function : Adding Curve to Grids
 template<class D, class Y, class VH>
-void CurvesLSH<D, Y, VH>::addCurve(std::vector<std::vector<D> > &curve, Y &y) {
+void CurvesLSH<D, Y, VH>::addX(std::vector<std::vector<D> > &curve, Y &y) {
 
     typename std::list<CurveGridHT<D, Y, VH> *>::iterator gridHT;
 
@@ -129,17 +129,27 @@ void CurvesLSH<D, Y, VH>::addCurve(std::vector<std::vector<D> > &curve, Y &y) {
 // Function : Querying for ANN Curve in Grids
 //std::list< std::tuple<Y, std::vector<std::vector<D> > > >
 template<class D, class Y, class VH>
-void CurvesLSH<D, Y, VH>::queryCurve(std::vector<std::vector<D> > &curve ) {
+std::list<std::tuple<Y, D>> CurvesLSH<D, Y, VH>::queryX(std::vector<std::vector<D> > &curve ) {
 
     typename std::list<CurveGridHT<D, Y, VH> *>::iterator gridHT;
-    std::list<std::tuple<Y, D>> distanceList;
+    std::list<std::tuple<Y, D>> currDistanceList, finalDistanceList, resDistList;
 
     // Search curve in all Grid HTables
     for (gridHT = GridHT_ListP.begin(); gridHT != GridHT_ListP.end(); gridHT++) {
-        // Search curve in current grid
-        (*gridHT)->queryCurve(curve);
+        // Search curve in current grid and get list of neighbors (label, distance)
+        currDistanceList = (*gridHT)->queryCurve(curve);
+        // Attach to final best neighbors
+        finalDistanceList.insert(finalDistanceList.end(), currDistanceList.begin(), currDistanceList.end());
     }
 
+    // Sort all CurveGrid Hash Tables results
+    finalDistanceList.sort(TupleLess<1>());
+    // Return the best
+    resDistList.push_back( finalDistanceList.front());
+    return resDistList;
+
 }
+
+
 
 #endif //ADS_PROJECT1_CURVESLSH_H
