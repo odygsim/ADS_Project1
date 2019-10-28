@@ -9,12 +9,10 @@
 #include <vector>
 #include <list>
 #include <string>
-#include <clocale>
 #include <cstdio>
 #include <stdio.h>
 #include <stddef.h>
 #include <stdlib.h>
-#include <pthread.h>
 #include <getopt.h>
 #include <values.h>
 #include <chrono>
@@ -24,11 +22,47 @@
 #include <unordered_map>
 #include <cmath>
 
+
+/************************************** Definition of Methods *******************************************************/
+
+void scanRadius(const std::string &s, double &radius, char &delimiter);
+
+unsigned int KCalculation(double e, int d);
+
+int get_int_bit_value(int num, int bitPosition);
+
+int set_int_bit_value(int num, int pos, int bitValue);
+
+unsigned int trueMod(long a, long b);
+
+unsigned int calcModOfNumberInPower(long num, int power, long modulator, std::vector<unsigned int> &modArray);
+
+int
+readCurvesLSHWithHypercubeParameters(int argc, char **argv, std::string &inputFile, std::string &queryFile,
+                                     std::string &outputFile,
+                                     int &k_hypercube, int &M, int &probes, int &L_grid);
+
+void print_curvesLSHWithHypercube_usage();
+
+int inputFileMessageDialog(std::string askMessage, std::string errorMessage, std::string &fileName);
+
 std::string getDatetime(bool);
 
 std::string getFilename(const std::string &str);
 
-template<int index>
+/************************************** Methods With Templates *******************************************************/
+
+template<class D>
+bool longestVec(const std::vector<std::vector<D> > &A, const std::vector<std::vector<D> > &B) {
+    return A.size() < B.size();
+}
+
+template<class D>
+bool shortestVec(const std::vector<std::vector<D> > &A, const std::vector<std::vector<D> > &B) {
+    return A.size() > B.size();
+}
+
+template<int index>   /// sort tuples
 struct TupleLess {
     template<typename Tuple>
     bool operator()(const Tuple &left, const Tuple &right) const {
@@ -36,7 +70,6 @@ struct TupleLess {
     }
 };
 
-std::vector<std::string> split(const std::string &s, char delimiter);
 
 template<typename RT, typename DT>
 RT manhattanDistance(DT &point1, DT &point2) {
@@ -116,27 +149,9 @@ RT lpNorm(DT &point1, DT &point2, std::string metric_name) {
     return (RT) powl(sum, 1.0 / p);
 }
 
-template<class X, class Y>
-std::tuple<Y, X> splitToPoint2(const std::string &s, char delimiter) {
-    X tokens;
-    std::string token;
-    std::istringstream tokenStream(s);
-    int i = 0;
-    std::string name;
-    while (std::getline(tokenStream, token, delimiter)) {
-        if (!token.empty()) {
-            if (i == 0)
-                name = token;
-            else // TODO make prediction for double? or get a parameter what to read? int/double
-                tokens.push_back(stoi(token));
-        }
-        i += 1;
-    }
-    return std::make_tuple(name, tokens);
-}
 
 template<class CX, class CY, class X, class Y>
-void splitToPoint3(const std::string &s, char delimiter, CX &dataList, CY &labelList) {
+void splitToPoint(const std::string &s, char delimiter, CX &dataList, CY &labelList) {
     /**
      * @brief Parse data and label to objects CX and CY accordingly.
      * @param s string to parse.
@@ -284,12 +299,9 @@ void ReduceTrajectories(CX &dataList, CY &labelList, CX &ReducedDataList, CY &Re
     }
 }
 
-void scanRadius(const std::string &s, double &radius, char &delimiter);
-
 template<class CX, class CY, class X, class Y>
 //data container , data labels
-
-bool readDataAndLabelsFromFile2(const std::string &fileName, CX &fDataList, CY &fLabelList, double radius = 0.0) {
+bool readDataAndLabelsFromFile(const std::string &fileName, CX &fDataList, CY &fLabelList, double radius = 0.0) {
     /**
      * @brief Read data and label to objects CX and CY accordingly.
      * @param fileName string filename to read.
@@ -321,7 +333,7 @@ bool readDataAndLabelsFromFile2(const std::string &fileName, CX &fDataList, CY &
         if (radius != 0.0) // no radius
         { // go to next line
         } else
-            splitToPoint3<CX, CY, X, Y>(tmp, delim, fDataList, fLabelList);
+            splitToPoint<CX, CY, X, Y>(tmp, delim, fDataList, fLabelList);
     }
     // we have read the radius go on
 
@@ -331,7 +343,7 @@ bool readDataAndLabelsFromFile2(const std::string &fileName, CX &fDataList, CY &
         if (!tmp.empty()) {
             if (tmp[tmp.size() - 1] == newlineWindows)
                 tmp.erase(tmp.end() - 1); // remove /r
-            splitToPoint3<CX, CY, X, Y>(tmp, delim, fDataList, fLabelList);
+            splitToPoint<CX, CY, X, Y>(tmp, delim, fDataList, fLabelList);
         }
     }
     file.close();
@@ -339,41 +351,12 @@ bool readDataAndLabelsFromFile2(const std::string &fileName, CX &fDataList, CY &
 
 }
 
-template<class Y, class X>
-std::vector<std::tuple<Y, X>> readData2(const std::string &fileName) {
-    std::vector<std::tuple<Y, X>> dataList;
-    std::ifstream file;
-    std::string tmp;
-
-    // Check filenames
-    if (file.fail()) {
-        std::cerr << "Error: Wrong filename / notFound" << std::endl;
-        exit(1);
-    }
-    // Test if file can be opened
-    file.open(fileName);
-    if (!file) {
-        std::cerr << "Unable to open file : " << fileName << std::endl;
-        exit(1);
-    }
-    // Iterate over input file and store each Point's dimension data in a vector
-    while (!file.eof()) {
-        getline(file, tmp, '\r'); // remove /r
-        if (tmp[0] == '\n')
-            tmp.erase(tmp.begin());
-        if (!tmp.empty())
-            dataList.push_back(splitToPoint2<X, Y>(tmp, ' '));
-    }
-    file.close();
-    return dataList;
-}
 
 void print_cube_usage();
 
 int
 readHypercubeParameters(int argc, char **argv, std::string &inputFile, std::string &queryFile, std::string &outputFile,
                         int &k, int &M, int &probes);
-
 
 std::string calculateStats(std::list<double> &distanceListEA, std::list<double> &timeListE, double &accuracy);
 
@@ -573,7 +556,7 @@ PrimitiveType dtwD(CurveX &a, CurveX &b, std::string metric_name) {
     list <vector<int>> Path;         // The Path is return in a list of tuples {i,j}
     // Alloc 2-d array.
     vector<vector<TUP>> DTW(n, vector<TUP>(m, {MAXDOUBLE, 0, 0})); // The array m * n that hold the values calculated.
-        f = &lpNorm<PrimitiveType, PointX>;
+    f = &lpNorm<PrimitiveType, PointX>;
 //    if (metric_name == "manhattan")     /* definition of the metric depending */
 //        f = &manhattanDistance<PrimitiveType, PointX>;
 //    else if (metric_name == "euclidean")     /* definition of the metric depending */
@@ -652,14 +635,14 @@ std::tuple<double, std::list<std::tuple<int, int>>> dtwWindow(CurveX &a, CurveX 
             TempVector.clear();
         }
     }
-    i = m - 1, j = n - 1;
+    i = n - 1, j = m - 1;
     while (i > 0 && j > 0) {
         Path.push_front({i - 1, j - 1});
         i = get<1>(DTW[i][j]);                  // Get i
         j = get<2>(DTW[i][j]);                  // get j
     }
     // get total distance, path and return them.
-    return {get<0>(DTW[m - 1][n - 1]), Path};
+    return {get<0>(DTW[n - 1][m - 1]), Path};
 
 }
 
@@ -744,17 +727,4 @@ getENNData(std::string &filename) {
     return returnList;
 }
 
-template<typename D>
-D max(D a, D b) {
-    if (a > b) return a;
-    return b;
-}
-
-template<typename D>
-D min(D a, D b) {
-    if (a < b) return a;
-    return b;
-}
-
-unsigned int KCalculation(double e, int d);
 #endif //ADS_PROJECT1_UTIL_H
