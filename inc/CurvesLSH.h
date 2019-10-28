@@ -8,7 +8,7 @@
 #include <list>
 #include <vector>
 #include "util.h"
-#include "util2.h"
+//#include "util2.h"
 #include "CurveGridHT.h"
 
 /***** Class implementing LSH for curves ******************

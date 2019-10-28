@@ -31,7 +31,7 @@ private:
 public:
     // Constructors-destructors
     Hypercube_HT(int d, double w = 3000, int k = 3, int m = INT32_MAX - 5, int M = 10, int probes = 2, int k_hi = 4, double r = 0);
-    ~Hypercube_HT();
+    ~Hypercube_HT() { for (auto hf : hList) delete hf; };
     // Getting the fi for given point
     int get_fi(const TID &p) ;
 
@@ -62,17 +62,17 @@ Hypercube_HT<TID>::Hypercube_HT(int d, double w, int k , int m, int M, int probe
 
 }
 
-// Hypercube HashTable destructor
-template<class TID>
-Hypercube_HT<TID>::~Hypercube_HT(){
-
-    // Get hList start and end positions
-    typename std::list <FunctionH<TID> *>::iterator hListStart = hList.begin();
-    typename std::list <FunctionH<TID> *>::iterator hListEnd = hList.end();
-    // Erase all elements in hList
-    hList.erase(hListStart, hListEnd);
-
-}
+//// Hypercube HashTable destructor
+//template<class TID>
+//Hypercube_HT<TID>::~Hypercube_HT(){
+//
+//    // Get hList start and end positions
+//    typename std::list <FunctionH<TID> *>::iterator hListStart = hList.begin();
+//    typename std::list <FunctionH<TID> *>::iterator hListEnd = hList.end();
+//    // Erase all elements in hList
+//    hList.erase(hListStart, hListEnd);
+//
+//}
 
 
 // Get fi mapping for given g
@@ -99,7 +99,7 @@ template<class TID>
 unsigned int Hypercube_HT<TID>::calculate_g(const TID &p){
 
     // Calculate g from the k Hi
-    std::vector<int> hValues;
+    std::vector<unsigned int> hValues;
     unsigned int g;
     //Calculate the values of each h
     for(FunctionH<TID>* h: hList){

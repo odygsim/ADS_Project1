@@ -4,7 +4,7 @@
 
 #include <string>
 #include <tuple>
-#include "../inc/util2.h"
+#include "../inc/util.h"
 #include "../inc/CurvesLSH.h"
 #include "../inc/KNeighborsClassifier.h"
 

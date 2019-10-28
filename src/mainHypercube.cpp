@@ -46,7 +46,7 @@ void runCube(int id, std::string &iFileName, std::string &qFileName, std::string
                                 iFileName) != 0 ) { exit(EXIT_FAILURE); }
 
     // Read Train data
-    readDataAndLabelsFromFile2<CX, CY, X, Y>(iFileName, iDataList, iLabelList);
+    readDataAndLabelsFromFile<CX, CY, X, Y>(iFileName, iDataList, iLabelList);
 
     // Get dimension of data
     dimension = iDataList.front().size();
@@ -82,7 +82,7 @@ void runCube(int id, std::string &iFileName, std::string &qFileName, std::string
 
         // Read Query data
         std::cout << "Reading querying data..." << '\n';
-        if ( !readDataAndLabelsFromFile2<CX, CY, X, Y>(qFileName, qDataList, qLabelList, radius) ) { break; };
+        if ( !readDataAndLabelsFromFile<CX, CY, X, Y>(qFileName, qDataList, qLabelList, radius) ) { break; };
 
         // Ask for output file
         if ( inputFileMessageDialog("Please provide the output file path (or file name if in running directory)",
@@ -148,16 +148,6 @@ void runCube(int id, std::string &iFileName, std::string &qFileName, std::string
 
     }
 
-//    /// Start fit and predict
-//    if (iDataList.size() == 1000000){
-//        // if big dataset Prefetch results from file.
-//        string f = "tests/sample_datasets/siftbig/ENN_results.txt";
-//        E = getENNData<D,Y>(f);
-//        double ennFit  = 0.688875, ennPredict = 48334.336797;
-//        timeList.push_back(ennFit);
-//        timeList.push_back(ennPredict);
-//    }else {
-
     // Clean Up
     delete eknn;
     delete clEknn;
@@ -186,67 +176,67 @@ int main(int argc, char **argv) {
 }
 
 
-int iimain(int argc, char **argv) {
-
-    using namespace std;
-
-    std::string inputFile;
-    std::string queryFile;
-    std::string outputFile;
-    int k, M, probes;
-
-    list<vector<int>> iDataList;
-    list<string> iLabelList;
-    list<vector<int>> qDataList;
-    list<string> qLabelList;
-
-
-    // Read/Verify program parameters
-    if ( readHypercubeParameters(argc, argv, inputFile, queryFile, outputFile, k, M, probes) != 0 ){
-        return -1;
-    }
-
-
-    std::cout << "Running Hypecube with arguments: " << "input file = \"" << inputFile << "\" query file = \"" << queryFile << "\" output file =  \"" << outputFile
-         << " k = " << k << " M = " << M  << " probes = " << probes << "\n";
-
-    // Read input file to get dataset in form of label and data lists
-//    readDataAndLabelsFromFile2<CX, CY, X, Y>(iFileName, iDataList, iLabelList);
-    readDataAndLabelsFromFile(inputFile, iDataList, iLabelList);
-
-    // Read query file to get dataset in form of label and data lists
-//    readDataAndLabelsFromFile2<CX, CY, X, Y>(iFileName, iDataList, iLabelList);
-    readDataAndLabelsFromFile(queryFile, qDataList, qLabelList);
-
-    // Find size of vector and data
-    int d = (*iDataList.begin()).size();
-    int dataSize = iDataList.size();
-
-    // Create a hypercube structure
-    Hypercube<vector<int>, int, string>* HQ = new Hypercube<vector<int>, int, string>(d,3000,3,10,2,4,0);
-
-    typedef typename list<vector<int>>::iterator tdIt; // Iterator on the list of vectors
-    typedef typename list<string>::iterator tyIt; // iterator on the list of strings
-    tdIt iteratorData; // Init Iterator on list of vectors
-    tdIt queryIterData;
-    tdIt itDE = iDataList.end(); // end of data iterator
-    tyIt iteratorLabels; // Iterator on the list of strings
-    auto data = iDataList;
-    auto labels = iLabelList;
-
-    // Add dataset points
-    int i=0;
-    for (iteratorData = data.begin(), iteratorLabels = labels.begin();
-         iteratorData != itDE; ++iteratorData, ++iteratorLabels) {
-        HQ->addX(*iteratorData, *iteratorLabels); // Add a vector<int> and string
-        std::cout << i++ << "\n";
-//        if (i>10) break;
-    }
-
-    // Query for a point to test
-    queryIterData = qDataList.begin();
-    list< tuple<std::string, int> > resList = HQ->queryX(*iteratorData);
-
-    return 0;
-
-}
+//int iimain(int argc, char **argv) {
+//
+//    using namespace std;
+//
+//    std::string inputFile;
+//    std::string queryFile;
+//    std::string outputFile;
+//    int k, M, probes;
+//
+//    list<vector<int>> iDataList;
+//    list<string> iLabelList;
+//    list<vector<int>> qDataList;
+//    list<string> qLabelList;
+//
+//
+//    // Read/Verify program parameters
+//    if ( readHypercubeParameters(argc, argv, inputFile, queryFile, outputFile, k, M, probes) != 0 ){
+//        return -1;
+//    }
+//
+//
+//    std::cout << "Running Hypecube with arguments: " << "input file = \"" << inputFile << "\" query file = \"" << queryFile << "\" output file =  \"" << outputFile
+//         << " k = " << k << " M = " << M  << " probes = " << probes << "\n";
+//
+//    // Read input file to get dataset in form of label and data lists
+////    readDataAndLabelsFromFile2<CX, CY, X, Y>(iFileName, iDataList, iLabelList);
+//    readDataAndLabelsFromFile(inputFile, iDataList, iLabelList);
+//
+//    // Read query file to get dataset in form of label and data lists
+////    readDataAndLabelsFromFile2<CX, CY, X, Y>(iFileName, iDataList, iLabelList);
+//    readDataAndLabelsFromFile(queryFile, qDataList, qLabelList);
+//
+//    // Find size of vector and data
+//    int d = (*iDataList.begin()).size();
+//    int dataSize = iDataList.size();
+//
+//    // Create a hypercube structure
+//    Hypercube<vector<int>, int, string>* HQ = new Hypercube<vector<int>, int, string>(d,3000,3,10,2,4,0);
+//
+//    typedef typename list<vector<int>>::iterator tdIt; // Iterator on the list of vectors
+//    typedef typename list<string>::iterator tyIt; // iterator on the list of strings
+//    tdIt iteratorData; // Init Iterator on list of vectors
+//    tdIt queryIterData;
+//    tdIt itDE = iDataList.end(); // end of data iterator
+//    tyIt iteratorLabels; // Iterator on the list of strings
+//    auto data = iDataList;
+//    auto labels = iLabelList;
+//
+//    // Add dataset points
+//    int i=0;
+//    for (iteratorData = data.begin(), iteratorLabels = labels.begin();
+//         iteratorData != itDE; ++iteratorData, ++iteratorLabels) {
+//        HQ->addX(*iteratorData, *iteratorLabels); // Add a vector<int> and string
+//        std::cout << i++ << "\n";
+////        if (i>10) break;
+//    }
+//
+//    // Query for a point to test
+//    queryIterData = qDataList.begin();
+//    list< tuple<std::string, int> > resList = HQ->queryX(*iteratorData);
+//
+//    return 0;
+//
+//}

@@ -10,7 +10,7 @@
 #include <cmath>
 //#include <tuple>
 //#include <string>
-//#include "util.h"
+#include "util.h"
 //#include "util2.h"
 #include "LSH.h"
 #include "Hypercube.h"
