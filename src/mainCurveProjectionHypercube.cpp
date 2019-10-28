@@ -17,17 +17,19 @@ runCurveProjectionHypercube(int id, std::string &iFileName, std::string &qFileNa
      */
 
     using namespace std;
-    typedef vector<double> PointX;
+    typedef double DX;
+    typedef vector<DX> PointX;
     typedef vector<PointX> X; // X is a Curve
     typedef list<X> CX;
     typedef list<string> CY;
-    typedef string Y;
-    typedef double TX;
     tuple<double, list<vector<int>>> CostAndPath;
-//    typedef LSH<X, TX, Y> LSH_;
-//    typedef ExactKNeighbors<CX, X, TX, CY, Y> EKNN_;
     typedef chrono::steady_clock::time_point timePoint;
-    typedef std::tuple<std::string, std::vector<std::vector<double>> &> Y_Curve_ANN;
+    typedef std::string DY;
+    typedef std::vector<double> HQ_IDX;
+    typedef std::tuple<X,DY> HQ_SAVEDDATA;
+    typedef Hypercube< PointX, DX, HQ_SAVEDDATA > HQStruct;
+    typedef LSH< PointX, DX, HQ_SAVEDDATA > LSHStruct;
+    typedef Projection<DX, DY, LSHStruct>  PR_lsh;
     // these list are returned by predictWithTime method.
 //    std::list<std::tuple<double, std::list<std::tuple<Y, D>>>> A, E;
 
@@ -44,8 +46,8 @@ runCurveProjectionHypercube(int id, std::string &iFileName, std::string &qFileNa
     ofstream oFile;
     // Read Train data and query data.
     start = initTime();                                         // timestamp start
-    readTrajectories<CX, CY, X, TX>(iFileName, iDataList, iLabelList);
-    readTrajectories<CX, CY, X, TX>(qFileName, qDataList, qLabelList);
+    readTrajectories<CX, CY, X, DX>(iFileName, iDataList, iLabelList);
+    readTrajectories<CX, CY, X, DX>(qFileName, qDataList, qLabelList);
 
     // Get points dimension and min and max number of points in curves dataset
     int dim = iDataList.begin()->begin()->size();
@@ -64,7 +66,7 @@ runCurveProjectionHypercube(int id, std::string &iFileName, std::string &qFileNa
     int kk = testQDataList.size();
 list<list<vector<int>>> paths;
     iDataList.pop_front();
-//    CostAndPath = dtwWindow<X, PointX, TX>(iDataList.front(), qDataList.front(), 3, 2);
+//    CostAndPath = dtwWindow<X, PointX, DX>(iDataList.front(), qDataList.front(), 3, 2);
     PathFinder *pathFinder = new PathFinder(3, 7, 2, 0 );
 //    for (int i = 0; i < 10; ++i) {
 //        for (int j = 0; j < 10; ++j) {
@@ -89,7 +91,7 @@ list<list<vector<int>>> paths;
 //    auto first = std::make_tuple(1, iDataList);
     iDataList.pop_front();
 //    qDataList.pop_front();
-    CostAndPath = dtw<X, PointX, TX>(iDataList.front(), qDataList.front(), "euclidean");
+    CostAndPath = dtw<X, PointX, DX>(iDataList.front(), qDataList.front(), "euclidean");
     cout << "Time to read files : " << getElapsed(start) << " list Sizes " << iDataList.size() << " "
          << iLabelList.size() << " " << qDataList.size() << endl;
     cout << "Distance of first Points: " << get<0>(CostAndPath) << " and Path:\n";
@@ -103,14 +105,13 @@ list<list<vector<int>>> paths;
     typename CY::iterator iterLabel1;
     typename CX::iterator iterQData;
     typename CY::iterator iterQLabel;
-    typedef Projection<double, std::string, LSH<std::vector<double>, double, Y_Curve_ANN>>  PR_;
-    PR_ * pr_lsh = new PR_(dimension, dim, 6000, 4, L=1, 0, 0, 100, "euclidean", 0.5);
+    PR_lsh * pr_lsh = new PR_lsh(dimension, dim, 6000, 4, L=1, 0, 0, 100, "euclidean", 0.5);
 
     CX::iterator CurveIter;
     CY::iterator CurveLblIter;
     // Add all train dataset curves to CLSH structure
-    for (CurveIter = iDataList.begin(), CurveLblIter = iLabelList.begin();
-         CurveIter != iDataList.end(), CurveLblIter != iLabelList.end() ; CurveIter++, CurveLblIter++ ) {
+    for (CurveIter = testIDataList.begin(), CurveLblIter = testILabelList.begin();
+         CurveIter != testIDataList.end(), CurveLblIter != testILabelList.end() ; CurveIter++, CurveLblIter++ ) {
         pr_lsh->addX(*CurveIter, *CurveLblIter);
     }
 
@@ -120,10 +121,10 @@ list<list<vector<int>>> paths;
 //            int top_limit = 0, std::string metric_name = "euclidean");
     dimension = iDataList.front().size(); // get dimension of data
     // Initialize algorithms
-//    LSH_ *lsh = new LSH<X, TX, Y>(w, dimension, k, L, m, numNeighbors, topLimit, metric_name);
-//    auto *clLsh = new KNeighborsClassifier<LSH_ *, CX, X, TX, CY, Y>(numNeighbors, lsh);
+//    LSH_ *lsh = new LSH<X, DX, Y>(w, dimension, k, L, m, numNeighbors, topLimit, metric_name);
+//    auto *clLsh = new KNeighborsClassifier<LSH_ *, CX, X, DX, CY, Y>(numNeighbors, lsh);
 //    auto *eknn = new EKNN_(numNeighbors, metric_name);
-//    auto *clEknn = new KNeighborsClassifier<EKNN_ *, CX, X, TX, CY, Y>(numNeighbors, eknn);
+//    auto *clEknn = new KNeighborsClassifier<EKNN_ *, CX, X, DX, CY, Y>(numNeighbors, eknn);
     /// Uncomment next 2 lines if you want to get a w based on r. Find r, for small input takes ~5min, and r ~= 1200
 //    r = meanDisVtanceBetweenPoints<list<vector<int>>, vector<int>, int>(iDataList);
 //    w = 4*r;
@@ -158,7 +159,7 @@ list<list<vector<int>>> paths;
 //    A = clLsh->predictWithTimeAndDistance(qDataList);           // predict Approx knn
 //    timeList.push_back(getElapsed(start));                      // timestamp end
 //    /// Calculate results and stats also
-//    results = unrollResult<Y, TX, CY> (E, A, qLabelList);       // unroll the results and the stats to tuple strings.
+//    results = unrollResult<Y, DX, CY> (E, A, qLabelList);       // unroll the results and the stats to tuple strings.
 //    timeList.push_back(getElapsed(AppStart));                      // timestamp App End
 //
 //    // Write result, stats to according files
