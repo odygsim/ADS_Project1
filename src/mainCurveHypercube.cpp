@@ -22,7 +22,7 @@ void runCurveCube(int id, std::string &iFileName, std::string &qFileName, std::s
     typedef vector< vector< D > > X;
     typedef string Y;
     typedef double TX;
-    typedef ExactKNeighbors<CX, X, TX, CY, Y> EKNN_;
+    typedef ExactKNeighbors2<CX, X, TX, CY, Y> EKNN_;
     typedef chrono::steady_clock::time_point timePoint;
     // these list are returned by predictWithTime method.
     std::list<std::tuple<double, std::list<std::tuple<Y, D>>>> A, E;
@@ -79,7 +79,6 @@ void runCurveCube(int id, std::string &iFileName, std::string &qFileName, std::s
 
     // Initialize algorithms ( Hypercube, HQ_Classifier, ExactKNN, EKNN_Classifier )
     CLSH_HQ_Struct* CLSH = new CLSH_HQ_Struct(dimension, delta, k, M, probes, maxPointsInCurves, L_grid , w , metric_name, maxCoordNum );
-//    HC_ *HCube= new HC_(dimension, w, k, M, probes, k_hi, r);
 
     auto *clCube = new KNeighborsClassifier<CLSH_HQ_Struct *, CX, X, TX, CY, Y>(CLSH);
     auto *eknn = new EKNN_(radius, metric_name);
@@ -110,8 +109,7 @@ void runCurveCube(int id, std::string &iFileName, std::string &qFileName, std::s
 
         // Read Query data
         std::cout << "Reading querying data..." << '\n';
-//        if ( !readDataAndLabelsFromFile<CX, CY, X, Y>(qFileName, qDataList, qLabelList, radius) ) { break; };
-          readTrajectories<CX, CY, X, TX>(qFileName, qDataList, qLabelList);
+        readTrajectories<CX, CY, X, TX>(qFileName, qDataList, qLabelList);
 
         // Ask for output file
         if ( inputFileMessageDialog("Please provide the output file path (or file name if in running directory)",
@@ -185,6 +183,7 @@ void runCurveCube(int id, std::string &iFileName, std::string &qFileName, std::s
 }
 
 int main(int argc, char **argv) {
+
     using namespace std;
     // Set program parameters
     int k = 4, M = 10, probes =2, L_grid = 4;
