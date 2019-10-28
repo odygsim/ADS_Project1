@@ -34,7 +34,8 @@ private:
 
     // Dimension of points - delta to be used ( delta =< 4*d*min{m1,m2} / m1,m2 : number of points in curves )
     // Maximum number of points in a curve to apply padding for hashing 1d vectors - assume 10% more than max points of curves in dataset
-    int pointDim, delta, maxPointsForPadding;
+    int pointDim, maxPointsForPadding;
+    double delta, maxCoord;
     // Name for the metric to be used internally in fdist
     std::string metric_name;
     // Parameters for LSH
@@ -59,7 +60,7 @@ private:
     void initializeGrid();
 
     // Create a Grid Point of PointDim dimension containing zeros to pad grid curves with
-    void initZeroGridPoint();
+    void initZeroGridPoint(double maxCoord );
 
     // Calculate curve's corresponding grid curve
     GridCurveType calcGridCurve(CurveType &curve);
@@ -75,12 +76,12 @@ public:
     CurveGridHT() {}
 
     // Constructor for LSH one dim hashing
-    CurveGridHT(int pointDim, int delta, int maxPointsForPadding, int kVecs, double w = 3000,
-            std::string metric_name = "euclidean") ;
+    CurveGridHT(int pointDim, double delta, int maxPointsForPadding, int kVecs, double w = 3000,
+                std::string metric_name = "euclidean", double maxCoord = 50);
 
     // Constructor for Hypercube one dim hashing
-    CurveGridHT(int pointDim, int delta, int maxPointsForPadding, int kHypercube, int maxSearchPoints, int probes, double w =3000,
-            std::string metric_name = "euclidean");
+    CurveGridHT(int pointDim, double delta, int maxPointsForPadding, int kHypercube, int maxSearchPoints, int probes,
+                double w = 3000, std::string metric_name = "euclidean", double maxCoord = 50);
 
     // Destructor for LSH/Hypercube structures
     virtual ~CurveGridHT() { delete oneDimHashing ; };
@@ -274,8 +275,7 @@ void CurveGridHT<D, Y, VH>::initializeGrid() {
     double ti, gdi;
 
     // Uniform random generator for mapping g to {0,1} : f
-//    std::mt19937 fgenerator;
-    std::uniform_real_distribution<double> distr(0, pointDim);
+    std::uniform_real_distribution<double> distr(0, delta);
 
     // Create Grid representing vector Gd
     for (int i = 0; i < pointDim; i++) {
@@ -290,18 +290,20 @@ void CurveGridHT<D, Y, VH>::initializeGrid() {
 }
 
 template<class D, class Y, class VH>
-void CurveGridHT<D, Y, VH>::initZeroGridPoint() {
+void CurveGridHT<D, Y, VH>::initZeroGridPoint(double maxCoord) {
 
-    // Create grid point of pointDim dimension full of zero values
+    double padNum = 100 * maxCoord;
+    // Create grid point of pointDim dimension full of great values
     for (int i=0 ; i < pointDim ; i++) {
-        zeroGridPoint.push_back(0.0);
+        zeroGridPoint.push_back(padNum);
     }
 
 }
 
 template<class D, class Y, class VH>
-CurveGridHT<D, Y, VH>::CurveGridHT(int pointDim, int delta, int maxPointsForPadding, int kVecs, double w, std::string metric_name) :
-                        pointDim(pointDim), delta(delta), maxPointsForPadding(maxPointsForPadding), k_vecs(kVecs), w(w), metric_name(metric_name),
+CurveGridHT<D, Y, VH>::CurveGridHT(int pointDim, double delta, int maxPointsForPadding, int kVecs, double w, std::string metric_name, double maxCoord) :
+                        pointDim(pointDim), delta(delta), maxPointsForPadding(maxPointsForPadding), k_vecs(kVecs), w(w),
+                        metric_name(metric_name), maxCoord(maxCoord),
                         fgenerator((std::random_device())()){
 
     // Set the distance metric function to be used
@@ -309,7 +311,7 @@ CurveGridHT<D, Y, VH>::CurveGridHT(int pointDim, int delta, int maxPointsForPadd
 
     // Initialize grid and zero grid point for padding
     this->initializeGrid();
-    this->initZeroGridPoint();
+    this->initZeroGridPoint(maxCoord);
 
     // Create a new LSH hash structure for one dimensional hashing of grid curve
     oneDimHashing = new LSHType(pointDim, w , k_vecs, 1, 0, DBL_MAX, 0, "manhattan");
@@ -317,10 +319,11 @@ CurveGridHT<D, Y, VH>::CurveGridHT(int pointDim, int delta, int maxPointsForPadd
 }
 
 template<class D, class Y, class VH>
-CurveGridHT<D, Y, VH>::CurveGridHT(int pointDim, int delta, int maxPointsForPadding, int kHypercube, int maxSearchPoints,
-        int probes, double w, std::string metric_name):
+CurveGridHT<D, Y, VH>::CurveGridHT(int pointDim, double delta, int maxPointsForPadding, int kHypercube,
+                                   int maxSearchPoints, int probes,
+                                   double w, std::string metric_name, double maxCoord):
     pointDim(pointDim), delta(delta), maxPointsForPadding(maxPointsForPadding), k_hypercube(kHypercube),
-    maxSearchPoints(maxSearchPoints), probes(probes), w(w), metric_name(metric_name),
+    maxSearchPoints(maxSearchPoints), probes(probes), w(w), metric_name(metric_name), maxCoord(maxCoord),
     fgenerator((std::random_device())()){
 
     // Set the distance metric function to be used
@@ -328,7 +331,7 @@ CurveGridHT<D, Y, VH>::CurveGridHT(int pointDim, int delta, int maxPointsForPadd
 
     // Initialize grid and zero grid point for padding
     this->initializeGrid();
-    this->initZeroGridPoint();
+    this->initZeroGridPoint(maxCoord);
 
     // Create a new Hypercube hash structure for one dimensional hashing of grid curve
     oneDimHashing = new HQType(pointDim, w, k_hypercube, maxSearchPoints, probes, 4, DBL_MAX);
