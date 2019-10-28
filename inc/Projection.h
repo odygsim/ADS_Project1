@@ -239,11 +239,12 @@ std::list<std::tuple<Y, D>> Projection<D, Y, VH>::scanTraversals(CurveType &x, i
     }
 
     if (!labelDistanceRetList.empty()) {
+
         labelDistanceRetList.sort(TupleLess<1>()); // sort by neighbors
         // Now append the nearest neighbors
         retList.push_back(labelDistanceRetList.front());
     }
-    return labelDistanceRetList;
+    return retList;
 }
 
 template<class D, class Y, class VH>
