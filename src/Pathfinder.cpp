@@ -388,12 +388,18 @@ std::list<std::list<std::vector<int>>> PathFinder::RelevantPaths(){
         }
     }
 //    PrintTable();
-    if (FullPaths.size() == 0) {std::cerr << N << M << "error no paths" << std::endl;}
+//    if (FullPaths.size() == 0) {std::cerr << N << M << "error no paths" << std::endl;}
     Paths fp1;
-    if(!FullPaths.empty())
-        fp1.push_back(FullPaths.front());
+    Paths::iterator Pathsiter= FullPaths.begin();
+    int i = 0;
+    if(!FullPaths.empty()){
+        for (i = 0; i < 10 && Pathsiter != FullPaths.end(); ++i, Pathsiter++) {
+
+            fp1.push_back(FullPaths.front());
+        }
+    }
 //    return FullPaths;
-    return fp1;//todo fix this
+    return fp1;
 }
 
  std::list<std::list<std::vector<int>>> PathFinder::FindPaths(int i, int j){

@@ -1,5 +1,5 @@
 //
-// Created by ody on 17/10/19.
+// Created by user on 10/28/19.
 //
 
 #include<cstring>
@@ -8,8 +8,8 @@
 #include"../inc/Projection.h"
 
 void
-runCurveProjectionLsh(std::string &iFileName, std::string &qFileName, std::string &oFileName, int k = 4, int k_hi = 4,
-                      int w = 6000, int m = 0, int probes = 0, int M = 0, double e = 0.5) {
+runCurveProjectionLsh(std::string &iFileName, std::string &qFileName, std::string &oFileName, int k_vec = 4,
+                      int L_vec = 5, int w = 6000, int m = 0, int topLimit = 0, double e = 0.5) {
     /**
      * @brief Runs lsh knn algorithm.
      * @params TODO complete.
@@ -30,6 +30,7 @@ runCurveProjectionLsh(std::string &iFileName, std::string &qFileName, std::strin
     typedef Hypercube<PointX, DX, HQ_SAVEDDATA> HQStruct;
     typedef LSH<PointX, DX, HQ_SAVEDDATA> LSHStruct;
     typedef Projection<DX, DY, HQStruct> ProjectionCurveHQStruct;
+    typedef Projection<DX, DY, LSHStruct> ProjectionCurveLSHStruct;
     // these list are returned by predictWithTime method.
     std::list<std::tuple<double, std::list<std::tuple<DY, DX>>>> ANNResults, ENNResults;
 
@@ -49,9 +50,8 @@ runCurveProjectionLsh(std::string &iFileName, std::string &qFileName, std::strin
     if (inputFileMessageDialog("Please provide the training dataset file path (or file name if in running directory)",
                                "No input file has been provided! Program terminates..please try again",
                                iFileName) != 0) { exit(EXIT_FAILURE); }
-
-    // Read Train data
     start = initTime();                                         // timestamp start
+    // Read Train data
     readTrajectories<CX, CY, X, DX>(iFileName, iDataList, iLabelList);
 //    readTrajectories<CX, CY, X, DX>(qFileName, qDataList, qLabelList);
 
@@ -61,9 +61,7 @@ runCurveProjectionLsh(std::string &iFileName, std::string &qFileName, std::strin
 
     // Reduce Curves to dimension 25..
     ReduceTrajectories<CX, CY, X>(iDataList, iLabelList, testIDataList, testILabelList, dimension,
-                                  iDataList.size() / 1000);
-    // take the last 100 records of curves for query set.
-//    ReduceTrajectories<CX,CY,X>(iDataList,iLabelList,testQDataList, testQLabelList, dimension, iDataList.size()/7000);
+                                  iDataList.size() / 10);
     // Max number of points
     CX::iterator max_itr = max_element(testIDataList.begin(), testIDataList.end(), longestVec<double>);
     int max_curve_sz = max_itr->size();
@@ -72,9 +70,9 @@ runCurveProjectionLsh(std::string &iFileName, std::string &qFileName, std::strin
     int min_curve_sz = min_itr->size();
     CX::iterator CurveIter;
     CY::iterator CurveLblIter;
-    ProjectionCurveHQStruct *projHC = new ProjectionCurveHQStruct(dimension, dim, w, k, M, probes, DBL_MAX, e,
-                                                                  "euclidean");
-    auto *clProjHC = new KNeighborsClassifier<ProjectionCurveHQStruct *, CX, X, DX, CY, DY>(projHC);
+    ProjectionCurveLSHStruct *projLSH = new ProjectionCurveLSHStruct(dimension, dim, w, k_vec, L_vec, 0, 0, topLimit, e,
+                                                                     "euclidean");
+    auto *clProjLSH = new KNeighborsClassifier<ProjectionCurveLSHStruct *, CX, X, DX, CY, DY>(projLSH);
 
     dimension = iDataList.front().size(); // get dimension of data
     // Initialize algorithms
@@ -87,11 +85,10 @@ runCurveProjectionLsh(std::string &iFileName, std::string &qFileName, std::strin
     clEknn->fit(testIDataList, testILabelList);                         // fit exact knn
     timeList.push_back(getElapsed(start));                      // timestamp end
 
-    std::cout << " Fitting train set to HC Projection ANN..." << newline;
+    std::cout << " Fitting train set to LSH ANN..." << newline;
     start = initTime();                                         // timestamp start
-    clProjHC->fit(testIDataList, testILabelList);                          // fit approx knn
+    clProjLSH->fit(testIDataList, testILabelList);                          // fit approx knn
     timeList.push_back(getElapsed(start));                      // timestamp end
-
 
     // User's answer on repeated procedure (querying with new file)
     std::string userAnswer = "Y";
@@ -117,19 +114,19 @@ runCurveProjectionLsh(std::string &iFileName, std::string &qFileName, std::strin
                                    oFileName) != 0) { break; }
 
         // Inform user for running case
-        std::cout << "Running CurvesHypercube Projection with arguments: " << "input file = \"" << iFileName
+        std::cout << "Running CurvesLSH-Hypercube Projection with arguments: " << "input file = \"" << iFileName
                   << "\" query file = \"" << qFileName << "\" output file =  \"" << oFileName
-                  << " k_hy = " << k << " M = " << M << "probes = " << probes << " e = " << e << "\n";
+                  << " k = " << k_vec << " L = " << L_vec << " e = " << e << "\n";
 
         // KNN query set running
         std::cout << " Running query set in Exact KNN..." << newline;
         start = initTime();                                         // timestamp start
         ENNResults = clEknn->predictWithTimeAndDistance(testQDataList);          // predict exact knn
         timeList.push_back(getElapsed(start));                      // timestamp end
-
-        std::cout << " Running query set in CurveHypercube Projection ANN..." << newline;
+        // Hypercube query set running
+        std::cout << " Running query set in CurvesLsh-Hypercube Projection ANN..." << newline;
         start = initTime();                                         // timestamp start
-        ANNResults = clProjHC->predictWithTimeAndDistance(testQDataList);           // predict Approx knn
+        ANNResults = clProjLSH->predictWithTimeAndDistance(testQDataList);           // predict Approx knn
         timeList.push_back(getElapsed(start));                      // timestamp end
         /// Calculate results and stats also
         results = unrollResult<DY, DX, CY>(ENNResults, ANNResults,
@@ -137,14 +134,14 @@ runCurveProjectionLsh(std::string &iFileName, std::string &qFileName, std::strin
         timeList.push_back(getElapsed(AppStart));                      // timestamp App End
 
         // Write result, stats to according files
-        string fields = "AlgorithmName,id,datetime,probes,w,m,k,topLimit,numNeighbors,dimension,Accuracy,Time,iFileName,trainSize,fitExactTime,predictExactTime,fitApproxTime,predictApproxtime,AppTime\n";
+        string fields = "AlgorithmName,id,datetime,L,w,m,k,topLimit,numNeighbors,dimension,Accuracy,Time,iFileName,trainSize,fitExactTime,predictExactTime,fitApproxTime,predictApproxtime,AppTime\n";
 //    oFile.open("tests/stats_proj.csv", std::ios::out | std::ios::app);
-        string res = "HC, 0," + getDatetime(false) + "," + to_string(probes) + "," + to_string(w) + "," +
-                     to_string(m) + "," + to_string(k) +
-                     "," + to_string(M) + "," + to_string(0) + "," + to_string(dimension) + "," +
+        string res = "HC, 0," + getDatetime(false) + "," + to_string(L_vec) + "," + to_string(w) + "," +
+                     to_string(m) + "," + to_string(k_vec) +
+                     "," + to_string(topLimit) + "," + to_string(0) + "," + to_string(dimension) + "," +
                      get<1>(results) + "," + getFilename(iFileName) +
-                     "," + to_string(iDataList.size()) + "," + to_string(timeList[0]) + "," + to_string(timeList[1]) +
-                     "," + to_string(timeList[2]) + "," + to_string(timeList[3]) + "," + to_string(timeList[4]) +
+                     "," + to_string(testIDataList.size()) + "," + to_string(timeList[0]) + "," + to_string(timeList[2]) +
+                     "," + to_string(timeList[1]) + "," + to_string(timeList[3]) + "," + to_string(timeList[4]) +
                      "\n";
 //    oFile << res;
 //    oFile.close();
@@ -178,30 +175,29 @@ runCurveProjectionLsh(std::string &iFileName, std::string &qFileName, std::strin
 //
     delete eknn;
     delete clEknn;
-    delete projHC;
-    delete clProjHC;
+    delete projLSH;
+    delete clProjLSH;
 }
 
 int main(int argc, char **argv) {
     using namespace std;
 
-    int L1, k1, L = 5, k_hypercube = 4, w = 5000, numNeighbors = 1, topLimit =
-            4 * L, probes, r = 0, dimension = 0, M = 0, m = 0;// INT32_MAX - 5;
-    int id = 0;
+    int L = 1, k_vec = 4, w = 5000, topLimit =
+            4 * 100, m = 0;
     char *pEnd;
     const char *arg;
-    double e;
+    double e = 0.5;
     string newline = "\n", space = " ", metric_name = "manhattan", stats, result;
     string oFileName, iFileName, qFileName, output;
 
     //Read args
-    if (argc != 15) {
+    if (argc != 13) {
         fprintf(stderr, "Usage : %s -d <input file> -q <query file> -k_hypercube <int> -L <int> -o <output file>\n",
                 argv[0]);
         return 1;
     }
     // -d tests/sample_datasets/trajectories_dataset -q tests/sample_datasets/trajectories_test1 -k_hypercube 4 -probes 5 -M 5 -L_grid 6 -o tests/traj_output1.txt
-    while (--argc && argc > 3) {
+    while (--argc && argc > 4) {
         arg = *++argv;
         if (arg == NULL) break;
         if (!strcmp(arg, "-o")) {
@@ -209,20 +205,18 @@ int main(int argc, char **argv) {
                 oFileName = *++argv;
         } else if (!strcmp(arg, "-e"))
             e = (double) stod(*++argv);
-        else if (!strcmp(arg, "-M"))
-            M = (int) strtol(*++argv, &pEnd, 10);
+        else if (!strcmp(arg, "-L_vec"))
+            L = (int) strtol(*++argv, &pEnd, 10);
         else if (!strcmp(arg, "-k_hypercube"))
-            k_hypercube = (int) strtol(*++argv, &pEnd, 10);
-        else if (!strcmp(arg, "-probes"))
-            probes = (int) strtol(*++argv, &pEnd, 10);
+            k_vec = (int) strtol(*++argv, &pEnd, 10);
         else if (!strcmp(arg, "-q"))
             qFileName = *++argv;
         else if (!strcmp(arg, "-d"))
             iFileName = *++argv;
     }
 
-//    runCurveProjectionLsh(std::string &iFileName, std::string &qFileName, std::string &oFileName, int k_hypercube = 4, int k_hi = 4, int w = 6000, int m = 0, int probes = 0, int M = 0) {
-    runCurveProjectionLsh(iFileName, qFileName, oFileName, k_hypercube, w, m, M, probes, e);
+    runCurveProjectionLsh(iFileName, qFileName, oFileName, k_vec, L, w, m, topLimit, e);
+//    runCurveProjectionLsh(std::string &iFileName, std::string &qFileName, std::string &outFile, int k_vec = 4, int L_vec = 5,int w = 6000, int m = 0, int topLimit = 0, double e = 0.5) {
 
 
     return 0;

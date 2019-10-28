@@ -394,6 +394,7 @@ std::tuple<std::string, std::string> unrollResult(std::list<std::tuple<double, s
 // Get for each tuple second arg the list of points
         listTuples curLE = std::get<1>(*itListEx);
         listTuples curLA = std::get<1>(*itListAp);
+        if(curLA.empty()){std::cerr << "ANN return no neighbor, please change parameters or qset, exiting..\n" ;}
         assert(!curLA.empty());
         result += "Query: " + *(itY) + delim;
         result += "Nearest neighbor: " + std::get<0>(curLA.front()) + delim;
