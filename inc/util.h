@@ -42,7 +42,12 @@ readCurvesLSHWithHypercubeParameters(int argc, char **argv, std::string &inputFi
                                      std::string &outputFile,
                                      int &k_hypercube, int &M, int &probes, int &L_grid);
 
+int readCurvesLSHWithLshParameters(int argc, char **argv, std::string &inputFile, std::string &queryFile,
+                                   std::string &outputFile, int &k_vec, int &L_grid);
+
 void print_curvesLSHWithHypercube_usage();
+
+void print_curvesLSHWithLsh_usage();
 
 int inputFileMessageDialog(std::string askMessage, std::string errorMessage, std::string &fileName);
 
