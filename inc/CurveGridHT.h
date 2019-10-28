@@ -206,18 +206,18 @@ std::list<std::tuple<Y, D>> CurveGridHT<D, Y, VH>::queryCurve(CurveType &curve){
 
     // Type definition of query result
     typedef std::list< std::tuple< std::tuple<CurveType, Y>, double > >  neighbList;
-    // Type definition of result p
-    typedef std::tuple< std::tuple<CurveType, Y>, double >* resPointer;
+//    // Type definition of result p
+//    typedef std::tuple< std::tuple<CurveType, Y>, double >* resPointer;
 
     // Query results of one dim hashing
     neighbList oneDimQueryResults;
     // Iterator of neighbors in one dim hash results
-    typename neighbList::iterator currNeigh;
+    typename neighbList::const_iterator currNeigh;
     // Current and Best Neighbor data holders
     curveDataType currCurveData;
     CurveType currCurve;
-    Y currCurveLabel;
-    Y bestCurveLabel;
+    Y currCurveLabel ="";
+    Y bestCurveLabel ="";
     double bestDist = DBL_MAX;
     double currDist = 0;
 
@@ -235,10 +235,11 @@ std::list<std::tuple<Y, D>> CurveGridHT<D, Y, VH>::queryCurve(CurveType &curve){
 
     //Get neighbors stored in one dim Hash Table
     oneDimQueryResults = oneDimHashing->queryX( gridConcatVector );
-
+    int i=0;
     // Find the minimum distance neighbor
-    for ( currNeigh = oneDimQueryResults.begin(); currNeigh != oneDimQueryResults.end() ; currNeigh++ ) {
-
+    for ( currNeigh = oneDimQueryResults.begin(); currNeigh != oneDimQueryResults.end() ; ++currNeigh ) {
+        i++;
+//        std::cout << "currNeigh = " << i << '\n';
         // Getting current neighbor curve data tuple : (Curve, label)
         currCurveData = std::get<0>(*currNeigh);
         // Getting curve from curve data tuple
@@ -257,7 +258,10 @@ std::list<std::tuple<Y, D>> CurveGridHT<D, Y, VH>::queryCurve(CurveType &curve){
 
     // Hold (label,distance) best neighbour tuple
     std::list<std::tuple<Y, D>> distanceList;
-    distanceList.push_back(std::make_tuple(bestCurveLabel, bestDist));
+    // Check if no neighbour found
+    if ( bestCurveLabel != "" ){
+        distanceList.push_back(std::make_tuple(bestCurveLabel, bestDist));
+    }
 
     return distanceList;
 

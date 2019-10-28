@@ -17,6 +17,7 @@ template<class TID, class D, class Y>
 class Hypercube {
 
 private :
+
     // Parameters
     int d, k, maxSearchPoints, probes, k_hi;
     int m;
@@ -35,11 +36,12 @@ private :
 public:
 
     Hypercube(int d, double w = 3000, int k = 3, int maxSearchPoints = 10, int probes = 2, int k_hi = 4, double r = 0);
-    ~Hypercube(){};
+    ~Hypercube(){ for (auto hq_ht : HQ_HT_List) delete hq_ht; };
+
     // Adding a point with it's label to Hypercube Hash structure
-    void addPoint(TID &x, Y &y);
+    void addX(TID &x, Y &y);
     // Query a point : return a list of ANN in (label,distance) tuples
-    std::list<std::tuple<Y, D>> queryPoint(TID &x);
+    std::list<std::tuple<Y, D>> queryX(TID &x);
 
 };
 
@@ -61,7 +63,7 @@ Hypercube<TID, D, Y>::Hypercube(int d, double w, int k, int maxSearchPoints, int
 }
 
 template<class TID, class D, class Y>
-void Hypercube<TID, D, Y>::addPoint(TID &x, Y &y) {
+void Hypercube<TID, D, Y>::addX(TID &x, Y &y) {
 
     // Find corresponding hypercube vertice
     int v = calculate_point_corresponding_vertice(x);
@@ -73,7 +75,7 @@ void Hypercube<TID, D, Y>::addPoint(TID &x, Y &y) {
 }
 
 template<class TID, class D, class Y>
-std::list<std::tuple<Y, D>> Hypercube<TID, D, Y>::queryPoint(TID &x) {
+std::list<std::tuple<Y, D>> Hypercube<TID, D, Y>::queryX(TID &x) {
 
     // Hold current vertice and distance during search
     int currVert;
@@ -111,8 +113,8 @@ std::list<std::tuple<Y, D>> Hypercube<TID, D, Y>::queryPoint(TID &x) {
 
             // Check all points within the bucket
             for (auto local_it = HQ_Buckets.begin(j); local_it != HQ_Buckets.end(j); ++local_it) {
-                //
-                if (++currSP > maxSearchPoints) {
+                // Check if maximum candidates number has been exceeded unless radius is given
+                if (++currSP > maxSearchPoints && r == 0 ) {
                     break;
                 }
                 // Get neighbor point data and label
@@ -126,23 +128,6 @@ std::list<std::tuple<Y, D>> Hypercube<TID, D, Y>::queryPoint(TID &x) {
 
         }
     }
-
-//    // Create a vector in order to sort Neighbors tuples
-//    std::vector< std::tuple<Y,D> > neighResVector;
-//    typename std::list< std::tuple<Y, D>>::iterator tupleIter;
-//    typename std::vector< std::tuple<Y, D>>::iterator vecIter;
-//
-//    // Fill vector with distanceList tuple data
-//    for( tupleIter = distanceList.begin() ; tupleIter != distanceList.end(); tupleIter++ ){
-//        neighResVector.push_back(*tupleIter);
-//    }
-//    // Sort vector according to the distance element of tuples
-//    std::sort(begin(neighResVector), end(neighResVector), TupleLess<1>());
-//
-//    // Create new tupples distance list
-//    for( vecIter = neighResVector.begin() ; vecIter != neighResVector.end(); vecIter++ ){
-//        distanceLabelList.push_back(*vecIter);
-//    }
 
     // Sort list according to the distance element of tuples (neighbor label, distance)
     distanceList.sort(TupleLess<1>());
@@ -161,8 +146,10 @@ std::list<std::tuple<Y, D>> Hypercube<TID, D, Y>::queryPoint(TID &x) {
         }
 
     } else {
-        // Return nearest neighbor
-        distanceLabelList.push_back( distanceList.front() );
+        // Return nearest neighbor if any
+        if ( distanceList.size() > 0 ) {
+            distanceLabelList.push_back( distanceList.front() );
+        }
     }
 
     // Return neighbors

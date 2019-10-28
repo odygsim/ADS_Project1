@@ -72,11 +72,11 @@ void runCurveLSHWithHypercube( std::string &iFileName, std::string &qFileName, s
     typedef CurvesLSH< DX, DY, Hypercube< std::vector<double>, double, std::tuple< std::vector< std::vector<double> >, std::string >  > > CLSH_HQ_Struct;
     typedef CurvesLSH< DX, DY, LSHStruct > CLSH_LSH_Struct;
 
-////     Uncomment following line for running CurvesLSH with Hypercube
-//    CLSH_HQ_Struct* CLSH = new CLSH_HQ_Struct(dim, delta, k, M, probes, maxPointsInCurves, L_grid , w , metric_name);
+//     Uncomment following line for running CurvesLSH with Hypercube
+    CLSH_HQ_Struct* CLSH = new CLSH_HQ_Struct(dim, delta, k, M, probes, maxPointsInCurves, L_grid , w , metric_name);
 
-//     Uncomment following line for running CurvesLSH with LSH
-    CLSH_LSH_Struct* CLSH = new CLSH_LSH_Struct(dim, delta, k, maxPointsInCurves, L_grid , w , metric_name);
+////     Uncomment following line for running CurvesLSH with LSH
+//    CLSH_LSH_Struct* CLSH = new CLSH_LSH_Struct(dim, delta, k, maxPointsInCurves, L_grid , w , metric_name);
 
     CX::iterator CurveIter;
     CY::iterator CurveLblIter;
@@ -85,13 +85,19 @@ void runCurveLSHWithHypercube( std::string &iFileName, std::string &qFileName, s
     for (CurveIter = iDataList.begin(), CurveLblIter = iLabelList.begin(); CurveIter != iDataList.end(), CurveLblIter != iLabelList.end() ; CurveIter++, CurveLblIter++ ) {
         i++;
         CLSH->addX(*CurveIter, *CurveLblIter);
-//        if (i>5) break;
     }
 
     CurveIter = qDataList.begin();
 
+    std::list<std::tuple<std::string, double> > queryRes, queryResList;
 //    std::list< std::tuple< std::string, std::vector<std::vector<double> > > > res =
-    CLSH->queryX((*CurveIter));
+    for (CurveIter = qDataList.begin(), CurveLblIter = qLabelList.begin(); CurveIter != qDataList.end(), CurveLblIter != qLabelList.end() ; CurveIter++, CurveLblIter++ ) {
+        i++;
+        queryRes = CLSH->queryX(*CurveIter);
+        queryResList.push_back( queryRes.front());
+    }
+
+//    CLSH->queryX((*CurveIter));
 
     // Clean
     delete CLSH;

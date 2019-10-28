@@ -144,8 +144,11 @@ std::list<std::tuple<Y, D>> CurvesLSH<D, Y, VH>::queryX(std::vector<std::vector<
 
     // Sort all CurveGrid Hash Tables results
     finalDistanceList.sort(TupleLess<1>());
-    // Return the best
-    resDistList.push_back( finalDistanceList.front());
+    // Return the best if any
+    if ( finalDistanceList.size() > 0 ) {
+        resDistList.push_back(finalDistanceList.front());
+    }
+
     return resDistList;
 
 }
