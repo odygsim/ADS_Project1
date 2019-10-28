@@ -115,15 +115,17 @@ std::list<std::tuple<Y, D>> LSH<TID, D, Y>::queryX(TID &x) const {
     distanceList.sort(TupleLess<1>()); // sort by neighbors
     IteratorListTuples itE = distanceList.end(); // iterator for traverse the list.
     // Now append the nearest neighbors
-    if ((radius) > 0) {
-        for (iterListTuples = distanceList.begin();
-             (iterListTuples != itE) && (std::get<1>(*iterListTuples) <= radius); ++iterListTuples) {
-            labelDistanceList.push_back(*iterListTuples);
-        }
-    } else {
-        labelDistanceList.push_back(distanceList.front());
-    }
+    if (!distanceList.empty()) {
+        if ((radius) > 0) {
+            for (iterListTuples = distanceList.begin();
+                 (iterListTuples != itE) && (std::get<1>(*iterListTuples) <= radius); ++iterListTuples) {
+                labelDistanceList.push_back(*iterListTuples);
+            }
+        } else {
 
+            labelDistanceList.push_back(distanceList.front());
+        }
+    }
     return labelDistanceList;
 }
 

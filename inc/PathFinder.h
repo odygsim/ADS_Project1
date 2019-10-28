@@ -55,4 +55,18 @@ public:
 
 };
 
+
+template<typename D>
+D max(D a, D b) {
+    if (a > b) return a;
+    return b;
+}
+
+template<typename D>
+D min(D a, D b) {
+    if (a < b) return a;
+    return b;
+}
+
+
 #endif //ADS_PROJECT1_PATHFINDER_H

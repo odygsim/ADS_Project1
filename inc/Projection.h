@@ -31,36 +31,44 @@ class Projection {
     std::vector<std::vector<RelevantPaths>> ArrayTraversals;    // The array of Traversals MxM with objects RelevantPaths
 
     // Setting type for LSH, Hypercube
-    typedef LSH< PointType, D, curveDataType > LSHType;
-    typedef Hypercube< PointType, D, curveDataType > HQType;
+    typedef LSH<PointType, D, curveDataType> LSHType;
+    typedef Hypercube<PointType, D, curveDataType> HQType;
 
     unsigned int dimensionPoint, dimensionCurve; // dimension , column limit of G
     unsigned int K, window = 2; // row limit of G
     double e;
     std::string metric_name;
 
-    std::tuple<D, std::list<std::vector<int>>> (*f)(CurveType &, CurveType &, std::string);
+//    std::tuple<D, std::list<std::vector<int>>> (*f)(CurveType &, CurveType &, std::string);
+    D (*f)(CurveType &, CurveType &, std::string);
 
     CurveType G;// keep G matrix here
-    ConcatVector mulCurveAndG(CurveType x);
+    std::vector<D> mulCurveAndG(CurveType x);
 
     std::list<std::tuple<Y, D>> scanTraversals(CurveType &, int w = 2);
+
+    std::string name = "ANNProjection";
 
     void initializer();
 
 public:
     Projection(int d);
 
+    std::string getName() const { return name; }
+
     // LSH constructor
-    Projection(int dimensionCurve, int dimensionPoint, int w = 6000, int k = 4, int L = 5, int m = 0, double radius = 0,
-               int top_limit = 0, std::string metric_name = "euclidean", double e = 0.5);
+    Projection(int dimensionCurve, int dimensionPoint, int w = 6000, int k = 4, int L = 5, int m = 0,
+               double radius = 0,
+               int top_limit = 0, double e = 0.5, std::string metric_name = "euclidean");
 
     void addX(CurveType &x, Y &y);  // Add point to structure.
 
-    std::list<std::tuple<Y, D>> queryX(CurveType &x) const; // Query a Point it return a list of tuples (label, distance).
+    std::list<std::tuple<Y, D>> queryX(CurveType &x); // Query a Point it return a list of tuples (label, distance).
     // Hypercube constructor
-    Projection(int dimensionCurve, int dimensionPoint, double w = 3000, int k = 3, int maxSearchPoints = 10,
-               int probes = 2, int k_hi = 4, double r = 0, std::string metric_name = "euclidean");
+    Projection(int dimensionCurve, int dimensionPoint, double w = 5000, int k_hypercube = 3, int maxSearchPoints = 10,
+               int probes = 2, double r = DBL_MAX, double e = 0.5, std::string metric_name = "euclidean");
+//    Projection(int dimensionCurve, int dimensionPoint, double w = 3000, int k = 3, int maxSearchPoints = 10,
+//               int probes = 2, int k_hi = 4, double r = 0, std::string metric_name = "euclidean");
 
 };
 
@@ -68,15 +76,18 @@ public:
 //LSH(int d, int w = 6000, int k = 4, int L = 5, int m = 0, double radius = 0, int top_limit = 0,
 //    std::string metric_name = "manhattan"); // Constructor 1.
 template<class D, class Y, class VH>
-Projection<D, Y, VH>::Projection(int dimensionCurve, int dimensionPoint, int w, int k, int L, int m, double radius,
-                                 int top_limit, std::string metric_name, double e):metric_name(metric_name),
+Projection<D, Y, VH>::Projection(int dimensionCurve, int dimensionPoint, int w, int k, int L, int m,
+                                 double radius,
+                                 int top_limit, double e, std::string metric_name):metric_name(metric_name),
                                                                                    dimensionCurve(dimensionCurve),
                                                                                    dimensionPoint(dimensionPoint),
                                                                                    e(e) {
 
     initializer();
+    f = &dtwD<CurveType, PointType, D>;
     // create the Array MXM // TODO check if i need to start from 1.
     for (int i = 0; i < dimensionCurve; ++i) {
+        std::vector<std::vector<TupleRelevantPath>> rowTuple;
         for (int j = 0; j < dimensionCurve; ++j) {
             // Get Relevant Paths for i,j
             PathFinder *pathFinder = new PathFinder(i, j, window);
@@ -86,35 +97,51 @@ Projection<D, Y, VH>::Projection(int dimensionCurve, int dimensionPoint, int w, 
             for (auto path: paths) { // const &?
                 // add to each path a Vector Hashtable lsh/cube
                 TupleRelevantPath t = std::make_tuple(path,
-                                         new LSHType(dimensionPoint, w, k, L, m, radius, top_limit,
-                                                                              metric_name));
+                                                      new LSHType(dimensionPoint, w, k, L, m, radius, top_limit,
+                                                                  metric_name));
                 relPathsVector.push_back(t);
             }
-            ArrayTraversals.push_back({relPathsVector});
+            rowTuple.push_back(relPathsVector);
         }
+        ArrayTraversals.push_back(rowTuple);
     }
     // calculate relevant traversals for each ij of MxM and store them in ArrayTraversals
 
 }
 
+/// HYPERCUBE
 template<class D, class Y, class VH>
-Projection<D, Y, VH>::Projection(int dimensionCurve, int dimensionPoint, double w, int k, int maxSearchPoints,
-                                 int probes, int k_hi, double r, std::string metric_name):metric_name(metric_name) {
-
+Projection<D, Y, VH>::Projection(int dimensionCurve, int dimensionPoint, double w, int k_hypercube, int maxSearchPoints,
+                                 int probes, double r, double e, std::string metric_name):metric_name(metric_name),
+                                                                                          e(e), dimensionCurve(
+                dimensionCurve), dimensionPoint(dimensionPoint) {
+    e = 0.5;
+    int k_hi = 4;
     initializer();
+    f = &dtwD<CurveType, PointType, D>;
     // create the Array MXM
-    for (int i = 0; i < dimensionPoint; ++i) {
-        for (int j = 0; j < dimensionPoint; ++j) {
+    for (int i = 0; i < dimensionCurve; ++i) {
+        std::vector<std::vector<TupleRelevantPath>> rowTuple;
+        for (int j = 0; j < dimensionCurve; ++j) {
             // Get Relevant Paths for i,j
-            PathFinder *pathFinder = new PathFinder(i, window);
+//            if ( i == 5 && j == 5)
+//                std::cout<< "a\n" ;
+            PathFinder *pathFinder = new PathFinder(i, j, window);
             Paths paths = pathFinder->RelevantPaths();
-            TupleRelevantPath t = std::make_tuple(paths, new HQType (dimensionPoint, w, k, maxSearchPoints,
-            probes, k_hi, r));
             delete pathFinder;
-            ArrayTraversals.push_back(t);
+            RelevantPaths relPathsVector;
+            for (auto path: paths) { // const &?
+                // add to each path a Vector Hashtable lsh/cube
+                TupleRelevantPath t = std::make_tuple(path,
+                                                      new HQType(dimensionPoint, w, k_hypercube, maxSearchPoints,
+                                                                 probes, k_hi,
+                                                                 r));
+                relPathsVector.push_back(t);
+            }
+            rowTuple.push_back(relPathsVector);
         }
+        ArrayTraversals.push_back(rowTuple);
     }
-    // calculate relevant traversals for each ij of MxM and store them in ArrayTraversals
 }
 
 
@@ -146,61 +173,89 @@ std::list<std::tuple<Y, D>> Projection<D, Y, VH>::scanTraversals(CurveType &x, i
     typedef std::list<std::tuple<Y, D>> listRetTuples;                 // Declare Types list of tuples.
     typedef typename listTuples::iterator IteratorListTuples;     // Declare Iterator of list of tuples.
     typedef typename listRetTuples::iterator IteratorListRetTuples;     // Declare Iterator of list of tuples.
+    curveDataType currCurveData;
+    CurveType currCurve;
+    Y currCurveLabel = "";
+    Y bestCurveLabel = "";
+    double bestDist = DBL_MAX;
+    double currDist = 0;
 
-    std::tuple<double, std::list<std::vector<int>>> (*f)(CurveType &, CurveType &, std::string);
-    f = &dtw<CurveType, std::vector<double>, double>;
+//    std::tuple<double, std::list<std::vector<int>>> (*f)(CurveType &, CurveType &, std::string);
+    D (*f)(CurveType &, CurveType &, std::string) = &dtwD<CurveType, std::vector<D>, D>;
 
-    int numPoints = x.size();
+    int numPoints = x.size() - 1;
+    int currI, currJ;
     std::vector<double> hashedX;
 
-    listTuples distanceList;                                      // List that stores the distances from neighbors.
+    listTuples currDistanceList, finalDistanceList;                                      // List that stores the distances from neighbors.
     listRetTuples labelDistanceRetList, retList;                              // List that stores the labels of neighbors.
     IteratorListTuples iterListTuples;                            // iterator to traverse the list.
 
     hashedX = mulCurveAndG(x); // mul x * G
 
-    std::list<std::vector<int>> Actions{{0,  1},
-                                        {1,  0},
-                                        {0,  -1},
-                                        {-1, 0}};        // a list of action N, S, E, W
+    std::list<std::vector<int>> Actions{
+            {0,  0}, // current
+            {0,  1},
+            {1,  0},
+            {0,  -1},
+            {-1, 0}
+    };        // a list of action N, S, E, W
     if (w == 1) {
         Actions.pop_back();
         Actions.pop_back();
     }
+
     for (auto action: Actions) {     // for all actions gather results of queries
-        RelevantPaths &cur = ArrayTraversals[numPoints + action[0]][numPoints + action[1]];
-        for (auto tup: cur) {         // for each each Traversal aka path, VH
-            VH &vh = std::get<1>(tup);      // get ANN
-            distanceList.push_back(vh.queryPoint(hashedX));       // query the ANN  and append the results to a list.
+        // Get neighbors or current relevant path
+        currI = numPoints + action[0];
+        currJ = numPoints + action[1];
+        // if position is not out of limits
+        if (currI < dimensionCurve && currJ < dimensionCurve) {
+            RelevantPaths &cur = ArrayTraversals[currI][currJ];
+            for (auto tup: cur) {         // for each each Traversal aka path, VH
+                VH *vh = std::get<1>(tup);      // get ANN
+                currDistanceList = vh->queryX(hashedX);       // query the ANN  and append the results to a list.
+                // Attach to final best neighbors
+                finalDistanceList.insert(finalDistanceList.end(), currDistanceList.begin(), currDistanceList.end());
+            }
         }
     }
-    distanceList.sort(TupleLess<1>()); // sort by neighbors
+    finalDistanceList.sort(TupleLess<1>()); // sort by neighbors
 /// TODO check if i need to run dtw on the results.
     // iterator for traverse the list.
-    for (iterListTuples = distanceList.begin(); (iterListTuples != distanceList.end()); ++iterListTuples) {
+    for (iterListTuples = finalDistanceList.begin(); (iterListTuples != finalDistanceList.end()); ++iterListTuples) {
 
         // this a tuple of (y, distanceFromDtw)
         // extact y string and curve
-        labelDistanceRetList.push_back({std::get<1>(std::get<0>(*iterListTuples)),
-                                        f(std::get<0>(std::get<0>(*iterListTuples)), x, metric_name)});
+        currCurveData = std::get<0>(*iterListTuples);
+        // Getting curve from curve data tuple
+        currCurve = std::get<0>(currCurveData);
+        // Getting curve Label from curve data tuple
+        currCurveLabel = std::get<1>(currCurveData);
+        // Calculate the distance from current Curve and queryCurve
+        currDist = f(currCurve, x, metric_name);
+        // push the result to a list to be sorted to the best neighbor
+        labelDistanceRetList.push_back(std::make_tuple(currCurveLabel, currDist));
     }
 
-    labelDistanceRetList.sort(TupleLess<1>()); // sort by neighbors
-    // Now append the nearest neighbors
-    retList.push_back(labelDistanceRetList.front());
+    if (!labelDistanceRetList.empty()) {
+        labelDistanceRetList.sort(TupleLess<1>()); // sort by neighbors
+        // Now append the nearest neighbors
+        retList.push_back(labelDistanceRetList.front());
+    }
     return labelDistanceRetList;
 }
 
 template<class D, class Y, class VH>
 // Query a Point it return a list of tuples (label, distance).
-std::list<std::tuple<Y, D>> Projection<D, Y, VH>::queryX(CurveType &x) const {
+std::list<std::tuple<Y, D>> Projection<D, Y, VH>::queryX(CurveType &x) {
 
     return scanTraversals(x);  // scan and return result
 }
 
 template<class D, class Y, class VH>
 // Query a Point it return a list of tuples (label, distance).
-std::vector<double> Projection<D, Y, VH>::mulCurveAndG(CurveType x) {
+std::vector<D> Projection<D, Y, VH>::mulCurveAndG(CurveType x) {
     std::vector<double> rowX;
     std::vector<double> rowY;
     double sum = 0;
@@ -228,7 +283,7 @@ std::vector<double> Projection<D, Y, VH>::mulCurveAndG(CurveType x) {
 template<class D, class Y, class VH>
 // Init G
 void Projection<D, Y, VH>::initializer() {
-    f = &dtw<CurveType, std::vector<double>, double>;
+    f = &dtwD<CurveType, PointType, D>;
     K = KCalculation(e, dimensionPoint);
     std::random_device randDev;
     std::mt19937 generator(randDev());

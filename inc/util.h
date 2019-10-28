@@ -285,7 +285,7 @@ void ReduceTrajectories(CX &dataList, CY &labelList, CX &ReducedDataList, CY &Re
     //  traverse the curves and reduce each one
     for (i = 0;
          iterData != iterDataEnd && i < count;
-         ++iterData, ++iterLabels) {
+         ++iterData, ++iterLabels, i++) {
         // got the curve now reduce its dimension
         iterXEnd = (*iterData).end();
         for (k = 0, iterX = (*iterData).begin(); k < dimension && iterX != iterXEnd; ++k, iterX++) {
@@ -430,7 +430,7 @@ std::tuple<std::string, std::string> unrollResult(std::list<std::tuple<double, s
 }
 
 template<class TD, class TID, class D>
-int meanDistanceBetweenPoints(TD &data) {
+int meanDistanceBetweenPoints(TD &data, int maxI) {
     /**
      * @brief General fit for all methods lsh, cube, exactKnn.
      * @param x The first object with data.
@@ -449,7 +449,7 @@ int meanDistanceBetweenPoints(TD &data) {
     typedef typename TD::iterator tdIt; // Iterator on the list of vectors
     // Init Iterator on list of vectors, Init Iterator on list of vectors, end of data iterator
     tdIt iteratorData, iteratorDataJ, itDE = data.end();
-    for (iteratorData = data.begin(); iteratorData != itDE; ++iteratorData) {
+    for (iteratorData = data.begin(); iteratorData != itDE && i < maxI; ++iteratorData) {
         std::cout << getDatetime(false) + "\t\t\t\tChecking point: " << i << "/" << size << std::endl;
         std::list<D> distanceList;
         for (iteratorDataJ = data.begin(); iteratorDataJ != itDE; ++iteratorDataJ) {
