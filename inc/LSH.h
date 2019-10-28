@@ -107,7 +107,8 @@ std::list<std::tuple<Y, D>> LSH<TID, D, Y>::queryX(TID &x) const {
     for (auto ht: htList) { // for all hastTables getPoints!
         for (auto point : ht->getPoint(x)) {
             // iterate through all returned points and append them in a list.
-            distanceList.push_back({std::get<0>(point), f(std::get<1>(point), x)});
+            if (!std::get<1>(point).empty()) // TODO fix this, will be ever second object vector that has method empty?
+                distanceList.push_back(std::make_tuple(std::get<0>(point), f(std::get<1>(point), x)));
         }
     }
 
@@ -116,7 +117,7 @@ std::list<std::tuple<Y, D>> LSH<TID, D, Y>::queryX(TID &x) const {
     // Now append the nearest neighbors
     if ((radius) > 0) {
         for (iterListTuples = distanceList.begin();
-             (iterListTuples != itE) && (radius < std::get<1>(*iterListTuples)); ++iterListTuples) {
+             (iterListTuples != itE) && (std::get<1>(*iterListTuples) <= radius); ++iterListTuples) {
             labelDistanceList.push_back(*iterListTuples);
         }
     } else {
