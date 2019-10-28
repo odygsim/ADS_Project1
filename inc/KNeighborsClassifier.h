@@ -90,10 +90,10 @@ KNeighborsClassifier<A, TD, TID, D, TY, Y>::predictWithTimeAndDistance(TD &x) {
 
     timePoint start;
 //    assert(alg->getName());
-    std::string cl = alg->getName();
+//    std::string cl = alg->getName();
     double elapsed;
     int i ;
-    int qDataSize = x.size();
+//    int qDataSize = x.size();
     listTuples distanceList; // distanceList to store all neighbors
     lTIt iteratorListTuples; // Iterator on list of tuples
     returnL returnList; // definition of return list
@@ -102,7 +102,7 @@ KNeighborsClassifier<A, TD, TID, D, TY, Y>::predictWithTimeAndDistance(TD &x) {
     IteratorTD iteratorData;
     for (iteratorData = x.begin(), i = 0 ; iteratorData != e1; ++iteratorData, i++) {
         listTuples labelDistanceList; // every query has new labelDistanceList
-        std:: cout << getDatetime(false) << "\t\t\t\tQuery data of " << cl << " : " << i << "/" << qDataSize << std::endl;
+//        std:: cout << getDatetime(false) << "\t\t\t\tQuery data of " << cl << " : " << i << "/" << qDataSize << std::endl;
         start = initTime(); // Start Time
 //        auto future = std::async(std::launch::async, [this, iteratorData](){ return this->alg->queryPoint(*iteratorData);});
 //        labelDistanceList = future.get();
