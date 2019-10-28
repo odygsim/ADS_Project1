@@ -91,7 +91,7 @@ void runCurveLsh(int id, std::string &iFileName, std::string &qFileName, std::st
     timeList.push_back(getElapsed(start));                      // timestamp end
 
     // Hypercube train set fitting
-    std::cout << " Fitting train set to Hypercube ANN..." << newline;
+    std::cout << " Fitting train set to CurvesLSH-LSH ANN..." << newline;
     start = initTime();                                         // timestamp start
     clLsh->fit(iDataList, iLabelList);                         // fit approx knn
     timeList.push_back(getElapsed(start));                      // timestamp end
@@ -117,7 +117,7 @@ void runCurveLsh(int id, std::string &iFileName, std::string &qFileName, std::st
                                     oFileName) != 0 ) { break; }
 
         // Inform user for running case
-        std::cout << "Running CurvesLSH-Hypercube with arguments: " << "input file = \"" << iFileName << "\" query file = \"" << qFileName << "\" output file =  \"" << oFileName
+        std::cout << "Running CurvesLSH-Lsh with arguments: " << "input file = \"" << iFileName << "\" query file = \"" << qFileName << "\" output file =  \"" << oFileName
                   << " k_vec = " << k << " L_grid = " << L_grid << "\n";
 
         // KNN query set running
@@ -194,7 +194,7 @@ int main(int argc, char **argv) {
     string iFileName, qFileName, oFileName;
 
     // Read/Verify program parameters
-    if ( readCurvesLSHWithHypercubeParameters(argc, argv, iFileName, qFileName, oFileName, k, M, probes, L_grid) != 0  ){
+    if ( readCurvesLSHWithLshParameters(argc, argv, iFileName, qFileName, oFileName, k, L_grid) != 0  ){
         return -1;
     }
 

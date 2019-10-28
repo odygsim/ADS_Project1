@@ -91,7 +91,7 @@ void runCurveCube(int id, std::string &iFileName, std::string &qFileName, std::s
     timeList.push_back(getElapsed(start));                      // timestamp end
 
     // Hypercube train set fitting
-    std::cout << " Fitting train set to Hypercube ANN..." << newline;
+    std::cout << " Fitting train set to CurvesLSH-Hypercube ANN..." << newline;
     start = initTime();                                         // timestamp start
     clCube->fit(iDataList, iLabelList);                         // fit approx knn
     timeList.push_back(getElapsed(start));                      // timestamp end
@@ -127,7 +127,7 @@ void runCurveCube(int id, std::string &iFileName, std::string &qFileName, std::s
         timeList.push_back(getElapsed(start));                      // timestamp end
 
         // Hypercube query set running
-        std::cout << " Running query set in Hypercube ANN..." << newline;
+        std::cout << " Running query set in CurvesLsh-Hypercube ANN..." << newline;
         start = initTime();                                         // timestamp start
         A = clCube->predictWithTimeAndDistance(qDataList);           // predict Approx knn
         timeList.push_back(getElapsed(start));                      // timestamp end
@@ -143,7 +143,7 @@ void runCurveCube(int id, std::string &iFileName, std::string &qFileName, std::s
             break;
         }
         string res;
-        res = "Cube," + to_string(id) + "," + getDatetime(false) + ", L_grid = " + to_string(L_grid) + ", w = " + to_string(w) + ", probes = " +
+        res = "CurvesLsh-Cube," + to_string(id) + "," + getDatetime(false) + ", L_grid = " + to_string(L_grid) + ", w = " + to_string(w) + ", probes = " +
               to_string(probes) + ", k = " + to_string(k) + ", M = " + to_string(M) + ", dimension = " + to_string(dimension) + "," +
               ", maximumCoordinate used = " + to_string(maxCoordNum) + "," +
               get<1>(results) + "," + getFilename(iFileName) +
