@@ -34,7 +34,8 @@ private:
     // Dimension of points - delta to be used ( delta =< 4*d*min{m1,m2} / m1,m2 : number of points in curves )
     // Number of grid
     // Maximum number of points in a curve to apply padding for hashing 1d vectors - assume 10% more than max points of curves in dataset
-    int pointDim, delta, numGrids, maxPointsForPadding;
+    int pointDim, numGrids, maxPointsForPadding;
+    double delta, maxCoord ;
     // Parameters for LSH
     int k_vecs;
     // Parameters for Hypercube
@@ -53,12 +54,11 @@ public:
 
     CurvesLSH();
 
-    CurvesLSH(int pointDim, int delta, int kVecs, int maxPointsForPadding, int numGrids = 4, double w = 3000,
-              std::string metricName = "euclidean");
+    CurvesLSH(int pointDim, double delta, int kVecs, int maxPointsForPadding, int numGrids = 4, double w = 3000,
+              std::string metricName = "euclidean", double maxCoord = 50);
 
-    CurvesLSH(int pointDim, int delta, int kHypercube, int maxSearchPoints, int probes, int maxPointsForPadding,
-              int numGrids = 4,
-              double w = 3000, std::string metricName = "euclidean");
+    CurvesLSH(int pointDim, double delta, int kHypercube, int maxSearchPoints, int probes, int maxPointsForPadding,
+              int numGrids = 4, double w = 3000, std::string metricName = "euclidean", double maxCoord = 50);
 
     // Adding a curve with label y to CurvesLSH structure
     void addX(CurveType &curve, Y &y);
@@ -73,10 +73,10 @@ public:
 
 // Constructor initializing LSH Vector Hash
 template<class D, class Y, class VH>
-CurvesLSH<D, Y, VH>::CurvesLSH(int pointDim, int delta, int kVecs, int maxPointsInCurves, int numGrids, double w,
-                               std::string metricName)
+CurvesLSH<D, Y, VH>::CurvesLSH(int pointDim, double delta, int kVecs, int maxPointsInCurves, int numGrids, double w,
+                               std::string metricName, double maxCoord)
         :pointDim(pointDim), delta(delta), numGrids(numGrids), k_vecs(kVecs), strMetric(metricName),
-         maxPointsForPadding(maxPointsInCurves), w(w) {
+         maxPointsForPadding(maxPointsInCurves), w(w), maxCoord(maxCoord) {
 
     // Set the distance metric function to be used
     fDist = &dtw<CurveType, PointType, D>;
@@ -84,19 +84,20 @@ CurvesLSH<D, Y, VH>::CurvesLSH(int pointDim, int delta, int kVecs, int maxPoints
     // Create d number of gi hypercube hashTable functions
     for (int i = 0; i < numGrids; ++i) {
         // Create the grid hash tables with LSH constructor
-        GridHT_ListP.push_back(new CurveGridHT<D, Y, VH>(pointDim, delta, maxPointsForPadding, kVecs, w));
+        GridHT_ListP.push_back(new CurveGridHT<D, Y, VH>(pointDim, delta, maxPointsForPadding, kVecs, w,
+                                                         metricName, maxCoord));
     }
 
 }
 
 // Constructor initializing Hypercube Vector Hash
 template<class D, class Y, class VH>
-CurvesLSH<D, Y, VH>::CurvesLSH(int pointDim, int delta, int kHypercube, int maxSearchPoints, int probes,
-                               int maxPointsInCurves, int numGrids,
-                               double w, std::string metricName)
+CurvesLSH<D, Y, VH>::CurvesLSH(int pointDim, double delta, int kHypercube, int maxSearchPoints, int probes,
+                               int maxPointsInCurves,
+                               int numGrids, double w, std::string metricName, double maxCoord)
         :pointDim(pointDim), delta(delta), numGrids(numGrids), k_hypercube(kHypercube),
          maxSearchPoints(maxSearchPoints), probes(probes), strMetric(metricName),
-         maxPointsForPadding(maxPointsInCurves), w(w) {
+         maxPointsForPadding(maxPointsInCurves), w(w), maxCoord(maxCoord) {
 
     // Set the distance metric function to be used
     fDist = &dtw<CurveType, PointType, D>;
@@ -105,7 +106,8 @@ CurvesLSH<D, Y, VH>::CurvesLSH(int pointDim, int delta, int kHypercube, int maxS
     for (int i = 0; i < numGrids; ++i) {
 
         // Create the grid hash tables with Hypercube constructor
-        GridHT_ListP.push_back( new CurveGridHT<D, Y, VH>(pointDim, delta, maxPointsForPadding, k_hypercube, maxSearchPoints, probes, w) );
+        GridHT_ListP.push_back(new CurveGridHT<D, Y, VH>(pointDim, delta, maxPointsForPadding, k_hypercube,
+                                                         maxSearchPoints, probes, w, metricName, maxCoord));
     }
 
 }

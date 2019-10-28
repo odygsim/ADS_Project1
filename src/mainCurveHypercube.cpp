@@ -59,7 +59,9 @@ void runCurveLSHWithHypercube( std::string &iFileName, std::string &qFileName, s
     // Set the max curve size to use
     int maxPointsInCurves = 1.1 * max_curve_sz;
     // Set delta to be used in curves LSH
-    int delta = 4 * dim * min_curve_sz;
+    double delta = 0.001; //4 * dim * min_curve_sz;
+    // Maximum number in coordinates
+    double maxCoordNum=55;
 
     // Create LSH for curves structure
     typedef double DX;
@@ -73,10 +75,10 @@ void runCurveLSHWithHypercube( std::string &iFileName, std::string &qFileName, s
     typedef CurvesLSH< DX, DY, LSHStruct > CLSH_LSH_Struct;
 
 //     Uncomment following line for running CurvesLSH with Hypercube
-    CLSH_HQ_Struct* CLSH = new CLSH_HQ_Struct(dim, delta, k, M, probes, maxPointsInCurves, L_grid , w , metric_name);
+    CLSH_HQ_Struct* CLSH = new CLSH_HQ_Struct(dim, delta, k, M, probes, maxPointsInCurves, L_grid , w , metric_name, maxCoordNum );
 
 ////     Uncomment following line for running CurvesLSH with LSH
-//    CLSH_LSH_Struct* CLSH = new CLSH_LSH_Struct(dim, delta, k, maxPointsInCurves, L_grid , w , metric_name);
+//    CLSH_LSH_Struct* CLSH = new CLSH_LSH_Struct(dim, delta, k, maxPointsInCurves, L_grid , w , metric_name, maxCoordNum);
 
     CX::iterator CurveIter;
     CY::iterator CurveLblIter;
@@ -112,7 +114,8 @@ int main(int argc, char **argv) {
 
     using namespace std;
     // Set program parameters
-    int k = 4, w = 3000, M = 10, probes =2, L_grid = 4;
+    int k = 4, M = 10, probes =2, L_grid = 4;
+    double w = 0.01;
     int id = 0;
     char *pEnd;
     const char *arg;
