@@ -175,7 +175,6 @@ runCurveProjectionLsh(std::string &iFileName, std::string &qFileName, std::strin
 
     }
 //    // Clean Up
-//
     delete eknn;
     delete clEknn;
     delete projHC;
@@ -185,9 +184,7 @@ runCurveProjectionLsh(std::string &iFileName, std::string &qFileName, std::strin
 int main(int argc, char **argv) {
     using namespace std;
 
-    int L1, k1, L = 5, k_hypercube = 4, w = 5000, numNeighbors = 1, topLimit =
-            4 * L, probes, r = 0, dimension = 0, M = 0, m = 0;// INT32_MAX - 5;
-    int id = 0;
+    int k_hypercube = 4, w = 5000,probes, M = 0, m = 0;
     char *pEnd;
     const char *arg;
     double e;

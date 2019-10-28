@@ -500,11 +500,16 @@ todo: ##@analysis Check for programmer notes in code.
 #..............................................................................#
 .PHONY: all
 all: ##@build Creates all targets.
-all: 
+all: lsh hypercube curve_grid_lsh curve_grid_hypercube curve_projection_lsh curve_projection_hypercube
 	@echo  Creates all targets $(TARGETS)
-	$(error *** CAUTION: NOT ALL TARGETS IMPLEMENTED YET $(TARGETS) ***  )
-	$(info *** Creating $(TARGETS) executables ***  )
-	$(TARGET1) $(TARGET2) $(TARGET3) $(TARGET4) $(TARGET5)
+# 	make lsh
+# 	make hypercube
+# 	make curve_grid_lsh
+# 	make curve_grid_hypercube
+# 	make curve_projection_lsh
+# 	make curve_projection_hypercube
+# 	$(error *** CAUTION: NOT ALL TARGETS IMPLEMENTED YET $(TARGETS) ***  )
+# 	$(info *** Creating $(TARGETS) executables ***  )
 
 lsh: ##@build lsh with points.
 lsh: ${BIN_DIR}lsh

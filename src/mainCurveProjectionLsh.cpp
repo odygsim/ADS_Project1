@@ -140,7 +140,8 @@ runCurveProjectionLsh(std::string &iFileName, std::string &qFileName, std::strin
                      to_string(m) + "," + to_string(k_vec) +
                      "," + to_string(topLimit) + "," + to_string(0) + "," + to_string(dimension) + "," +
                      get<1>(results) + "," + getFilename(iFileName) +
-                     "," + to_string(testIDataList.size()) + "," + to_string(timeList[0]) + "," + to_string(timeList[2]) +
+                     "," + to_string(testIDataList.size()) + "," + to_string(timeList[0]) + "," +
+                     to_string(timeList[2]) +
                      "," + to_string(timeList[1]) + "," + to_string(timeList[3]) + "," + to_string(timeList[4]) +
                      "\n";
 //    oFile << res;
@@ -182,8 +183,7 @@ runCurveProjectionLsh(std::string &iFileName, std::string &qFileName, std::strin
 int main(int argc, char **argv) {
     using namespace std;
 
-    int L = 1, k_vec = 4, w = 5000, topLimit =
-            4 * 100, m = 0;
+    int L = 1, k_vec = 4, w = 5000, topLimit = 4 * 100, m = 0;
     char *pEnd;
     const char *arg;
     double e = 0.5;
