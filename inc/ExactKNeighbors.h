@@ -105,16 +105,16 @@ class ExactKNeighbors2 {
 public:
 //    ExactKNeighbors(double radius, D (*f1) (TID &, TID &)):radius(radius), f1(f1) { }
 
-    ExactKNeighbors2(double radius, std::string metric = "dtwEuclidean") : radius(radius), metric_name(metric) {
+    ExactKNeighbors2(double radius, std::string metric = "euclidean") : radius(radius), metric_name(metric) {
         /* Constructor and initialization */
-        if (metric_name == "dtwEuclidean")     /* definition of the metric depending */{
+        if (metric_name == "euclidean")     /* definition of the metric depending */{
             f = &dtwD<TID, std::vector<double>, D>;
-            metric_name = "euclidean";
+//            metric_name = "euclidean";
         }
-        else if (metric_name == "dtwManhattan")     /* definition of the metric depending */{
+        else if (metric_name == "manhattan")     /* definition of the metric depending */{
             f = &dtwD<TID, std::vector<double>, D>;
 //            f = &dtwD<std::vector<std::vector<double>>, TID, D>;
-            metric_name = "euclidean";
+//            metric_name = "euclidean";
         }
     }
 
@@ -163,7 +163,7 @@ std::list<std::tuple<Y, D>> ExactKNeighbors2<TD, TID, D, TY, Y>::queryX(TID &x) 
     // Calculate distance from query point against all data.
     for (iteratorData = data.begin(), iteratorLabels = labels.begin();
          iteratorData != itDE; ++iteratorData, ++iteratorLabels) {
-        distanceList.push_back(std::make_pair(*iteratorLabels, f(*iteratorData, (x), metric_name))); // Append distances to a list.
+        distanceList.push_back(std::make_pair(*iteratorLabels, f(*iteratorData, x, metric_name))); // Append distances to a list.
     }
     distanceList.sort(TupleLess<1>()); // sort distance list by neighbors
     itE = distanceList.end();
