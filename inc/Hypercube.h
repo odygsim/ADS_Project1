@@ -51,7 +51,7 @@ Hypercube<TID, D, Y>::Hypercube(int d, double w, int k, int maxSearchPoints, int
 
     // Set default parameters
     m = INT32_MAX - 5;
-    k_hi = 4;
+    k_hi = 1;// Changed01
 
     // Create d number of gi hypercube hashTable functions
     for (int i = 0; i < k; ++i) {
