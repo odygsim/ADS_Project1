@@ -4,9 +4,59 @@
 
 #include <string>
 #include <tuple>
+#include <list>
+#include <vector>
 #include "../inc/util.h"
 #include "../inc/CurvesLSH.h"
 #include "../inc/KNeighborsClassifier.h"
+
+template<typename D>
+D calc_best_curvesLSH_delta( std::list<std::vector< std::vector<D>>> iDataList){
+
+    using namespace std;
+
+    /* Types definition for curves, points */
+    typedef list< vector< vector<D> > > ListOfCurvesType;
+    typedef vector<vector<D>> CurveType;
+    typedef vector<D> PointType;
+    typename ListOfCurvesType::iterator curveIt;
+    typename CurveType::iterator pointIt;
+    int lLen=0, cLen=0;
+    double curvesDiffAvg, pointsDiffAvg;
+    PointType prevPoint, nextPoint;
+    CurveType prevCurve, nextCurve;
+
+    // For each curve find the average distance between succesive points
+    // Then average the distances of all curves
+    for (curveIt = iDataList.begin() ; curveIt != iDataList.end(); curveIt++ ) {
+        // Increase length of list of curves
+        lLen++;
+        // Intitialize current curve's starting point
+        pointIt = curveIt->begin();
+        prevPoint = (*pointIt);
+        // Initialize length, points average of curve
+        cLen = 0;
+        pointsDiffAvg = 0;
+        // Go to next curve's point
+        pointIt++;
+        // Loop through all curve's points to find average distance difference between succesive points
+        for ( pointIt ; pointIt != curveIt->end() ; pointIt++ ) {
+            cLen++;
+            nextPoint = (*pointIt);
+            pointsDiffAvg += euclideanDistance<D, std::vector<D>>(prevPoint, nextPoint); // current points euclidean difference
+            prevPoint = nextPoint;
+        }
+        // Calc average distance difference
+        pointsDiffAvg = pointsDiffAvg / cLen;
+        // Add current curves points difference average to total of all curves
+        curvesDiffAvg += pointsDiffAvg;
+    }
+    // Calc average for all curves
+    curvesDiffAvg = curvesDiffAvg / lLen;
+
+    // return delta
+    return curvesDiffAvg;
+}
 
 template<typename D>
 void runCurveLsh(int id, std::string &iFileName, std::string &qFileName, std::string &oFileName,
@@ -73,7 +123,7 @@ void runCurveLsh(int id, std::string &iFileName, std::string &qFileName, std::st
     // Set the max curve size to use
     int maxPointsInCurves = 1.1 * max_curve_sz;
     // Set delta to be used in curves LSH
-    double delta = 0.001; //4 * dim * min_curve_sz;
+    double delta = calc_best_curvesLSH_delta<double>(iDataList); //4 * dim * min_curve_sz;
     // Maximum number in coordinates
     double maxCoordNum=55;
 
@@ -120,11 +170,11 @@ void runCurveLsh(int id, std::string &iFileName, std::string &qFileName, std::st
         std::cout << "Running CurvesLSH-Lsh with arguments: " << "input file = \"" << iFileName << "\" query file = \"" << qFileName << "\" output file =  \"" << oFileName
                   << " k_vec = " << k << " L_grid = " << L_grid << "\n";
 
-        // KNN query set running
-        std::cout << " Running query set in Exact KNN..." << newline;
-        start = initTime();                                         // timestamp start
-        E = clEknn->predictWithTimeAndDistance(qDataList);          // predict exact knn
-        timeList.push_back(getElapsed(start));                      // timestamp end
+//        // KNN query set running
+//        std::cout << " Running query set in Exact KNN..." << newline;
+//        start = initTime();                                         // timestamp start
+//        E = clEknn->predictWithTimeAndDistance(qDataList);          // predict exact knn
+//        timeList.push_back(getElapsed(start));                      // timestamp end
 
         // Hypercube query set running
         std::cout << " Running query set in CurvesLSH-LSH ANN..." << newline;
