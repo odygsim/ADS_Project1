@@ -2,7 +2,7 @@
 // Created by user on 10/12/19.
 //
 
-#include "../inc/Point.h"
+#include "../inc/test_util/Point.h"
 
 #include <utility>
 

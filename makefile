@@ -422,13 +422,13 @@ runtesthypercube:
 	${RUNNING}
 	@$(ECHO)
 	$(info running small dataset)
-	${BIN_DIR}hypercube -d ${TESTS_DIR}sample_datasets/siftsmall/input_small_id -q ${TESTS_DIR}sample_datasets/siftsmall/query_small_id -k 3 -M 10 -probes 2 -o ${TESTS_DIR}out_cube_small.txt
+	${BIN_DIR}cube -d ${TESTS_DIR}sample_datasets/siftsmall/input_small_id -q ${TESTS_DIR}sample_datasets/siftsmall/query_small_id -k 3 -M 1500 -probes 2 -o ${TESTS_DIR}out_cube_small.txt
 	$(info running big dataset)
-	${BIN_DIR}hypercube -d ${TESTS_DIR}sample_datasets/siftbig/input_b_id -q ${TESTS_DIR}sample_datasets/siftbig/query_b_id -k 3 -M 10 -probes 2 -o ${TESTS_DIR}out_cube_big.txt
+	${BIN_DIR}cube -d ${TESTS_DIR}sample_datasets/siftbig/input_b_id -q ${TESTS_DIR}sample_datasets/siftbig/query_b_id -k 3 -M 100 -probes 2 -o ${TESTS_DIR}out_cube_big.txt
 
 
 .PHONY: runtestprojcube
-runtestprojcube: ##@tests Run cube tests
+runtestprojcube: ##@tests Run Projection cube tests
 runtestprojcube:
 	@${MKDIR_P} ${TESTS_DIR}
 	${RUNNING}
@@ -437,7 +437,7 @@ runtestprojcube:
 	${BIN_DIR}curve_projection_hypercube -d ${TESTS_DIR}sample_datasets/trajectories_dataset -q ${TESTS_DIR}sample_datasets/trajectories_query_dataset -k_hypercube 3 -M 10 -probes 10 -e 0.5 -o ${TESTS_DIR}out_projection_cube_small.txt
 
 .PHONY: runtestprojlsh
-runtestprojlsh: ##@tests Run cube tests
+runtestprojlsh: ##@tests Run Projection lsh tests
 runtestprojlsh:
 	@${MKDIR_P} ${TESTS_DIR}
 	${RUNNING}
@@ -446,7 +446,7 @@ runtestprojlsh:
 	${BIN_DIR}curve_projection_lsh -d ${TESTS_DIR}sample_datasets/trajectories_dataset -q ${TESTS_DIR}sample_datasets/trajectories_query_dataset -k_vec 4 -L_vec 5 -e 0.5 -o ${TESTS_DIR}out_projection_lsh_small.txt
 
 .PHONY: runtestgridlsh
-runtestgridlsh: ##@tests Run cube tests
+runtestgridlsh: ##@tests Run Grid LSH tests
 runtestgridlsh:
 	@${MKDIR_P} ${TESTS_DIR}
 	${RUNNING}
@@ -455,13 +455,14 @@ runtestgridlsh:
 	${BIN_DIR}curve_grid_lsh -d ${TESTS_DIR}sample_datasets/trajectories_dataset -q ${TESTS_DIR}sample_datasets/trajectories_query_dataset -k_vec 4 -L_grid 5 -o ${TESTS_DIR}out_projection_lsh_small.txt
 
 .PHONY: runtestgridhypercube
-runtestgridhypercube: ##@tests Run cube tests
+runtestgridhypercube: ##@tests Grid HyperCube tests
 runtestgridhypercube:
 	@${MKDIR_P} ${TESTS_DIR}
 	${RUNNING}
 	@$(ECHO)
 	$(info running small dataset)
-	${BIN_DIR}curve_grid_hypercube -d ${TESTS_DIR}sample_datasets/trajectories_dataset -q ${TESTS_DIR}sample_datasets/trajectories_query_dataset -k_vec 4 -L_grid 5 -o ${TESTS_DIR}out_projection_lsh_small.txt
+	# `-d tests/sample_datasets/trajectories_dataset -q tests/sample_datasets/trajectories_query_dataset -k_hypercube 4 -L_grid 5 -M 5 -probes 10 -o tests/outsmall.txt
+	${BIN_DIR}curve_grid_hypercube -d ${TESTS_DIR}sample_datasets/trajectories_dataset -q ${TESTS_DIR}sample_datasets/trajectories_query_dataset -k_hypercube 4 -L_grid 5 -M 5 -probes 10 -o ${TESTS_DIR}out_projection_lsh_small.txt
 #..............................................................................#
 #	Documentation
 
@@ -526,7 +527,7 @@ ${BIN_DIR}cube: $(OBJS2)
 	$(MKDIR_P)		$(dir $@)
 	@$(CXX_HOST)  $(OBJS2) -o $@
 
-curve_grid_lsh: ##@build curve Lsh.
+curve_grid_lsh: ##@build curve Grid Lsh.
 curve_grid_lsh:${BIN_DIR}curve_grid_lsh
 ${BIN_DIR}curve_grid_lsh: $(OBJS3)
 # 	$(error *** Creating Curve Grid Lsh executable ***  )
@@ -535,7 +536,7 @@ ${BIN_DIR}curve_grid_lsh: $(OBJS3)
 	@$(CXX_HOST)  $(OBJS3) -o $@
 	${BUILD_SUCCESS}
 
-curve_grid_hypercube: ##@build curveCube.
+curve_grid_hypercube: ##@build curve Grid Cube.
 curve_grid_hypercube: ${BIN_DIR}curve_grid_hypercube
 ${BIN_DIR}curve_grid_hypercube: $(OBJS4)
 # 	$(error *** Creating Curve Grid HyperCube executable ***  )
@@ -544,7 +545,7 @@ ${BIN_DIR}curve_grid_hypercube: $(OBJS4)
 	@$(CXX_HOST)  $(OBJS4) -o $@
 	${BUILD_SUCCESS}
 
-curve_projection_lsh: ##@build curveProjection.
+curve_projection_lsh: ##@build curve Projection lsh.
 curve_projection_lsh: ${BIN_DIR}curve_projection_lsh
 ${BIN_DIR}curve_projection_lsh:${OBJS5}
 # 	$(error *** Creating Curve Grid Projection executable ***  )
@@ -553,7 +554,7 @@ ${BIN_DIR}curve_projection_lsh:${OBJS5}
 	@$(CXX_HOST)  $(OBJS5) -o $@
 	${BUILD_SUCCESS}
 
-curve_projection_hypercube: ##@build curveProjection.
+curve_projection_hypercube: ##@build curve Projection cube.
 curve_projection_hypercube: ${BIN_DIR}curve_projection_hypercube
 ${BIN_DIR}curve_projection_hypercube: ${OBJS6}
 # 	$(error *** Creating Curve Grid Projection executable ***  )

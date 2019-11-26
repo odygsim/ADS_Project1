@@ -1,0 +1,6 @@
+1. Change the mainCurveHyperCube.cpp file output file. lines 141-144 comment, lines 153-154 comment, line 158 leave just Filename output.
+2. Same at the mainHypercube.cpp
+3. Same at the mainCurveLsh.cpp
+4. Hypercube.h change line 54 to value 1 so it doesnt create an G but takes each hi. //done
+5. Changed makefile lines 425, 427 to cube. //done
+6. Change makefile line 465 //done
